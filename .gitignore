@@ -1,0 +1,28 @@
+# Supabase (local dev)
+supabase/.branches/
+supabase/.temp/
+
+# Flutter / Dart
+src/.dart_tool/
+src/.flutter-plugins
+src/.flutter-plugins-dependencies
+src/.packages
+src/build/
+src/android/local.properties
+src/ios/Flutter/Flutter.podspec
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Env
+.env
+.env.local
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
