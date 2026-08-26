@@ -1,4 +1,4 @@
-# RentEase — Supabase (Backend)
+# BizTown Rent-Manager — Supabase (Backend)
 
 Backend chạy hoàn toàn trên Supabase: Postgres DB, Auth, Storage, và Edge Functions cho logic phía server.
 

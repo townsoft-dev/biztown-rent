@@ -3,7 +3,7 @@ paths:
   - "src/**/*.dart"
 ---
 
-# Flutter Coding Standards — RentEase
+# Flutter Coding Standards — BizTown Rent-Manager
 
 > Placeholder. Điền chi tiết sau khi có design UI + mô tả nghiệp vụ cụ thể — không tự quyết kiến trúc lớn ở đây, hỏi trước.
 

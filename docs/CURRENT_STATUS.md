@@ -11,7 +11,7 @@ Setup kỹ thuật xong — đang chờ **design UI** và **mô tả nghiệp v�
 - [x] Cài Flutter SDK (3.47.1, qua `~/development/flutter`, PATH set trong `~/.zshrc`)
 - [x] Cài Supabase CLI (2.115.0, qua npm devDependency, chạy bằng `npx supabase`)
 - [x] Commit git đầu tiên
-- [x] Push lên GitHub, đã transfer sang Organization: https://github.com/townsoft-dev/rentease
+- [x] Push lên GitHub, đã transfer sang Organization, đổi tên repo: https://github.com/townsoft-dev/biztown-rent
 - [x] Tạo project Supabase (`rentease`, region South Asia/Mumbai, org cá nhân `trandung1291`, sẽ transfer sau) — URL: `https://rrtppoibjprlvasnbvwr.supabase.co`
 - [x] `supabase init` xong (`supabase/config.toml`)
 - [x] Publishable key + Secret key + Access Token đã có, lưu trong `supabase/.env` (local, không lên git)

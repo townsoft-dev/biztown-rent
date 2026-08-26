@@ -1,4 +1,4 @@
-# RentEase — Mobile App (Flutter)
+# BizTown Rent-Manager — Mobile App (Flutter)
 
 Đây là placeholder cho Flutter app — chưa chạy `flutter create .` (đợi design UI + mô tả nghiệp vụ chi tiết trước).
 

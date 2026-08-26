@@ -1,8 +1,8 @@
-# RentEase
+# BizTown Rent-Manager
 
 Ứng dụng mobile quản lý nhà cho thuê (quản lý phòng/căn hộ, khách thuê, hợp đồng, thanh toán).
 
-> Tên project là tên tạm thời, có thể đổi sau.
+> Brand: **BizTown** — Sản phẩm: **Rent-Manager** (tên chính thức do khách hàng chốt).
 
 ## Stack
 

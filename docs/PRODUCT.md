@@ -2,7 +2,7 @@
 
 ## Tổng quan
 
-RentEase là ứng dụng mobile (Flutter) giúp chủ nhà quản lý nhà/phòng cho thuê: đăng ký nhà/phòng, khách thuê, hợp đồng, ghi số điện nước và gửi hóa đơn hàng tháng.
+BizTown Rent-Manager là ứng dụng mobile (Flutter) giúp chủ nhà quản lý nhà/phòng cho thuê: đăng ký nhà/phòng, khách thuê, hợp đồng, ghi số điện nước và gửi hóa đơn hàng tháng.
 
 ## Đối tượng người dùng
 

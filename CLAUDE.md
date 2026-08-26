@@ -1,6 +1,6 @@
 @docs/CLAUDE.md
 
-# Claude Code Instructions — RentEase
+# Claude Code Instructions — BizTown Rent-Manager
 
 ## Quy trình
 

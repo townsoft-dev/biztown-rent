@@ -4,7 +4,7 @@ Tài liệu này giúp AI (Claude) hiểu nhanh project khi làm việc.
 
 ## Project
 
-RentEase — ứng dụng mobile quản lý nhà cho thuê. Stack: **Flutter** (frontend) + **Supabase** (backend, không dùng Vercel). Xem [PRODUCT.md](PRODUCT.md) để biết yêu cầu chi tiết, [ARCHITECTURE.md](ARCHITECTURE.md) để biết kiến trúc.
+BizTown Rent-Manager — ứng dụng mobile quản lý nhà cho thuê. Stack: **Flutter** (frontend) + **Supabase** (backend, không dùng Vercel). Xem [PRODUCT.md](PRODUCT.md) để biết yêu cầu chi tiết, [ARCHITECTURE.md](ARCHITECTURE.md) để biết kiến trúc.
 
 ## Cấu trúc
 

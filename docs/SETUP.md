@@ -1,18 +1,18 @@
 # SETUP.md — Hướng dẫn setup môi trường
 
-Hướng dẫn setup toàn bộ môi trường dev cho RentEase từ đầu (máy mới, người mới nhận project).
+Hướng dẫn setup toàn bộ môi trường dev cho BizTown Rent-Manager từ đầu (máy mới, người mới nhận project).
 
 ## 1. Tài khoản cần có
 
 - **GitHub** — quyền truy cập vào repo (Organization `townsoft-dev`, hoặc org của bạn nếu đã bàn giao).
-- **Supabase** — tài khoản + quyền truy cập project `rentease` (hoặc tạo project mới nếu build lại từ đầu, xem mục 4).
+- **Supabase** — tài khoản + quyền truy cập project `rentease` (tên project trên Supabase Dashboard, chưa đổi theo tên mới; chức năng không đổi) — hoặc tạo project mới nếu build lại từ đầu, xem mục 4.
 - **Apple Developer** — chỉ cần khi build/publish app lên App Store (chưa cần ở giai đoạn dev).
 
 ## 2. Clone repo
 
 ```bash
-git clone git@github.com:townsoft-dev/rentease.git
-cd rentease
+git clone git@github.com:townsoft-dev/biztown-rent.git
+cd biztown-rent
 ```
 
 Cần SSH key đã add vào GitHub account của bạn. Nếu chưa có, tạo bằng:
