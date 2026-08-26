@@ -82,7 +82,18 @@ cd src
 flutter run   # chọn thiết bị/emulator khi được hỏi
 ```
 
-## 7. Tài liệu liên quan
+## 7. (Tùy chọn) Cho Claude Code đọc trực tiếp Figma
+
+Nếu dùng Claude Code và muốn agent đọc được file Figma trực tiếp (không cần export ảnh thủ công):
+
+1. Cài CLI chuẩn (bản VS Code extension không có sẵn lệnh này): `npm install -g @anthropic-ai/claude-code`
+2. Đăng ký server chính thức của Figma: `claude mcp add --transport http figma https://mcp.figma.com/mcp`
+3. Xác thực (**phải chạy ở terminal thật, có tương tác được**, không chạy được trong phiên non-interactive): `claude mcp login figma` → trình duyệt mở ra → đăng nhập Figma → **Allow Access**.
+4. Mở phiên Claude Code mới — agent sẽ thấy công cụ Figma khả dụng.
+
+Không bắt buộc — nếu bỏ qua bước này, dùng cách thủ công ở mục "Design" trong [DESIGN.md](DESIGN.md) (export ảnh + design tokens) vẫn đủ để code chính xác.
+
+## 8. Tài liệu liên quan
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — kiến trúc hệ thống
 - [DATABASE.md](DATABASE.md) — schema dữ liệu
