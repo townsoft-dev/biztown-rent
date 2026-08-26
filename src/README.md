@@ -1,12 +1,14 @@
 # RentEase — Mobile App (Flutter)
 
-Đây là placeholder cho Flutter app. Máy hiện chưa cài Flutter SDK.
+Đây là placeholder cho Flutter app — chưa chạy `flutter create .` (đợi design UI + mô tả nghiệp vụ chi tiết trước).
 
-## Setup lần đầu
+Flutter SDK đã cài sẵn tại `~/development/flutter` (PATH set trong `~/.zshrc`, mở terminal mới để có lệnh `flutter`). Android SDK / Xcode đầy đủ **chưa cài** — cần khi build/test trên thiết bị thật hoặc emulator.
 
-1. Cài [Flutter SDK](https://docs.flutter.dev/get-started/install).
-2. Trong thư mục `src/`, chạy `flutter create .` để sinh đầy đủ project (android/, ios/, lib/, test/...). Lệnh này sẽ giữ lại `pubspec.yaml` đã có sẵn nếu chọn đúng org/tên phù hợp — kiểm tra lại `pubspec.yaml` sau khi chạy.
-3. Thêm dependency `supabase_flutter` để kết nối Supabase (Auth, Database, Storage).
+## Setup khi bắt đầu code (sau khi có design)
+
+1. Trong thư mục `src/`, chạy `flutter create .` để sinh đầy đủ project (android/, ios/, lib/, test/...). Lệnh này sẽ giữ lại `pubspec.yaml` đã có sẵn nếu chọn đúng org/tên phù hợp — kiểm tra lại `pubspec.yaml` sau khi chạy.
+2. Thêm dependency `supabase_flutter` để kết nối Supabase (Auth, Database, Storage).
+3. Điền `.claude/rules/flutter.md` (chọn state management, cấu trúc `lib/`...).
 
 ## Kết nối Backend
 

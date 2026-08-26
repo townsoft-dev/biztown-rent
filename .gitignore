@@ -1,3 +1,6 @@
+# Node (chỉ dùng cho Supabase CLI tooling, không phải app code)
+node_modules/
+
 # Supabase (local dev)
 supabase/.branches/
 supabase/.temp/

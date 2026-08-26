@@ -1,0 +1,9 @@
+{
+  "name": "rentease-tooling",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RentEase - chi de chua CLI tooling (Supabase CLI), khong phai code backend",
+  "devDependencies": {
+    "supabase": "^2.115.0"
+  }
+}
