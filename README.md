@@ -21,6 +21,10 @@
 └── changelog/           # Nhật ký thay đổi chi tiết theo ngày/giờ/người thực hiện
 ```
 
+## Setup môi trường
+
+Người mới nhận project (kể cả khách hàng sau khi bàn giao) xem [docs/SETUP.md](docs/SETUP.md) — hướng dẫn cài đặt đầy đủ từ đầu (Flutter SDK, Supabase CLI, lấy API keys, link project...).
+
 ## Docs
 
 Xem [docs/](docs/) để hiểu yêu cầu sản phẩm, kiến trúc, API, database và các quyết định thiết kế.
