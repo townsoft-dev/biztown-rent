@@ -11,6 +11,7 @@ Setup kỹ thuật xong — đang chờ **design UI** và **mô tả nghiệp v�
 - [x] Cài Flutter SDK (3.47.1, qua `~/development/flutter`, PATH set trong `~/.zshrc`)
 - [x] Cài Supabase CLI (2.115.0, qua npm devDependency, chạy bằng `npx supabase`)
 - [x] Commit git đầu tiên
+- [x] Push lên GitHub: https://github.com/dungtv1291/rentease
 
 ## Còn thiếu để dev thật được (máy local)
 
