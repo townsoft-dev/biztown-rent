@@ -14,20 +14,20 @@ Setup kỹ thuật xong — đang chờ **design UI** và **mô tả nghiệp v�
 - [x] Push lên GitHub, đã transfer sang Organization: https://github.com/townsoft-dev/rentease
 - [x] Tạo project Supabase (`rentease`, region South Asia/Mumbai, org cá nhân `trandung1291`, sẽ transfer sau) — URL: `https://rrtppoibjprlvasnbvwr.supabase.co`
 - [x] `supabase init` xong (`supabase/config.toml`)
-- [x] Publishable key + Secret key đã có, lưu trong `supabase/.env` (local, không lên git)
+- [x] Publishable key + Secret key + Access Token đã có, lưu trong `supabase/.env` (local, không lên git)
+- [x] `supabase link` thành công — project `rentease` (ACTIVE_HEALTHY, Postgres 17, ap-south-1) đã gắn với repo
 
 ## Còn thiếu để dev thật được (máy local)
 
 - [ ] Android Studio (Android SDK) — cần khi build/test trên Android
 - [ ] Xcode đầy đủ + CocoaPods — cần khi build/test trên iOS
-- [ ] **Personal Access Token** Supabase (dashboard/account/tokens) — cần để `supabase link` chạy được
 - [ ] Tài khoản Apple Developer (cần khi publish lên App Store)
+- [ ] Rotate lại Secret key + Access Token (cả 2 đã bị dán vào chat, coi như lộ)
 
 ## Đang làm / Tiếp theo (chờ design + business)
 
 - [ ] Nhận design UI + mô tả nghiệp vụ chi tiết
 - [ ] Chạy `flutter create .` trong `src/` để sinh đầy đủ project
-- [ ] `supabase link --project-ref rrtppoibjprlvasnbvwr` (đang chờ Access Token)
 - [ ] Thiết kế schema (house, room, tenant, contract, meter_reading, bill) trong `supabase/migrations/`
 - [ ] Chọn state management, điền `.claude/rules/flutter.md`
 - [ ] Viết Edge Functions: sinh Bill hàng tháng + gửi Email/SMS
