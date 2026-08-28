@@ -97,6 +97,6 @@ Không bắt buộc — nếu bỏ qua bước này, dùng cách thủ công ở
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — kiến trúc hệ thống
 - [DATABASE.md](DATABASE.md) — schema dữ liệu
-- [PRODUCT.md](PRODUCT.md) — yêu cầu sản phẩm, luồng nghiệp vụ
+- [PRODUCT-OVERVIEW.md](PRODUCT-OVERVIEW.md) — Tổng quan sản phẩm
 - [../CLAUDE.md](../CLAUDE.md) + [../.claude/rules/flutter.md](../.claude/rules/flutter.md) — quy ước code nếu dùng Claude Code
 - [../changelog/](../changelog/) — lịch sử thay đổi chi tiết

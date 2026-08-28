@@ -2,7 +2,7 @@
 
 ## Giai đoạn
 
-Setup kỹ thuật xong — đang chờ **design UI** và **mô tả nghiệp vụ chi tiết** trước khi code tính năng thật. Mô tả nghiệp vụ viết vào [PRODUCT.md](PRODUCT.md) (mục "Luồng nghiệp vụ chính" / "Tính năng chính").
+Setup kỹ thuật xong — đang chờ **design UI** và **mô tả nghiệp vụ chi tiết** trước khi code tính năng thật. Mô tả nghiệp vụ viết vào [PRODUCT-OVERVIEW.md](PRODUCT-OVERVIEW.md) (mục "Luồng nghiệp vụ chính" / "Tính năng chính").
 
 ## Đã xong
 
