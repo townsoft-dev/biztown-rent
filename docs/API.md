@@ -6,10 +6,10 @@ Không có API tự viết — dùng trực tiếp **Supabase auto-generated RES
 
 ## Edge Functions (logic phía server)
 
-| Function | Mô tả | Trigger |
-|----------|-------|---------|
-| TBD (ví dụ: `generate-invoice`) | Sinh Invoice hàng tháng từ meter_reading + contract | Scheduled Trigger (pg_cron), hàng tháng |
-| TBD (ví dụ: `send-notification`) | Gửi thông báo qua Push (FCM/APNs) + SMS/Zalo | Gọi từ `generate-invoice`, nhắc thanh toán, hoặc sự kiện khác (yêu cầu mới...) |
-| TBD (ví dụ: `send-otp-sms`) | Auth Hook (Send SMS) — gửi OTP đăng nhập qua nhà cung cấp SMS Việt Nam | Supabase Auth gọi khi user đăng nhập/đăng ký |
+| Function | Mô tả | Trigger | Trạng thái |
+|----------|-------|---------|---|
+| `generate-invoice` | Tính & tạo Invoice từ 2 kỳ meter_reading gần nhất + contract (BR-BILL-01..05) | Gọi từ L-13 (Xem trước & Gửi Hoá đơn), sau này thêm Scheduled Trigger hàng tháng | Logic tính đã code xong, đã deploy lên project dev |
+| `send-notification` | Gửi Push (FCM/APNs) + SMS/Zalo, ghi vào bảng `notifications` | Gọi từ `generate-invoice`, nhắc thanh toán, yêu cầu mới... | Khung đã có, phần gửi thật (TODO) chờ chọn provider + tạo Firebase project |
+| `send-otp-sms` | Auth Hook (Send SMS) — gửi OTP qua nhà cung cấp SMS Việt Nam | Supabase Auth gọi khi user đăng nhập/đăng ký | Khung đã có, TODO chờ chọn eSMS/Speedsms |
 
-> Cập nhật danh sách Edge Functions cụ thể khi triển khai (`supabase/functions/`).
+> Cả 3 function đã deploy thử lên project Supabase dev để verify compile — logic gửi Push/SMS/Zalo thật cần hoàn thiện khi có tài khoản nhà cung cấp.
