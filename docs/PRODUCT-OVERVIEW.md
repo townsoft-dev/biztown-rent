@@ -89,7 +89,7 @@ Tham khảo nhanh các sản phẩm cùng phân khúc tại Việt Nam (quản l
 ## 10. Tài liệu liên quan
 - [USER-FLOWS](USER-FLOWS.md) - flow nghiệp vụ chính
 - [REQUIREMENTS](REQUIREMENTS.md) - yêu cầu chức năng/phi chức năng
-- [BUSINESS-RULES](BUSINESS-RULE.md) - quy tắc nghiệp vụ
+- [BUSINESS-RULES](BUSINESS-RULES.md) - quy tắc nghiệp vụ
 - [SCREEN-SPEC](SCREEN-SPEC.md) - mô tả màn hình
 - [DESIGN](DESIGN.md) - hệ thống thiết kế
 - [CLAUDE](CLAUDE.md) - hướng dẫn cho dev/Claude Code khi phát triển 

@@ -33,7 +33,7 @@
 | FR-ROOM-02 | Landlord tạo/sửa/xoá Phòng trong 1 Dãy trọ (tên phòng, giá thuê, diện tích, tiện ích, ảnh) | Must | |
 | FR-ROOM-03 | Xem danh sách phòng với trạng thái: Trống / Đã thuê / Đang sửa chữa | Must | |
 | FR-ROOM-04 | Lọc/tìm kiếm phòng theo dãy trọ, trạng thái | Should | |
-| FR-ROOM-05 | Cấu hình đơn giá điện/nước & phí dịch vụ mặc định theo từng phòng hoặc theo dãy trọ | Must |cố định theo hợp đồng — xem [BUSINESS-RULES](BUSINESS-RULE.md) |
+| FR-ROOM-05 | Cấu hình đơn giá điện/nước & phí dịch vụ mặc định theo từng phòng hoặc theo dãy trọ | Must |cố định theo hợp đồng — xem [BUSINESS-RULES](BUSINESS-RULES.md) |
 | FR-ROOM-06 | Quản lý nhiều Dãy trọ cùng lúc trong 1 tài khoản Landlord | Must | Bắt buộc theo mô hình đã chọn (đa quy mô) |
 
 ### 2.3 Tìm kiếm & Xem nhà/phòng cho thuê (Discovery / Search)
@@ -47,7 +47,7 @@
 | FR-DISC-06 | Landlord nhận thông báo khi có Yêu cầu liên hệ mới | Must | Dùng chung cơ chế push với FR-NOTI-01 |
 | FR-DISC-07 | Bản đồ (map view) cho danh sách tìm kiếm | Could | Phase 2, Phase 1 chỉ list + filter text |
 | FR-DISC-08 | Giới hạn số yêu cầu liên hệ Tenant gửi/ngày (chống spam) | Should | 10 yêu cầu 1 ngày |
-| FR-DISC-09 | Tự động tắt toggle Public listing khi phòng chuyển "Đã thuê" | Must | Xem [BUSINESS-RULES](BUSINESS-RULE.md) BR-LIST-xx |
+| FR-DISC-09 | Tự động tắt toggle Public listing khi phòng chuyển "Đã thuê" | Must | Xem [BUSINESS-RULES](BUSINESS-RULES.md) BR-LIST-xx |
 | FR-DISC-10 | Chat/nhắn tin trong app giữa Tenant quan tâm & Landlord | Won't (MVP) | Trùng với FR chat chung — vẫn ngoài phạm vi theo [PRODUCT-OVERVIEW](PRODUCT-OVERVIEW.md); MVP chỉ dừng ở gửi inquiry, liên hệ tiếp diễn ra ngoài app |
 
 ### 2.4 Quản lý Người thuê & Hợp đồng (Tenant & Contract)
@@ -56,7 +56,7 @@
 | FR-CTR-01 | Landlord tạo hồ sơ Tenant (tên, SĐT, CMND/CCCD, ảnh giấy tờ) — **độc lập với hợp đồng**, lưu vào "Tenant Pool" (Flow #2 Tenant Registration) | Must | có lưu ảnh CCCD |
 | FR-CTR-02 | Landlord tạo Hợp đồng thuê gắn Tenant với Phòng: ngày bắt đầu, kỳ hạn, tiền cọc, tiền thuê | Must | |
 | FR-CTR-03 | Xem chi tiết hợp đồng (cả 2 phía Landlord & Tenant) | Must | |
-| FR-CTR-04 | Kết thúc hợp đồng / trả phòng, xử lý tiền cọc | Must | chi tiết quy trình đối soát cọc — xem  [BUSINESS-RULES](BUSINESS-RULE.md)|
+| FR-CTR-04 | Kết thúc hợp đồng / trả phòng, xử lý tiền cọc | Must | chi tiết quy trình đối soát cọc — xem  [BUSINESS-RULES](BUSINESS-RULES.md)|
 | FR-CTR-05 | Gia hạn hợp đồng | Must | |
 | FR-CTR-06 | Nhiều Tenant trên cùng 1 hợp đồng/phòng (ở ghép) | Could | xem flow #3 |
 | FR-CTR-07 | Ký hợp đồng điện tử (e-signature) trong app | Won't (MVP) | Phase 2 |
@@ -72,7 +72,7 @@
 | FR-BILL-05 | Tenant xem lịch sử hoá đơn trong app | Must | |
 | FR-BILL-06 | Landlord đánh dấu hoá đơn "Đã thu tiền" thủ công | Must | Theo hướng thanh toán thủ công MVP |
 | FR-BILL-07 | Tenant chủ động đánh dấu "Đã thanh toán" + đính kèm ảnh chứng từ | Should | |
-| FR-BILL-08 | Hệ thống tự động nhắc thanh toán trước/đúng/sau hạn | Must | lịch nhắc cụ thể — xem [BUSINESS-RULES](BUSINESS-RULE.md) |
+| FR-BILL-08 | Hệ thống tự động nhắc thanh toán trước/đúng/sau hạn | Must | lịch nhắc cụ thể — xem [BUSINESS-RULES](BUSINESS-RULES.md) |
 | FR-BILL-010 | Tính phí phạt trễ hạn tự động | Could | có áp dụng không, công thức theo điều khoản hợp đồng |
 
 ### 2.6 Báo cáo doanh thu (Reporting)

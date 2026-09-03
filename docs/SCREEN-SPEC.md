@@ -97,7 +97,7 @@
 - **Thành phần chính:** Danh sách thông báo dạng list, mỗi dòng gồm: icon theo loại sự kiện, tiêu đề, tóm tắt ngắn, thời gian tương đối (VD "2 giờ trước"), chấm tròn đánh dấu chưa đọc. Có thể có tab/filter "Tất cả" / "Chưa đọc".
 - **Trạng thái màn hình:** Có thông báo (list) / Rỗng ("Chưa có thông báo nào").
 - **Hành động & điều hướng:** Bấm vào 1 thông báo → đánh dấu đã đọc + điều hướng tới màn hình liên quan tương ứng theo loại sự kiện (BR-NOTI-01→08): hoá đơn mới/nhắc thanh toán → L-15 (Landlord) hoặc T-04 (Tenant); yêu cầu mới/cập nhật trạng thái → L-18 (Landlord) hoặc T-07 (Tenant, xem chi tiết); Landlord xác nhận đã thu tiền → T-04; lời mời tham gia app → màn hình xác nhận mời (Flow A2); yêu cầu liên hệ mới (Flow #3) → L-19.
-- **Dữ liệu hiển thị:** Theo các loại sự kiện ở [BUSINESS-RULES](BUSINESS-RULE.md) mục 5 (Notification Rules).
+- **Dữ liệu hiển thị:** Theo các loại sự kiện ở [BUSINESS-RULES](BUSINESS-RULES.md) mục 5 (Notification Rules).
 - **Edge cases:** Thông báo trỏ tới 1 thực thể đã bị xoá/không còn hợp lệ (VD yêu cầu đã bị huỷ) → cần trạng thái "không thể mở, nội dung đã thay đổi" thay vì lỗi trắng màn hình thì hiển thị "data not found".
 
 ### S-04 — Hồ sơ cá nhân / Cài đặt
@@ -167,7 +167,7 @@
   - Diện tích (m²) — optional
   - Giá thuê / tháng (bắt buộc, VNĐ)
   - Đơn giá điện (VNĐ/kWh) — bắt buộc nếu bật tính hoá đơn tự động
-  - Đơn giá nước (VNĐ/m³ hoặc VNĐ/người —  xem [BUSINESS-RULES](BUSINESS-RULE.md))
+  - Đơn giá nước (VNĐ/m³ hoặc VNĐ/người —  xem [BUSINESS-RULES](BUSINESS-RULES.md))
   - Phí dịch vụ khác (danh sách có thể thêm: internet, rác, gửi xe...) — optional
   - Trạng thái phòng: Trống / Đã thuê / Đang sửa chữa (read-only, hệ thống tự set trừ "Đang sửa chữa" có thể set tay)
   - Nút Lưu / Huỷ
@@ -200,7 +200,7 @@
 - **Trạng thái màn hình:** Tạo mới / Chỉnh sửa / Lỗi validate.
 - **Hành động & điều hướng:** Lưu → quay lại L-07 (hoặc, nếu được mở dưới dạng "thêm nhanh" từ trong L-09, quay lại L-09 với người thuê vừa tạo đã được chọn sẵn). Người thuê mới lưu vào Tenant Pool, **chưa** gắn phòng/hợp đồng (BR-CTR-06).
 - **Dữ liệu hiển thị:** Hồ sơ người thuê (nếu đang sửa).
-- **Edge cases:** SĐT trùng với hồ sơ Tenant có sẵn trong cùng tài khoản Landlord → cảnh báo trùng, gợi ý mở hồ sơ cũ thay vì tạo mới. Lưu trữ ảnh CCCD cần tuân thủ [BUSINESS-RULES](BUSINESS-RULE.md) mục 7 (Privacy) — mã hoá khi lưu (NFR-03).
+- **Edge cases:** SĐT trùng với hồ sơ Tenant có sẵn trong cùng tài khoản Landlord → cảnh báo trùng, gợi ý mở hồ sơ cũ thay vì tạo mới. Lưu trữ ảnh CCCD cần tuân thủ [BUSINESS-RULES](BUSINESS-RULES.md) mục 7 (Privacy) — mã hoá khi lưu (NFR-03).
 
 ### L-09 — Tạo Hợp đồng thuê
 
@@ -234,7 +234,7 @@
 - **Trạng thái màn hình:** Đang tổng kết / Đã xác nhận.
 - **Hành động & điều hướng:** Xác nhận → phòng chuyển trạng thái "Trống" → quay lại L-06 (Chi tiết Phòng, giờ đã Trống trở lại).
 - **Dữ liệu hiển thị:** Dữ liệu công nợ & tiền cọc của hợp đồng đang kết thúc.
-- **Edge cases:**  Quy trình đối soát cọc cụ thể ([BUSINESS-RULES](BUSINESS-RULE.md)).
+- **Edge cases:**  Quy trình đối soát cọc cụ thể ([BUSINESS-RULES](BUSINESS-RULES.md)).
 
 ### L-12 — Nhập chỉ số điện nước
 

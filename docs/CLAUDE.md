@@ -6,7 +6,7 @@ Tài liệu này giúp AI (Claude) hiểu nhanh project khi làm việc.
 ## 1. Bối cảnh dự án
 
 **BizTown Rent-Manager** là mobile app (iOS + Android, Flutter) giúp chủ trọ (Landlord) quản lý nhà/phòng/hợp đồng/hoá đơn điện nước/thu tiền/yêu cầu của người thuê, và người thuê (Tenant) tìm phòng, theo dõi hoá đơn, thanh toán, gửi yêu cầu — mô hình 2 chiều (2-sided), multi-tenant SaaS phục vụ nhiều chủ trọ với nhiều quy mô cho thuê khác nhau.
- Xem [PRODUCPRODUC-OVERVIEW.md](PRODUCT-OVERVIEW.md) để biết yêu cầu chi tiết, [ARCHITECTURE.md](ARCHITECTURE.md) để biết kiến trúc.
+ Xem [PRODUCT-OVERVIEW.md](PRODUCT-OVERVIEW.md) để biết yêu cầu chi tiết, [ARCHITECTURE.md](ARCHITECTURE.md) để biết kiến trúc.
 
 ## Cấu trúc
 
