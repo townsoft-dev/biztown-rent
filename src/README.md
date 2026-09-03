@@ -13,4 +13,4 @@ Flutter SDK đã cài sẵn tại `~/development/flutter` (PATH set trong `~/.zs
 ## Kết nối Backend
 
 - Supabase: dùng trực tiếp từ app qua `supabase_flutter` SDK (anon key) cho các thao tác CRUD thông thường (House, Room, Tenant, Contract).
-- Supabase Edge Functions (`../supabase/functions/`): dùng cho tác vụ cần service-role key hoặc gửi Email/SMS (không an toàn nếu gọi trực tiếp từ mobile app).
+- Supabase Edge Functions (`../supabase/functions/`): dùng cho tác vụ cần service-role key hoặc gửi Push/SMS/Zalo (không an toàn nếu gọi trực tiếp từ mobile app).
