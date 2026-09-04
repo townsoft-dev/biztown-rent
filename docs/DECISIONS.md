@@ -74,3 +74,22 @@ Dream (dreamnguyen@townsoftvina.com) push lên bộ docs nghiệp vụ đầy đ
 
 - Dùng **Riverpod** cho toàn bộ Flutter app, thay vì Bloc. Lý do: type-safe, ít boilerplate hơn Bloc, phù hợp app có nhiều role (Landlord/Tenant) và nhiều loại state cần chia sẻ giữa các màn hình liên quan (VD: Room ↔ Contract ↔ Invoice).
 - Chiến lược chuẩn bị: **hạ tầng/backend dựa trên business rules đã chốt (schema DB, Edge Functions) được làm ngay**, không đợi design hoàn thiện vì không phụ thuộc pixel UI. **Code UI/màn hình Flutter đợi design final** (hiện Figma còn là Low-fi Ver1, tránh code rồi sửa đi sửa lại khi design đổi).
+
+## 2026-09-03 (chiều) — Thu hẹp phạm vi Phase 1: bỏ app Tenant, thêm Manager sub-account, đổi cấu trúc app sang 5 menu
+
+**Đây là thay đổi phạm vi lớn nhất kể từ khi bắt đầu dự án**, do Dream trao đổi trực tiếp với sếp và quyết định, truyền đạt lại qua Claude (Cowork) để cập nhật toàn bộ `docs/*.md`. Quyết định:
+
+- **Bỏ hẳn app/tài khoản Tenant khỏi Phase 1.** Tenant không đăng nhập, không dùng app — chỉ là hồ sơ dữ liệu (tên, SĐT, CCCD...) và là người nhận hoá đơn/nhắc thanh toán một chiều qua SMS/Zalo. Toàn bộ mảng "2 chiều" (Landlord + Tenant cùng dùng app) từng là định hướng cốt lõi từ 2026-08-28 nay bị đảo ngược hoàn toàn.
+- **Thêm vai trò Manager** — tài khoản phụ do Landlord tạo trực tiếp (không tự đăng ký), được cấp quyền truy cập theo **từng Nhà/Dãy trọ cụ thể** (bảng `manager_house_access`), không mặc định thấy toàn bộ dữ liệu của Landlord.
+- **Cấu trúc app đổi từ "8 core flows" sang 5 menu chính** (bottom nav): House/Room Management, Tenant Management, Contract Management, Bill Management (core), User Setting. **Bill Management (tự động tạo & gửi hoá đơn hàng tháng) là chức năng quan trọng nhất.**
+- **Ngoài phạm vi Phase 1 (dời Phase 2):** House/Room Search/Discovery (marketplace tìm phòng — từng là Flow #3, tưởng đã là core flow chính thức từ 2026-08-28), Service Request Management (yêu cầu sửa chữa/bảo trì qua app — Flow #8 cũ), Revenue Report như 1 màn hình/menu riêng (số liệu tổng/đã thu/chưa thu nay xem tạm qua filter trong Bill Management).
+- **Trạng thái hoá đơn đổi** từ `Chưa thanh toán → Chờ xác nhận → Đã thanh toán/Quá hạn` sang `Draft → Sent → Collected/Overdue` — bỏ hoàn toàn bước Tenant tự đánh dấu đã chuyển khoản + đính ảnh chứng từ (không còn ý nghĩa vì Tenant không có app). Landlord/Manager là bên duy nhất cập nhật trạng thái thu tiền.
+- **Thêm Contract Versioning** — mỗi lần tạo/gia hạn/sửa điều khoản hợp đồng tạo 1 bản ghi `contract_version` mới (`changeReason`: New/Renewal/Amendment), giữ lịch sử đầy đủ thay vì ghi đè như trước. Hoá đơn snapshot `contractVersionId` tại thời điểm phát hành.
+- **Thêm trường thông tin môi giới/cò nhà** (`realEstate`: tên, liên hệ, phí) — optional, theo từng phiên bản hợp đồng.
+- Nguồn tham khảo cho đợt cập nhật: Dream mô tả bằng văn bản + chia sẻ FigJam board `PAuYWdSon7WcPKdRQStoPR` (entity + luồng theo 5 menu) qua phiên làm việc với Claude (Cowork), 2026-09-03.
+
+**Tác động cần dev lưu ý:**
+- Migration `supabase/migrations/20260903121605_initial_schema.sql` (11 bảng, đã áp lên Supabase dev thật) được viết theo schema **Version 1** (còn `payments`, `maintenance_requests`, `rental_inquiries`, notification cho Tenant) — **chưa khớp** schema Version 2 mô tả ở [DATABASE.md](DATABASE.md). Cần viết migration mới trước khi code UI theo scope mới.
+- Edge Function `generate-invoice` cần rà soát lại theo `contract_version`/snapshot mới; `send-notification` cần bỏ nhánh push cho Tenant.
+- Toàn bộ `docs/*.md` (PRODUCT-OVERVIEW, REQUIREMENTS, BUSINESS-RULES, USER-FLOWS, SCREEN-SPEC, DESIGN-SYSTEMS, ARCHITECTURE, DATABASE, API, CLAUDE) đã được cập nhật lên Version 2 trong cùng đợt này (2026-09-03) — xem changelog cùng ngày.
+- File Figma wireframe hiện có (Version 1, 36 màn 2 chiều) **chưa** được dựng lại theo 22 màn hình mới — `NEEDS INPUT` từ Dream về việc build lại Figma.
