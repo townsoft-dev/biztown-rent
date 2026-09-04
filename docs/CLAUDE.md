@@ -1,11 +1,12 @@
 # CLAUDE.md — Hướng dẫn cho AI
-> **Trạng thái tài liệu:** Version 1  **Last updated:** 2026-08-28
+> **Trạng thái tài liệu:** Version 2  **Last updated:** 2026-09-03
+> ⚠️ **Thay đổi phạm vi lớn (2026-09-03):** Phase 1 thu hẹp lại chỉ còn Landlord + Manager (tài khoản phụ do Landlord tạo) — **bỏ hẳn app/tài khoản Tenant**. Toàn bộ docs/*.md đã được cập nhật theo scope mới; xem [DECISIONS.md](DECISIONS.md) trước khi code bất kỳ tính năng nào liên quan tới Tenant, Search, Maintenance, hay Revenue Report (đều đã dời sang Phase 2 hoặc thay đổi cách hoạt động).
 
 Tài liệu này giúp AI (Claude) hiểu nhanh project khi làm việc.
 
 ## 1. Bối cảnh dự án
 
-**BizTown Rent-Manager** là mobile app (iOS + Android, Flutter) giúp chủ trọ (Landlord) quản lý nhà/phòng/hợp đồng/hoá đơn điện nước/thu tiền/yêu cầu của người thuê, và người thuê (Tenant) tìm phòng, theo dõi hoá đơn, thanh toán, gửi yêu cầu — mô hình 2 chiều (2-sided), multi-tenant SaaS phục vụ nhiều chủ trọ với nhiều quy mô cho thuê khác nhau.
+**BizTown Rent-Manager (Phase 1)** là mobile app (iOS + Android, Flutter) dành cho Chủ trọ (Landlord) và Quản lý (Manager, tài khoản phụ do Landlord tạo) — quản lý nhà/phòng/người thuê/hợp đồng, và **tự động tạo & gửi hoá đơn điện nước hàng tháng** (chức năng cốt lõi). Người thuê (Tenant) trong Phase 1 không cài app/không có tài khoản — chỉ nhận hoá đơn/nhắc thanh toán một chiều qua SMS/Zalo.
  Xem [PRODUCT-OVERVIEW.md](PRODUCT-OVERVIEW.md) để biết yêu cầu chi tiết, [ARCHITECTURE.md](ARCHITECTURE.md) để biết kiến trúc.
 
 ## Cấu trúc

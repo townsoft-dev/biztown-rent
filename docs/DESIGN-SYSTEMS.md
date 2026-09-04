@@ -1,5 +1,5 @@
 # Design SYSTEM— BizTown Rent-Manager
-> **Trạng thái tài liệu:** Version 1  **Last updated:** 2026-08-28
+> **Trạng thái tài liệu:** Version 2  **Last updated:** 2026-09-03 — cập nhật Bottom Navigation & trạng thái hoá đơn theo scope Phase 1 mới (Landlord + Manager, bỏ Tenant app). Xem [DECISIONS.md](DECISIONS.md).
 
 ---
 
@@ -88,9 +88,9 @@ Cân nhắc darkmode ở phase 2
 |---|---|
 | Button (Primary/Secondary/Text) |màu primary dùng Navy . Navy cho nút chính (đồng bộ thương hiệu), Orange cho nhấn mạnh/CTA khẩn (VD: "Pay Now"). |
 | Input field (text, number, date picker) | xám nhạt |
-| Status badge (cho trạng thái Hoá đơn/Yêu cầu) | Đề xuất mapping màu: Unpaid = neutral/xám, Pending confirmation = `color-warning` (cam), Paid = `color-success` (xanh), Overdue = `color-error` (đỏ) |
+| Status badge (cho trạng thái Hoá đơn) | **Cập nhật 2026-09-03** (trạng thái hoá đơn đổi tên — xem [BUSINESS-RULES](BUSINESS-RULES.md) BR-PAY-03): Draft = neutral/xám, Sent = `color-info`/xanh dương nhạt, Collected = `color-success` (xanh), Overdue = `color-error` (đỏ) |
 | Card (Phòng, Hoá đơn, Yêu cầu) | xám nhạt |
-| Bottom Navigation Bar | Đề xuất tab riêng cho Landlord (Home/Rooms/Bills/Reports/Profile) và Tenant (Home/Contract/Bills/Repairs/Profile) — đã xác nhận cấu trúc tab, đặc biệt có cần thêm tab riêng cho Search (Flow #3) hay truy cập qua banner/entry point như hiện tại trong Figma |
+| Bottom Navigation Bar | **Cập nhật 2026-09-03:** 1 bộ 5 tab dùng chung cho cả Landlord và Manager (khác nhau ở phạm vi dữ liệu, không khác cấu trúc tab): House/Room Management, Tenant Management, Contract Management, Bill Management, User Setting — xem [SCREEN-SPEC](SCREEN-SPEC.md) mục 1.2. Không còn bộ tab riêng cho Tenant (không có app). |
 | Empty states, Loading states | đen |
 
 ---
