@@ -107,8 +107,8 @@
 - **Mục đích:** Tập trung thông báo cho Landlord/Manager (FR-NOTI-03).
 - **Thành phần chính:** List thông báo (icon theo loại, tiêu đề, tóm tắt, thời gian tương đối, chấm chưa đọc), tab "Tất cả"/"Chưa đọc".
 - **Trạng thái:** Có thông báo / Rỗng.
-- **Hành động & điều hướng:** Tap → đánh dấu đã đọc + điều hướng: hoá đơn mới/nhắc thanh toán → B-03; hợp đồng sắp hết hạn → C-03.
-- **Dữ liệu hiển thị:** Theo BR-NOTI-01→04.
+- **Hành động & điều hướng:** Tap → đánh dấu đã đọc + điều hướng: hoá đơn mới/nhắc thanh toán → B-03; hợp đồng sắp hết hạn → C-03; **đến hạn tạo hoá đơn kỳ mới** (BR-NOTI-05) → màn Tạo hoá đơn (Bill Management) cho đúng hợp đồng, sẵn điền kỳ/thông tin liên quan để nhập chỉ số điện/nước.
+- **Dữ liệu hiển thị:** Theo BR-NOTI-01→05.
 - **Edge cases:** Thông báo trỏ tới thực thể đã xoá → hiện "Không tìm thấy dữ liệu" thay vì lỗi trắng màn hình.
 
 ---
@@ -120,7 +120,7 @@
 - **Thành phần chính:** Header (lời chào + chuông → S-03), list card mỗi Nhà/Dãy trọ (ảnh, tên, địa chỉ rút gọn, tỉ lệ "x/y phòng trống"), nút nổi "+" thêm mới, Bottom Navigation (5 menu).
 - **Trạng thái:** Có dữ liệu / Rỗng (CTA "Thêm Nhà/Dãy trọ đầu tiên" → H-02) — Manager chưa được cấp quyền nơi nào → thông báo "Chưa được cấp quyền truy cập, liên hệ chủ trọ".
 - **Hành động & điều hướng:** Tap card → H-03. Tap "+" → H-02.
-- **Dữ liệu hiển thị:** Landlord: toàn bộ `tb_house` của mình. Manager: chỉ `tb_house` có trong `tb_manager_house_access` của Manager đó.
+- **Dữ liệu hiển thị:** Landlord: toàn bộ `house` của mình. Manager: chỉ `house` có trong `manager_house_access` của Manager đó.
 - **Edge cases:** Nhiều Nhà/Dãy trọ (Persona B) → cần search/sort nếu danh sách dài.
 
 ### H-02 — House Registration (Create/Edit)
@@ -263,7 +263,7 @@
 - **Mục đích:** Tạo Manager mới hoặc sửa quyền truy cập của 1 Manager có sẵn.
 - **Thành phần chính:** Họ tên (bắt buộc), SĐT (bắt buộc, dùng làm tài khoản đăng nhập), Mật khẩu ban đầu (bắt buộc khi tạo mới), Ghi chú (optional), danh sách chọn Nhà/Dãy trọ được cấp quyền (multi-select từ H-01), toggle Active/Disabled, nút Lưu/Huỷ, nút "Xoá tài khoản Manager" (chỉ hiện khi sửa).
 - **Trạng thái:** Tạo mới / Chỉnh sửa / Lỗi validate.
-- **Hành động & điều hướng:** Lưu → tạo/cập nhật `tb_manager_account` + `tb_manager_house_access` → U-02.
+- **Hành động & điều hướng:** Lưu → tạo/cập nhật `manager_account` + `manager_house_access` → U-02.
 - **Dữ liệu hiển thị:** Thông tin Manager (nếu sửa) + danh sách House hiện có của Landlord để chọn cấp quyền.
 - **Edge cases:** SĐT trùng với Manager/Landlord khác → chặn, báo lỗi. Bỏ chọn hết Nhà/Dãy trọ → Manager coi như không còn quyền gì, cảnh báo trước khi lưu.
 

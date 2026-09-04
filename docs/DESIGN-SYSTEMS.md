@@ -1,5 +1,5 @@
 # Design SYSTEM— BizTown Rent-Manager
-> **Trạng thái tài liệu:** Version 2  **Last updated:** 2026-09-03 — cập nhật Bottom Navigation & trạng thái hoá đơn theo scope Phase 1 mới (Landlord + Manager, bỏ Tenant app). Xem [DECISIONS.md](DECISIONS.md).
+> **Trạng thái tài liệu:** Version 2  **Last updated:** 2026-09-04 — cập nhật Bottom Navigation & trạng thái hoá đơn theo scope Phase 1 mới (Landlord + Manager, bỏ Tenant app); đổi Assets nguồn từ PNG sang SVG (`design/Logo/`). Xem [DECISIONS.md](DECISIONS.md).
 
 ---
 
@@ -8,17 +8,20 @@
 
 ---
 
-## 1. Assets nguồn (từ project)
+## 1. Assets nguồn (`design/Logo/`)
+
+> **Cập nhật 2026-09-04:** Chuyển từ PNG (export tạm từ project) sang **SVG** — bản chính thức, đã có sẵn trong repo tại [`design/Logo/`](../design/Logo/), scale được mọi kích thước không vỡ nét. Không dùng lại các file `*2x.png` cũ nữa.
 
 | File | Dùng cho |
 |---|---|
-| `biztownrentmanagerlockup2x.png` | Logo lockup chính (nền sáng) |
-| `biztownrentmanagerlockuponnavy2x.png` | Logo lockup trên nền navy (dark) |
-| `biztownrentmanagerbanner2x.png` / `biztownrentmanagerbannernourl2x.png` | Banner |
-| `biztownrenticon2x.png` | Icon glyph — biểu tượng "Rent" (cột màu cam) |
-| `biztowninvoiceicon2x.png` | Icon glyph — biểu tượng "Invoice/Hoá đơn" (cột màu cam đất/san hô) |
+| [`biztown-rent-manager-lockup.svg`](../design/Logo/biztown-rent-manager-lockup.svg) | Logo lockup chính (nền sáng) |
+| [`biztown-rent-manager-lockup-on-navy.svg`](../design/Logo/biztown-rent-manager-lockup-on-navy.svg) | Logo lockup trên nền navy (dark) |
+| [`biztown-rent-manager-lockup-reversed.svg`](../design/Logo/biztown-rent-manager-lockup-reversed.svg) | Logo lockup đảo màu — dùng trên nền tối/ảnh, biến thể ngoài 2 bản trên |
+| [`biztown-rent-manager-banner.svg`](../design/Logo/biztown-rent-manager-banner.svg) | Banner (hiện chỉ có 1 bản SVG duy nhất, không còn tách riêng bản "no URL" như PNG cũ) |
+| [`biztown-wordmark.svg`](../design/Logo/biztown-wordmark.svg) | Wordmark — chỉ chữ "BizTown Rent Manager", không kèm icon |
+| [`biztown-rent-icon.svg`](../design/Logo/biztown-rent-icon.svg) | Icon glyph — biểu tượng "Rent" (cột màu cam) |
+| [`biztown-invoice-icon.svg`](../design/Logo/biztown-invoice-icon.svg) | Icon glyph — biểu tượng "Invoice/Hoá đơn" (cột màu cam đất/san hô) |
 
-Sẽ bổ sung file svg sau
 ---
 
 ## 2. Bảng màu (Color Palette)

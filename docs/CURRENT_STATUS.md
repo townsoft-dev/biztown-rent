@@ -4,7 +4,7 @@
 
 ⚠️ **Cập nhật 2026-09-03 (chiều):** Phase 1 vừa **thu hẹp phạm vi lớn** — bỏ app Tenant, thêm Manager sub-account, đổi cấu trúc app sang 5 menu chính. Toàn bộ `docs/*.md` đã được viết lại theo scope mới (Version 2) — xem [DECISIONS.md](DECISIONS.md). **Backend/schema đã build trước đó (migration, Edge Functions) theo scope Version 1 — cần rà soát/viết lại trước khi code UI.**
 
-✅ **Cập nhật 2026-09-03 (tối):** Figma wireframe **Version 2** (22 màn hình theo scope Phase 1 mới) đã build xongxong, nằm trong file Figma — xem [SCREEN-SPEC.md](SCREEN-SPEC.md) mục 3.
+✅ **Cập nhật 2026-09-03 (tối):** Figma wireframe **Version 2** (22 màn hình theo scope Phase 1 mới) đã build xong, nằm trong file Figma — xem [SCREEN-SPEC.md](SCREEN-SPEC.md) mục 3.
 
 **Sẵn sàng bắt đầu code UI theo Version 2** — chỉ còn thiếu việc nối prototype flow giữa các màn trong Figma (hiện là wireframe tĩnh) và rà soát lại backend/schema theo Version 2 trước khi dùng tiếp.
 

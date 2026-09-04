@@ -95,7 +95,7 @@
 |---|---|---|---|
 | FR-MGR-01 | Landlord xem/sửa Hồ sơ Chủ nhà (họ tên, SĐT, giới tính, ngày sinh, email, CCCD/CMND, mã số thuế, thông tin tài khoản ngân hàng, avatar) | Must | Số tài khoản ngân hàng dùng làm mặc định khi tạo hoá đơn |
 | FR-MGR-02 | Landlord tạo/xem/sửa danh sách tài khoản Manager | Must | |
-| FR-MGR-03 | Landlord gán/thu hồi quyền truy cập của 1 Manager theo từng Nhà/Dãy trọ cụ thể | Must | `tb_manager_house_access` |
+| FR-MGR-03 | Landlord gán/thu hồi quyền truy cập của 1 Manager theo từng Nhà/Dãy trọ cụ thể | Must | `manager_house_access` |
 | FR-MGR-04 | Manager chỉ thấy/thao tác trên dữ liệu (Phòng, Tenant liên quan, Hợp đồng, Hoá đơn) thuộc Nhà/Dãy trọ được cấp quyền | Must | Enforce qua RLS — xem [BUSINESS-RULES](BUSINESS-RULES.md) mục 6 |
 
 ---
@@ -127,7 +127,7 @@
 ---
 
 ## 5. Data Overview (sơ bộ — xem [DATABASE.md](DATABASE.md) cho schema đầy đủ)
-Các thực thể chính: `LandlordAccount`, `OwnerProfile`, `ManagerAccount`, `ManagerHouseAccess`, `House`, `Room`, `Tenant`, `Contract`, `ContractVersion`, `Invoice`, `ContractSettlement`, `Notification` (Landlord/Manager only).
+Các thực thể chính (tên bảng thật, snake_case, khớp [DATABASE.md](DATABASE.md)): `landlord_account`, `owner_profile`, `manager_account`, `manager_house_access`, `house`, `room`, `tenant`, `contract`, `contract_version`, `invoice`, `contract_settlement`, `notification` (Landlord/Manager only).
 
 ---
 

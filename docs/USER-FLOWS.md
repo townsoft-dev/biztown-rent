@@ -52,7 +52,7 @@ flowchart TD
     B --> C[Bấm 'Thêm Manager']
     C --> D[Nhập SĐT, họ tên, mật khẩu ban đầu]
     D --> E[Chọn 1 hoặc nhiều Nhà/Dãy trọ để cấp quyền]
-    E --> F[Lưu -> tạo tb_manager_account + tb_manager_house_access]
+    E --> F[Lưu -> tạo manager_account + manager_house_access]
     F --> G[Manager có thể đăng nhập ngay bằng SĐT + mật khẩu được cấp]
     B --> H{Sửa Manager có sẵn?}
     H -- Có --> I[Thêm/bớt Nhà-Dãy trọ được cấp quyền, hoặc khoá tài khoản]
@@ -82,12 +82,12 @@ flowchart TD
     A[Trang chủ] --> B[House List]
     B --> C{Hành động}
     C -- Thêm Nhà/Dãy trọ mới --> D[House Registration: tên, địa chỉ, mô tả, ảnh]
-    D --> E[Lưu -> tb_house]
+    D --> E[Lưu -> house]
     E --> B
     C -- Chọn Nhà/Dãy trọ có sẵn --> F[Room List trong nhà đó]
     F --> G{Hành động}
     G -- Thêm phòng mới --> H[Room Detail Create/Edit: số phòng, diện tích, giá tham khảo, tiện ích, phí định kỳ, ảnh]
-    H --> I[Lưu -> tb_room, trạng thái = Empty]
+    H --> I[Lưu -> room, trạng thái = Empty]
     I --> F
     G -- Chọn phòng có sẵn --> J[Room Detail]
     J --> K{Sửa hay Xoá?}
@@ -97,7 +97,7 @@ flowchart TD
     L -- Không --> N[Xoá phòng thành công]
 ```
 Không giới hạn số lượng phòng đăng ký trong Phase 1. Trùng tên phòng trong cùng dãy trọ → cảnh báo, không chặn.
-Manager chỉ thấy House List giới hạn theo Nhà/Dãy trọ được cấp quyền (`tb_manager_house_access`).
+Manager chỉ thấy House List giới hạn theo Nhà/Dãy trọ được cấp quyền (`manager_house_access`).
 
 ---
 
@@ -108,7 +108,7 @@ flowchart TD
     A[Trang chủ] --> B[Tenant Pool List]
     B --> C[Bấm 'Thêm người thuê']
     C --> D[Tenant Profile Create/Edit: họ tên, SĐT, giới tính, ngày sinh, email, CCCD/CMND + ảnh 2 mặt, ghi chú]
-    D --> E[Lưu -> tb_tenant, CHƯA gắn phòng/hợp đồng]
+    D --> E[Lưu -> tenant, CHƯA gắn phòng/hợp đồng]
     E --> B
     B --> F{Gắn vào phòng ngay?}
     F -- Có --> G[Chuyển sang Contract Management: Create Contract]
@@ -128,18 +128,18 @@ flowchart TD
     C -- Thêm mới ngay tại đây --> E[Nhập nhanh hồ sơ Tenant]
     D --> F[Nhập điều khoản: ngày bắt đầu, kỳ hạn, tiền cọc, tiền thuê/tháng, đơn giá điện/nước, phí định kỳ, danh sách tiện nghi - optional, hạn chế nếu có - optional (ví dụ : cấm động vật), phạt trễ hạn - optional, thông tin môi giới - optional]
     E --> F
-    F --> G[Lưu -> tạo tb_contract + tb_contract_version #1 changeReason=New]
+    F --> G[Lưu -> tạo contract + contract_version #1 changeReason=New]
     G --> H[Trạng thái phòng chuyển 'Occupied']
     H --> I[Contract Detail]
     I --> J{Hành động sau này}
-    J -- Gia hạn --> K[Tạo tb_contract_version mới changeReason=Renewal]
+    J -- Gia hạn --> K[Tạo contract_version mới changeReason=Renewal]
     K --> I
-    J -- Sửa điều khoản giữa kỳ --> K2[Tạo tb_contract_version mới changeReason=Amendment]
+    J -- Sửa điều khoản giữa kỳ --> K2[Tạo contract_version mới changeReason=Amendment]
     K2 --> I
-    J -- Xem lịch sử --> L[Version History - toàn bộ tb_contract_version theo thời gian]
+    J -- Xem lịch sử --> L[Version History - toàn bộ contract_version theo thời gian]
     J -- Kết thúc hợp đồng --> M[End Contract]
     M --> N[Tổng kết công nợ: hoá đơn chưa Collected + damageDeduction -> tính refundAmount]
-    N --> O[Xác nhận -> tạo tb_contract_settlement, contract.status=Ended]
+    N --> O[Xác nhận -> tạo contract_settlement, contract.status=Ended]
     O --> P[Trạng thái phòng chuyển lại 'Empty']
 ```
 1 phòng chỉ 1 hợp đồng Active tại 1 thời điểm; 1 hợp đồng chỉ 1 Tenant đại diện (fixed representative). Danh sách hợp đồng (Contract List) hỗ trợ filter theo "sắp hết hạn".

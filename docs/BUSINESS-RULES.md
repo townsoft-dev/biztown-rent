@@ -63,7 +63,7 @@
 
 ## 4. Vai trò & Phân quyền (Roles & Permissions)
 
-> Bỏ hoàn toàn cột `Tenant` (Phase 1 không có tài khoản/thao tác app phía Tenant). Thay `Tài khoản quản lý thứ cấp (Phase 2, chưa có chi tiết)` ở Version 1 bằng vai trò **Manager chính thức**, phạm vi giới hạn theo Nhà/Dãy trọ được cấp (`tb_manager_house_access`).
+> Bỏ hoàn toàn cột `Tenant` (Phase 1 không có tài khoản/thao tác app phía Tenant). Thay `Tài khoản quản lý thứ cấp (Phase 2, chưa có chi tiết)` ở Version 1 bằng vai trò **Manager chính thức**, phạm vi giới hạn theo Nhà/Dãy trọ được cấp (`manager_house_access`).
 
 | Hành động | Landlord | Manager |
 |---|---|---|
@@ -88,6 +88,7 @@
 | BR-NOTI-02 | Nhắc thanh toán (trước/đúng/sau hạn) | Push (Landlord/Manager) + SMS/Zalo (Tenant) | Must — xem BR-PAY-04 |
 | BR-NOTI-03 | Landlord/Manager đánh dấu đã thu tiền | Push (nội bộ, cho các Manager khác cùng phạm vi nếu có) | Should |
 | BR-NOTI-04 | Hợp đồng sắp hết hạn (nhắc gia hạn) | Push + có thể kèm SMS/Zalo | Could |
+| BR-NOTI-05 | Lịch đo chỉ số  | Push (Landlord/Manager) | Could |
 | ~~BR-NOTI cũ (yêu cầu mới, cập nhật trạng thái yêu cầu, lời mời Tenant vào app, yêu cầu liên hệ Search)~~ | | Removed | Gắn với Maintenance/Search — ngoài phạm vi Phase 1 |
 
 ---
@@ -97,7 +98,7 @@
 | ID | Quy tắc |
 |---|---|
 | BR-DATA-01 | Mỗi Landlord chỉ thấy dữ liệu (Nhà/Dãy trọ, Phòng, Tenant, Hợp đồng, Hoá đơn) thuộc tài khoản của mình. |
-| BR-DATA-02 | Mỗi Manager chỉ thấy/thao tác dữ liệu thuộc **Nhà/Dãy trọ được Landlord cấp quyền** (`tb_manager_house_access`) — không mặc định thấy toàn bộ dữ liệu của Landlord tạo ra Manager đó. |
+| BR-DATA-02 | Mỗi Manager chỉ thấy/thao tác dữ liệu thuộc **Nhà/Dãy trọ được Landlord cấp quyền** (`manager_house_access`) — không mặc định thấy toàn bộ dữ liệu của Landlord tạo ra Manager đó. |
 | BR-DATA-03 | Tenant **không có tài khoản đăng nhập** trong Phase 1 → không áp dụng RLS theo `auth.uid()` phía Tenant; dữ liệu Tenant chỉ được Landlord/Manager thuộc đúng phạm vi truy cập. |
 
 ---
