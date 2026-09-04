@@ -117,7 +117,7 @@
 ## 4. Integration Requirements
 | ID | Tích hợp | Trạng thái |
 |---|---|---|
-| INT-01 | Zalo ZNS (Zalo Notification Service) hoặc Zalo OA để gửi hoá đơn/thông báo cho Tenant | đang nghiên cứu chọn nhà cung cấp |
+| INT-01 | Zalo ZNS (Zalo Notification Service) hoặc Zalo OA để gửi hoá đơn/thông báo cho Tenant | đang tiến hành tạo và chờ phê duyệt tài khoản OA |
 | INT-02 | SMS Brandname (qua eSMS, Speedsms, hoặc nhà mạng) | đang nghiên cứu chọn nhà cung cấp |
 | INT-03 | OTP xác thực đăng ký/đăng nhập (Landlord/Manager) | dùng chung với INT-02, qua Supabase Auth Send SMS Hook |
 | INT-04 | Push notification (Firebase Cloud Messaging / APNs) cho Landlord/Manager | Xác nhận lại ở [ARCHITECTURE](ARCHITECTURE.md) |

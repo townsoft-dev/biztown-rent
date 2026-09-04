@@ -114,7 +114,7 @@ flowchart TD
     F -- Có --> G[Chuyển sang Contract Management: Create Contract]
     F -- Chưa, để sau --> H[Vẫn nằm trong Tenant Pool]
 ```
-Tenant Pool dùng chung cho toàn bộ Landlord (và các Manager được cấp quyền tương ứng). Có thể tạo hồ sơ Tenant ngay trong lúc tạo hợp đồng (không bắt buộc tạo trước).
+Tenant Pool dùng chung cho Landlord (và các Manager được cấp quyền tương ứng). Có thể tạo hồ sơ Tenant ngay trong lúc tạo hợp đồng (không bắt buộc tạo trước).
 
 ---
 
@@ -126,7 +126,7 @@ flowchart TD
     B --> C{Chọn người thuê}
     C -- Từ Tenant Pool có sẵn --> D[Chọn Tenant]
     C -- Thêm mới ngay tại đây --> E[Nhập nhanh hồ sơ Tenant]
-    D --> F[Nhập điều khoản: ngày bắt đầu, kỳ hạn, tiền cọc, tiền thuê/tháng, đơn giá điện/nước, phí định kỳ, phạt trễ hạn - optional, thông tin môi giới - optional]
+    D --> F[Nhập điều khoản: ngày bắt đầu, kỳ hạn, tiền cọc, tiền thuê/tháng, đơn giá điện/nước, phí định kỳ, danh sách tiện nghi - optional, hạn chế nếu có - optional (ví dụ : cấm động vật), phạt trễ hạn - optional, thông tin môi giới - optional]
     E --> F
     F --> G[Lưu -> tạo tb_contract + tb_contract_version #1 changeReason=New]
     G --> H[Trạng thái phòng chuyển 'Occupied']

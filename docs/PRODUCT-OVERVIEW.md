@@ -20,25 +20,25 @@
 > **Ghi chú phạm vi:** Bài toán "người thuê cần kênh minh bạch xem hoá đơn/gửi yêu cầu trong app" (từng là 1 phần vấn đề ở Version 1) được **dời sang Phase 2+** — xem mục 5.2.
 
 ## 3. Đối tượng người dùng (Target Users)
-Phase 1 phục vụ **nội bộ phía chủ trọ**: 1 hoặc nhiều Landlord, mỗi Landlord có thể tạo thêm các tài khoản Manager để chia việc quản lý.
+Phase 1 phục vụ **nội bộ phía chủ trọ**: nhiều Landlord, mỗi Landlord có thể tạo thêm các tài khoản Manager để chia việc quản lý.
 
 ### 3.1 Vai trò chính (Roles)
 | Vai trò | Mô tả | Ghi chú |
 |---|---|---|
 | **Chủ trọ (Landlord)** | Chủ tài khoản gốc. Tạo tài khoản, đăng ký Nhà/Phòng, quản lý Người thuê (hồ sơ), tạo/quản lý Hợp đồng, tạo & gửi hoá đơn, tạo và cấp quyền cho tài khoản Manager. | Toàn quyền trên toàn bộ dữ liệu của mình. |
-| **Quản lý (Manager)** | Tài khoản phụ **do Landlord tạo** (không tự đăng ký), được cấp quyền truy cập theo **từng Nhà/Dãy trọ cụ thể** (không mặc định thấy toàn bộ dữ liệu của Landlord). Thực hiện các nghiệp vụ vận hành hàng ngày: quản lý phòng, người thuê, hợp đồng, hoá đơn trong phạm vi được cấp. | Không tự tạo Manager khác, không quản lý tài khoản Landlord. |
+| **Quản lý (Manager)** | Tài khoản phụ **do Landlord tạo** (không tự đăng ký), được cấp quyền truy cập theo **từng Nhà/Dãy trọ cụ thể** (không mặc định thấy toàn bộ dữ liệu của Landlord). Thực hiện các nghiệp vụ vận hành hàng ngày: đăng ký/quản lý phòng, đăng ký/quản lý người thuê, tạo/quản lý hợp đồng, tạo/quản lý hoá đơn trong phạm vi được cấp. | Không tự tạo Manager khác, không quản lý tài khoản Landlord. |
 | **Người thuê (Tenant)** | **Không phải người dùng app trong Phase 1** — chỉ là hồ sơ dữ liệu (tên, SĐT, CCCD/CMND...) do Landlord/Manager tạo và gắn vào hợp đồng. Nhận hoá đơn & nhắc thanh toán qua SMS/Zalo (một chiều, ngoài app), thanh toán/trao đổi trực tiếp với Landlord ngoài app. | Có thể trở thành người dùng app ở Phase 2 (xem mục 5.2). |
 
 ### 3.2 Persona sơ bộ
 - **Persona A — Chủ trọ nhỏ lẻ:** quản lý 1 dãy trọ (5-10 phòng), tự làm mọi việc, chưa dùng phần mềm quản lý nào trước đó. Độ tuổi khoảng 50 trở lên, thiết bị chính là smartphone, kênh liên lạc quen dùng là Zalo. Không cần tạo Manager.
-- **Persona B — Chủ trọ/chủ đầu tư quy mô vừa:** quản lý nhiều dãy trọ hoặc chung cư mini, cần chia việc cho người quản lý riêng từng dãy trọ (con/nhân viên) qua tài khoản Manager, cần báo cáo doanh thu tổng hợp. Độ tuổi khoảng 30 trở lên.
+- **Persona B — Chủ trọ/chủ đầu tư quy mô vừa:** quản lý nhiều dãy trọ hoặc chung cư mini, cần chia việc cho người quản lý riêng từng dãy trọ (con/nhân viên) qua tài khoản Manager, cần báo cáo doanh thu tổng hợp. Độ tuổi khoảng 40 trở lên.
 - **Persona C — Manager (nhân viên/người thân được uỷ quyền):** được Landlord cấp tài khoản để quản lý vận hành 1 hoặc vài dãy trọ cụ thể (ghi số điện nước, tạo hoá đơn, theo dõi thu tiền) mà không cần thấy toàn bộ dữ liệu kinh doanh của Landlord.
 - ~~Persona người thuê~~ — không còn là người dùng trực tiếp của app trong Phase 1.
 
 ## 4. Giá trị cốt lõi (Value Proposition)
 | Đối tượng | Giá trị mang lại |
 |---|---|
-| Chủ trọ | Quản lý phòng/hợp đồng/người thuê tập trung trên điện thoại; **tự động tính & gửi hoá đơn điện nước hàng tháng qua SMS/Zalo** (chức năng cốt lõi); nhắc thu tiền tự động; chia việc an toàn cho Manager theo từng dãy trọ; lưu lịch sử thay đổi hợp đồng (version history) để tránh tranh chấp điều khoản. |
+| Chủ trọ | Quản lý phòng/hợp đồng/người thuê tập trung trên điện thoại; **tự động tính & gửi hoá đơn điện nước hàng tháng qua SMS/Zalo** (chức năng cốt lõi); nhắc đo chỉ số điện nước định kỳ, thu tiền tự động; chia việc an toàn cho Manager theo từng dãy trọ; lưu lịch sử thay đổi hợp đồng (version history) để tránh tranh chấp điều khoản. |
 | Manager | Công cụ vận hành gọn nhẹ, chỉ thấy đúng phạm vi (nhà/dãy trọ) được Landlord cấp quyền — không cần truy cập số liệu kinh doanh tổng thể. |
 | Người thuê | Nhận hoá đơn rõ ràng, đúng hạn qua SMS/Zalo (không cần cài thêm app trong Phase 1). |
 
@@ -50,8 +50,8 @@ Phase 1 tổ chức toàn bộ nghiệp vụ quanh **5 menu chính** dành cho L
 
 1. **House/Room Management** — Quản lý Nhà/Dãy trọ (tên, địa chỉ, mô tả, ảnh) & Phòng (số phòng, diện tích, giá tham khảo, tiện ích, phí định kỳ mặc định, ảnh, trạng thái Trống/Đã thuê/Đang sửa chữa).
 2. **Tenant Management** — Quản lý "kho" Người thuê (Tenant Pool) dùng chung cho cả Landlord: hồ sơ tên, SĐT, giới tính, ngày sinh, email, CCCD/CMND (2 mặt), ghi chú. Có thể tạo mới ngay trong lúc tạo hợp đồng (không bắt buộc tạo hồ sơ trước).
-3. **Contract Management** — Danh sách hợp đồng (filter theo sắp hết hạn), tạo hợp đồng mới, xem chi tiết hợp đồng kèm **lịch sử phiên bản điều khoản (version history: New/Renewal/Amendment)**, kết thúc hợp đồng kèm đối soát cọc/công nợ (settlement).
-4. **Bill Management (core)** — Danh sách hoá đơn (filter/sort theo trạng thái Draft/Sent/Collected/Overdue và theo tháng), tạo hoá đơn từ chỉ số điện/nước mới nhập, xem chi tiết, **tự động gửi hoá đơn cho người thuê qua SMS/Zalo**.
+3. **Contract Management** — Danh sách hợp đồng (filter theo tên nhà, số phòng, tên người thuê, sort tên nhà, số phòng, sắp hết hạn), tạo hợp đồng mới, xem chi tiết hợp đồng kèm **lịch sử phiên bản điều khoản (version history: New/Renewal/Amendment)**, kết thúc hợp đồng kèm đối soát cọc/công nợ (settlement).
+4. **Bill Management (core)** — Danh sách hoá đơn (filter/sort theo trạng thái Draft/Sent/Collected/Overdue và theo tháng hoặc kỳ quy định trong hợp đồng), tạo hoá đơn từ chỉ số điện/nước mới nhập và chi phí cố định khác như tiền thuê, tiền dịch vụ,..., xem chi tiết, **tự động gửi hoá đơn cho người thuê qua SMS/Zalo**.
 5. **User Setting** — Hồ sơ Chủ nhà (thông tin cá nhân, CCCD, mã số thuế, số tài khoản ngân hàng), quản lý tài khoản Manager (tạo, cấp/thu quyền theo từng Nhà/Dãy trọ), đăng nhập/đăng xuất.
 
 > Xem diagram tóm tắt (entity + luồng theo từng menu): FigJam board `PAuYWdSon7WcPKdRQStoPR` (link nội bộ do Dream chia sẻ, 2026-09-03).
@@ -89,7 +89,7 @@ Tham khảo nhanh các sản phẩm cùng phân khúc tại Việt Nam (quản l
 - Flow đơn giản, tối thiểu số bước.
 
 ## 8. Success Metrics (KPIs)
-- Xây dựng được MVP Phase 1 (5 menu) hoàn chỉnh trong thời gian ngắn nhất có thể (mục tiêu ban đầu 1 tháng, cần đánh giá lại theo scope mới)
+- Xây dựng được MVP Phase 1 (5 menu) hoàn chỉnh trong thời gian  1 tháng
 - Landlord có thể tự vận hành trọn vẹn 1 chu kỳ: đăng ký nhà/phòng → tạo hợp đồng → ghi chỉ số → tạo & gửi hoá đơn → đánh dấu đã thu tiền, không cần hỗ trợ thủ công.
 
 ## 9. Giả định & Rủi ro (Assumptions & Risks)
@@ -106,5 +106,5 @@ Tham khảo nhanh các sản phẩm cùng phân khúc tại Việt Nam (quản l
 - [BUSINESS-RULES](BUSINESS-RULES.md) - quy tắc nghiệp vụ
 - [SCREEN-SPEC](SCREEN-SPEC.md) - mô tả màn hình
 - [DESIGN](DESIGN.md) - hệ thống thiết kế
-- [DECISIONS](DECISIONS.md) - lịch sử quyết định, gồm quyết định thu hẹp phạm vi 2026-09-03
+- [DECISIONS](DECISIONS.md) - lịch sử quyết định
 - [CLAUDE](CLAUDE.md) - hướng dẫn cho dev/Claude Code khi phát triển

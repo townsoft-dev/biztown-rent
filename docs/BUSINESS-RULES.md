@@ -11,9 +11,9 @@
 | BR-BILL-01 | Hoá đơn hàng tháng = Tiền phòng (theo phiên bản hợp đồng — `contract_version.monthlyRent`) + Tiền điện + Tiền nước + Tổng phí định kỳ khác (`recurringFees`) | |
 | BR-BILL-02 | Tiền điện = (Chỉ số mới − Chỉ số cũ) × Đơn giá điện (`contract_version.electricityUnitPrice`) | Đơn giá là snapshot theo phiên bản hợp đồng đang hiệu lực tại thời điểm tạo hoá đơn |
 | BR-BILL-03 | Tiền nước = (Chỉ số mới − Chỉ số cũ) × Đơn giá nước (`contract_version.waterUnitPrice`) | Tính theo đồng hồ (m³) hay khoán theo đầu người tuỳ điều khoản hợp đồng, tự do điền khi tạo hợp đồng |
-| BR-BILL-04 | Phí khác = tổng các khoản phí cấu hình theo `recurringFees` (tên + số tiền) — snapshot vào hoá đơn tại thời điểm tạo | Danh mục gợi ý mặc định: "tiền dịch vụ", "tiền vệ sinh", "tiền wifi"... và được tự nhập |
+| BR-BILL-04 | Phí khác = tổng các khoản phí cấu hình theo `recurringFees` (tên + số tiền) — tuỳ điều khoản hợp đồng, snapshot vào hoá đơn tại thời điểm tạo | Danh mục mặc định giống điều khoản hợp đồng: ví dụ "tiền dịch vụ", "tiền vệ sinh", "tiền wifi"... và được tự nhập thêm hoặc sửa số tiền|
 | BR-BILL-05 | Chỉ số điện/nước mới phải ≥ chỉ số cũ (validate chống nhập sai) | |
-| BR-BILL-06 | Kỳ hoá đơn: theo tháng dương lịch, mốc bắt đầu (`periodStart`) neo theo ngày bắt đầu hợp đồng (`contract.createdAt`/ngày ký) | |
+| BR-BILL-06 | Kỳ hoá đơn: theo tháng dương lịch (hoặc định kỳ khác theo hợp đồng), mốc bắt đầu (`periodStart`) neo theo ngày bắt đầu hợp đồng (`contract.createdAt`/ngày ký) | |
 | BR-BILL-07 | Không làm tròn số tiền hoá đơn (chỉ bỏ số thập phân) | |
 
 ---

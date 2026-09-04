@@ -63,9 +63,9 @@
 
 | # | Màn hình | Ghi chú |
 |---|---|---|
-| U-01 | Owner Profile (Detail/Edit) | Chỉ Landlord |
+| U-01 | Owner/Manager Profile (Detail/Edit) | Tùy thuộc tài khoản đăng nhập là ai  |
 | U-02 | Manager Management List | Chỉ Landlord thấy |
-| U-03 | Manager Detail (Create/Edit + cấp quyền theo House) | |
+| U-03 | Manager Detail (Create/Edit + cấp quyền theo House) | Chỉ Landlord thấy |
 | U-04 | Xác nhận Đăng xuất | Dialog, cả Landlord & Manager |
 
 **Tổng: 4 (Shared) + 4 (House/Room) + 2 (Tenant) + 5 (Contract) + 3 (Bill) + 4 (User Setting) = 22 màn hình.**
@@ -82,8 +82,8 @@
 
 ### S-00 — Splash
 - **Mục đích:** Màn hình mở app, kiểm tra session hiện có.
-- **Thành phần chính:** Logo BizTown Rent-Manager (nền navy), tagline.
-- **Trạng thái:** Đang kiểm tra session.
+- **Thành phần chính:** Logo BizTown Rent-Manager (logo svg trong folder logo) (nền navy), tagline.
+- **Trạng thái:** Đang kiểm tra session. (hiển thị greeting )
 - **Hành động & điều hướng:** Không có session/hết hạn → S-01. Có session hợp lệ → Trang chủ (menu 1, House List H-01) theo vai trò đã đăng nhập (Landlord hoặc Manager).
 - **Edge cases:** Mạng chậm → timeout hợp lý (10s), không treo màn hình.
 
@@ -97,7 +97,7 @@
 
 ### S-02 — Đăng ký Landlord (SĐT & OTP)
 - **Mục đích:** Tạo tài khoản Landlord mới.
-- **Thành phần chính:** Input SĐT + nút gửi OTP; 6 ô nhập OTP + đếm ngược + gửi lại; bước tạo mật khẩu (2 field) sau khi OTP đúng.
+- **Thành phần chính:** Input SĐT + nút gửi OTP; 6 ô nhập OTP + đếm ngược 2 phút + gửi lại; bước tạo mật khẩu (2 field) sau khi OTP đúng.
 - **Trạng thái:** Nhập SĐT → Đang gửi OTP → Nhập OTP → (sai/hết hạn) → Tạo mật khẩu → Hoàn tất.
 - **Hành động & điều hướng:** Hoàn tất → H-01 (House List trống, CTA "Thêm Nhà/Dãy trọ đầu tiên").
 - **Dữ liệu hiển thị:** Không.
@@ -172,8 +172,8 @@
 ## 2.4 Contract Management (C-01 → C-05)
 
 ### C-01 — Contract List
-- **Mục đích:** Xem toàn bộ hợp đồng, lọc theo sắp hết hạn.
-- **Thành phần chính:** Chip filter (Tất cả/Active/Sắp hết hạn/Ended), list card (tên phòng, tên Tenant, ngày hết hạn, badge trạng thái).
+- **Mục đích:** Xem toàn bộ hợp đồng, lọc theo : tên nhà (dropdown), sắp hết hạn.
+- **Thành phần chính:**  filter 2 loại tên nhà (dropdown), hạn (Tất cả/Active/Sắp hết hạn/Ended), list card (tên phòng, tên Tenant, ngày hết hạn, badge trạng thái).
 - **Trạng thái:** Theo filter.
 - **Hành động & điều hướng:** Tap card → C-03.
 - **Dữ liệu hiển thị:** Hợp đồng thuộc phạm vi Landlord/Manager hiện tại.
@@ -181,7 +181,7 @@
 
 ### C-02 — Create Contract
 - **Mục đích:** Gắn 1 Tenant vào 1 Phòng đang Empty, tạo hợp đồng (tạo `contract` + `contract_version` #1).
-- **Thành phần chính:** Chọn Tenant (từ Tenant Pool hoặc "Thêm nhanh" → N-02), Ngày bắt đầu (bắt buộc), Kỳ hạn (bắt buộc), Tiền cọc (bắt buộc), Tiền thuê/tháng (mặc định lấy giá tham khảo ở H-04, cho sửa), Đơn giá điện/nước, Phí định kỳ (tên+số tiền, gợi ý từ H-04), Điều khoản phạt trễ hạn (optional, free text), Thông tin môi giới (optional: tên, liên hệ, phí), nút Lưu/Huỷ.
+- **Thành phần chính:** Chọn Tenant (từ Tenant Pool hoặc "Thêm nhanh" → N-02), Ngày bắt đầu (bắt buộc), Kỳ hạn (bắt buộc), Tiền cọc (bắt buộc), Tiền thuê/tháng (mặc định lấy giá tham khảo ở H-04, cho sửa), Đơn giá điện/nước, Phí định kỳ dạng từng dòng, thêm nội dung thì ấn "+" (tên+số tiền, gợi ý từ H-04), Điều khoản phạt trễ hạn (optional, free text), Thông tin môi giới (optional: tên, liên hệ, phí), nút Lưu/Huỷ.
 - **Trạng thái:** Chọn Tenant → Nhập điều khoản → Xác nhận.
 - **Hành động & điều hướng:** Lưu → phòng chuyển "Occupied" → hệ thống gửi SMS/Zalo thông báo cho Tenant (không phải lời mời dùng app, chỉ là thông báo hợp đồng) → C-03.
 - **Dữ liệu hiển thị:** Thông tin Tenant đã chọn + gợi ý từ phòng.
@@ -207,17 +207,17 @@
 - **Mục đích:** Xử lý trả phòng: tổng kết công nợ, đối soát tiền cọc.
 - **Thành phần chính:** Danh sách hoá đơn chưa `Collected` (nếu có, tính `unpaidInvoicesTotal`), số tiền cọc đã nhận (`depositAmount`, từ phiên bản hợp đồng hiện hành), ô nhập khoản trừ hư hỏng (`damageDeduction`, kèm ghi chú lý do), tổng kết cuối cùng (`refundAmount` = cọc − công nợ − khoản trừ), nút "Xác nhận trả phòng".
 - **Trạng thái:** Đang tổng kết / Đã xác nhận.
-- **Hành động & điều hướng:** Xác nhận → tạo `contract_settlement` (kèm `confirmedAt`) → `contract.status = Ended` → phòng chuyển "Empty" → quay lại H-04.
+- **Hành động & điều hướng:** Xác nhận → tạo `contract_settlement` (kèm `confirmedAt`) → `contract.status = Ended` → tạo last bill với số tiền đã tính (`refundAmount` âm hoặc dương)→  phòng chuyển "Empty" → quay lại H-04.
 - **Dữ liệu hiển thị:** Công nợ & tiền cọc của hợp đồng đang kết thúc.
-- **Edge cases:** `refundAmount` âm (Tenant còn nợ nhiều hơn cọc) → hiển thị rõ số tiền Tenant còn phải trả thêm, xử lý thu hồi ngoài app.
+- **Edge cases:** 
 
 ---
 
 ## 2.5 Bill Management (B-01 → B-03) — Core
 
 ### B-01 — Invoice List
-- **Mục đích:** Xem toàn bộ hoá đơn, lọc/sắp xếp theo trạng thái và theo tháng — đây là màn hình trung tâm của chức năng cốt lõi Phase 1.
-- **Thành phần chính:** Chip filter trạng thái (Tất cả/Draft/Sent/Collected/Overdue), bộ lọc theo tháng/năm, tuỳ chọn sắp xếp (mới nhất/số tiền), list card hoá đơn (tên phòng, kỳ, số tiền, badge trạng thái theo màu — xem [DESIGN](DESIGN.md)), nút nổi "+" → B-02.
+- **Mục đích:** Xem toàn bộ hoá đơn (bao gồm hóa đơn đã tạo vào hóa đơn draft nhưng dự kiến sẽ có theo thời hạn các hợp đồng đang active), lọc/sắp xếp theo nhà, phòng, trạng thái và theo tháng — đây là màn hình trung tâm của chức năng cốt lõi Phase 1.
+- **Thành phần chính:** filter nhà (dropdown : tất cả, list nhà), phòng (select dropdown), trạng thái (dropdown Tất cả/Draft/Sent/Collected/Overdue), bộ lọc theo tháng/năm, tuỳ chọn sắp xếp (mới nhất/trạng thái), list card hoá đơn (tên phòng, kỳ, số tiền, badge trạng thái theo màu — xem [DESIGN](DESIGN.md)), nút nổi "+" → B-02.
 - **Trạng thái:** Theo filter đang chọn.
 - **Hành động & điều hướng:** Tap card → B-03. Tap "+" → B-02.
 - **Dữ liệu hiển thị:** Hoá đơn thuộc phạm vi Landlord/Manager hiện tại. Có thể xem nhanh tổng/đã thu/chưa thu/quá hạn bằng cách lọc theo từng trạng thái (thay cho màn Revenue Report riêng — ngoài phạm vi Phase 1).
@@ -225,7 +225,7 @@
 
 ### B-02 — Create Invoice
 - **Mục đích:** Nhập chỉ số điện/nước mới, xem trước hoá đơn hệ thống tự tính, chọn kênh gửi.
-- **Thành phần chính:** Chọn phòng/hợp đồng Active cần tạo hoá đơn, hiện chỉ số cũ để đối chiếu, input chỉ số điện mới, input chỉ số nước mới, bảng preview (Tiền phòng, Tiền điện: chỉ số cũ→mới/kWh/đơn giá/thành tiền, Tiền nước tương tự, từng dòng phí định kỳ, **Tổng cộng**), chọn kênh gửi (SMS/Zalo/Cả hai), nút "Gửi hoá đơn", nút "Lưu nháp" (Draft).
+- **Thành phần chính:** Chọn phòng/hợp đồng Active cần tạo hoá đơn, hiện chỉ số cũ để đối chiếu, input chỉ số điện mới, input chỉ số nước mới, bảng preview (Tiền phòng, Tiền điện: chỉ số cũ→mới/kWh/đơn giá/thành tiền, Tiền nước tương tự, từng dòng phí định kỳ/chi phí  (cho phép edit và thêm dòng), **Tổng cộng**), thông tin tài khoản ngân hàng, chọn kênh gửi (SMS/Zalo/Cả hai), nút "Gửi hoá đơn", nút "Lưu nháp" (Draft).
 - **Trạng thái:** Nhập chỉ số → Preview (Draft) → Đã gửi (Sent).
 - **Hành động & điều hướng:** Nhập chỉ số không hợp lệ (< chỉ số cũ) → chặn ngay tại chỗ. Gửi → tạo `invoice` (snapshot `contractVersionId`, `roomLabel`, `houseName`, `tenantName` tại thời điểm gửi), trạng thái "Sent" → hệ thống gửi qua kênh đã chọn → B-01 (Invoice List cập nhật).
 - **Dữ liệu hiển thị:** Dữ liệu tính từ chỉ số vừa nhập + điều khoản từ `contract_version` hiện hành.
@@ -243,9 +243,9 @@
 
 ## 2.6 User Setting (U-01 → U-04)
 
-### U-01 — Owner Profile (Detail/Edit)
-- **Mục đích:** Xem/sửa hồ sơ Chủ nhà — chỉ Landlord có màn này (Manager có hồ sơ tài khoản riêng gọn hơn, không có mục này).
-- **Thành phần chính:** Avatar (optional), Họ tên, SĐT (đổi cần OTP lại), Giới tính, Ngày sinh, Email (optional), Số CCCD/CMND, Mã số thuế (optional), Thông tin tài khoản ngân hàng (dùng làm mặc định khi tạo hoá đơn ở B-02), nút Lưu.
+### U-01 — Owner/Manager Profile (Detail/Edit)
+- **Mục đích:** Xem/sửa hồ sơ Chủ nhà/manager — Landlord và Manager có hồ sơ tài khoản riêng tùy ai là người đăng nhập.
+- **Thành phần chính:** Avatar (optional), Họ tên, SĐT (đổi cần OTP lại), Giới tính, Ngày sinh, Email (optional), Số CCCD/CMND, Mã số thuế (optional- chỉ landlord), Thông tin tài khoản ngân hàng (chỉ landlord, dùng làm mặc định khi tạo hoá đơn ở B-02), nút Lưu. Button 
 - **Trạng thái:** Xem / Đang sửa.
 - **Hành động & điều hướng:** Lưu → toast xác nhận, ở lại màn hình.
 - **Dữ liệu hiển thị:** Thông tin tài khoản Landlord hiện tại.
@@ -279,9 +279,7 @@
 
 ## 3. Liên kết với Figma / FigJam
 
-- Wireframe MVP: **BizTown Rent-Manager — MVP Wireframes** → https://www.figma.com/design/AElzfTBuL8YyA8OJ85f7aX/BizTown-Rent-Manager-%E2%80%94-MVP-Wireframes — cùng 1 file, gồm 2 phần trên cùng page "MVP Wireframes (EN)":
-  - **Version 1** (giữ nguyên phía trên, không xoá — 36 màn hình 2 chiều Landlord+Tenant, đã lỗi thời so với scope Phase 1 hiện tại, giữ lại để tham khảo lịch sử).
-  - **Version 2 (2026-09-03)** (thêm mới, nằm phía dưới Version 1 trên cùng page): đầy đủ 22 màn hình theo đúng mục 1 ở trên, chia theo 5 khu vực đúng cấu trúc 5 menu — Shared (S-00→S-03), House/Room Management (H-01→H-04), Tenant Management (N-01→N-02), Contract Management (C-01→C-05), Bill Management (B-01→B-03), User Setting (U-01→U-04). Dùng chung style/token với Version 1 (nền `#F5F6F9`, header navy `#23305E`, accent cam `#EF9F27`, bo góc 12–16px, Material 3 Design Kit cho icon) và bottom nav 5 tab dùng chung Landlord/Manager theo [DESIGN-SYSTEMS.md](DESIGN-SYSTEMS.md).
+- Wireframe MVP: **BizTown Rent-Manager — MVP Wireframes** → https://www.figma.com/design/AElzfTBuL8YyA8OJ85f7aX/BizTown-Rent-Manager-%E2%80%94-MVP-Wireframes?node-id=133-57 (page MVP Wireframes (EN) - Version2) : đầy đủ 22 màn hình theo đúng mục 1 ở trên, chia theo 5 khu vực đúng cấu trúc 5 menu — Shared (S-00→S-03), House/Room Management (H-01→H-04), Tenant Management (N-01→N-02), Contract Management (C-01→C-05), Bill Management (B-01→B-03), User Setting (U-01→U-04). Dùng chung style/token với Version 1 (nền `#F5F6F9`, header navy `#23305E`, accent cam `#EF9F27`, bo góc 12–16px, Material 3 Design Kit cho icon) và bottom nav 5 tab dùng chung Landlord/Manager theo [DESIGN-SYSTEMS.md](DESIGN-SYSTEMS.md).
 - Diagram tóm tắt entity + luồng theo 5 menu (nguồn cho đợt viết lại tài liệu 2026-09-03): FigJam board `PAuYWdSon7WcPKdRQStoPR`.
 
-**Trạng thái:** Ver2 (tài liệu) — Figma wireframe Version 2 (22 màn) đã build xong, nằm dưới Version 1 trong cùng file. Còn thiếu: prototype liên kết giữa các màn (chỉ mới là wireframe tĩnh, chưa nối flow bằng Figma prototyping).
+**Trạng thái:** Ver2 (tài liệu) — Figma MVP Wireframes (EN) - Version2 (22 màn) đã build xong. Còn thiếu: prototype liên kết giữa các màn (chỉ mới là wireframe tĩnh, chưa nối flow bằng Figma prototyping).

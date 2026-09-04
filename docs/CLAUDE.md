@@ -23,4 +23,4 @@ Tài liệu này giúp AI (Claude) hiểu nhanh project khi làm việc.
 - Sau khi thay đổi code có ảnh hưởng đến trạng thái/tiến độ, cập nhật [CURRENT_STATUS.md](CURRENT_STATUS.md) và [CHANGELOG.md](CHANGELOG.md).
 - **Sau MỖI thay đổi** (dù nhỏ hay lớn), thêm entry vào `changelog/YYYY-MM-DD.md` (tạo file mới nếu chưa có, xem format tại [changelog/README.md](../changelog/README.md)): giờ, người thực hiện, tính năng/khu vực, mô tả cụ thể đã sửa gì.
 - Quyết định thiết kế quan trọng ghi vào [DECISIONS.md](DECISIONS.md) kèm lý do.
-- File thiết kế UI/UX nằm trong repo tại `design/` — cập nhật khi thiết kế thay đổi. hoặc theo đường link → https://www.figma.com/design/AElzfTBuL8YyA8OJ85f7aX/BizTown-Rent-Manager-%E2%80%94-MVP-Wireframes
+- File thiết kế UI/UX nằm trong repo tại `design/` — cập nhật khi thiết kế thay đổi. hoặc theo đường link → https://www.figma.com/design/AElzfTBuL8YyA8OJ85f7aX/BizTown-Rent-Manager-%E2%80%94-MVP-Wireframes?node-id=133-57 

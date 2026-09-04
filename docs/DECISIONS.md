@@ -77,7 +77,7 @@ Dream (dreamnguyen@townsoftvina.com) push lên bộ docs nghiệp vụ đầy đ
 
 ## 2026-09-03 (chiều) — Thu hẹp phạm vi Phase 1: bỏ app Tenant, thêm Manager sub-account, đổi cấu trúc app sang 5 menu
 
-**Đây là thay đổi phạm vi lớn nhất kể từ khi bắt đầu dự án**, do Dream trao đổi trực tiếp với sếp và quyết định, truyền đạt lại qua Claude (Cowork) để cập nhật toàn bộ `docs/*.md`. Quyết định:
+**Đây là thay đổi phạm vi lớn nhất kể từ khi bắt đầu dự án**, do Dream trao đổi trực tiếp với sếp và quyết định:
 
 - **Bỏ hẳn app/tài khoản Tenant khỏi Phase 1.** Tenant không đăng nhập, không dùng app — chỉ là hồ sơ dữ liệu (tên, SĐT, CCCD...) và là người nhận hoá đơn/nhắc thanh toán một chiều qua SMS/Zalo. Toàn bộ mảng "2 chiều" (Landlord + Tenant cùng dùng app) từng là định hướng cốt lõi từ 2026-08-28 nay bị đảo ngược hoàn toàn.
 - **Thêm vai trò Manager** — tài khoản phụ do Landlord tạo trực tiếp (không tự đăng ký), được cấp quyền truy cập theo **từng Nhà/Dãy trọ cụ thể** (bảng `manager_house_access`), không mặc định thấy toàn bộ dữ liệu của Landlord.
@@ -91,5 +91,5 @@ Dream (dreamnguyen@townsoftvina.com) push lên bộ docs nghiệp vụ đầy đ
 **Tác động cần dev lưu ý:**
 - Migration `supabase/migrations/20260903121605_initial_schema.sql` (11 bảng, đã áp lên Supabase dev thật) được viết theo schema **Version 1** (còn `payments`, `maintenance_requests`, `rental_inquiries`, notification cho Tenant) — **chưa khớp** schema Version 2 mô tả ở [DATABASE.md](DATABASE.md). Cần viết migration mới trước khi code UI theo scope mới.
 - Edge Function `generate-invoice` cần rà soát lại theo `contract_version`/snapshot mới; `send-notification` cần bỏ nhánh push cho Tenant.
-- Toàn bộ `docs/*.md` (PRODUCT-OVERVIEW, REQUIREMENTS, BUSINESS-RULES, USER-FLOWS, SCREEN-SPEC, DESIGN-SYSTEMS, ARCHITECTURE, DATABASE, API, CLAUDE) đã được cập nhật lên Version 2 trong cùng đợt này (2026-09-03) — xem changelog cùng ngày.
-- File Figma wireframe hiện có (Version 1, 36 màn 2 chiều) **chưa** được dựng lại theo 22 màn hình mới — `NEEDS INPUT` từ Dream về việc build lại Figma.
+- Toàn bộ `docs/*.md` (PRODUCT-OVERVIEW, REQUIREMENTS, BUSINESS-RULES, USER-FLOWS, SCREEN-SPEC, DESIGN-SYSTEMS, ARCHITECTURE, DATABASE, API, CLAUDE) đã được cập nhật lên Version 2 trong cùng đợt này (2026-09-04)
+- File Figma wireframe .fig cũ được xóa đi, thiết kế mới được cập nhật liên tục - tham khảo trực tiếp từ đường link figma đính kèm trong file [DESIGN.md](DESIGN.md)

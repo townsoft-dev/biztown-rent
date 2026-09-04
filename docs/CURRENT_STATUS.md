@@ -4,9 +4,9 @@
 
 ⚠️ **Cập nhật 2026-09-03 (chiều):** Phase 1 vừa **thu hẹp phạm vi lớn** — bỏ app Tenant, thêm Manager sub-account, đổi cấu trúc app sang 5 menu chính. Toàn bộ `docs/*.md` đã được viết lại theo scope mới (Version 2) — xem [DECISIONS.md](DECISIONS.md). **Backend/schema đã build trước đó (migration, Edge Functions) theo scope Version 1 — cần rà soát/viết lại trước khi code UI.**
 
-✅ **Cập nhật 2026-09-03 (tối):** Figma wireframe **Version 2** (22 màn hình theo scope Phase 1 mới) đã build xong, nằm dưới Version 1 trong cùng file Figma — xem [SCREEN-SPEC.md](SCREEN-SPEC.md) mục 3.
+✅ **Cập nhật 2026-09-03 (tối):** Figma wireframe **Version 2** (22 màn hình theo scope Phase 1 mới) đã build xongxong, nằm trong file Figma — xem [SCREEN-SPEC.md](SCREEN-SPEC.md) mục 3.
 
-Đã nhận đủ design UI (Figma, nay có cả Version 1 và Version 2) + bộ docs nghiệp vụ chi tiết từ Dream. **Sẵn sàng bắt đầu code UI theo Version 2** — chỉ còn thiếu việc nối prototype flow giữa các màn trong Figma (hiện là wireframe tĩnh) và rà soát lại backend/schema theo Version 2 trước khi dùng tiếp.
+**Sẵn sàng bắt đầu code UI theo Version 2** — chỉ còn thiếu việc nối prototype flow giữa các màn trong Figma (hiện là wireframe tĩnh) và rà soát lại backend/schema theo Version 2 trước khi dùng tiếp.
 
 ## Đã xong
 
@@ -28,7 +28,7 @@
 - [x] Cấu trúc `lib/` theo role (core/, data/, shared/, landlord/, tenant/) + wiring Supabase/Riverpod cơ bản trong `main.dart` (chưa có UI thật, chờ design final)
 - [x] Migration schema đầu tiên (11 bảng + RLS multi-tenant) viết xong và **đã áp lên Supabase dev thật** (`supabase db push` thành công, verify qua `migration list`)
 - [x] Khung 3 Edge Functions: `generate-invoice` (đã code logic tính hoá đơn thật theo BR-BILL-01..05), `send-notification`, `send-otp-sms` (2 cái sau còn TODO chờ chọn provider) — cả 3 đã deploy thử lên Supabase dev để verify compile
-- [x] **Figma wireframe Version 2** (22 màn hình, 5 menu, theo scope Phase 1 mới) build xong trong cùng file Figma, nằm dưới Version 1 — xem [SCREEN-SPEC.md](SCREEN-SPEC.md) mục 3
+- [x] **Figma wireframe Version 2** (22 màn hình, 5 menu, theo scope Phase 1 mới) build xong file Figma — xem [SCREEN-SPEC.md](SCREEN-SPEC.md) mục 3
 
 ## Còn thiếu để dev thật được (máy local)
 
