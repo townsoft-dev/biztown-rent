@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BizTown Rent-Manager — V3 (4-tab) mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#23305E;
+    --slate:#5A6B8A;
+    --slate-light:#868DA7;
+    --orange:#EF9F27;
+    --coral:#F0997B;
+    --neutral-200:#B9BDCC;
+    --success:#2E9E5B;
+    --error:#D9483C;
+    --info:#3E6BD9;
+    --bg-subtle:#F5F6F9;
+    --bg-default:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:#e8eaf0;
+    font-family:'Inter',system-ui,sans-serif;
+    color:var(--navy);
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:40px 16px;
+    min-height:100vh;
+  }
+  .page-title{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%);
+    font-size:13px; color:#5A6B8A; text-align:center; width:100%;
+  }
+  .rig{
+    display:flex; gap:28px; flex-wrap:wrap; justify-content:center;
+    margin-top:34px;
+  }
+  .phone-col{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .phone-label{ font-size:12px; font-weight:600; color:var(--slate); letter-spacing:.04em; text-transform:uppercase; }
+
+  .phone{
+    width:320px; height:660px;
+    background:var(--bg-default);
+    border-radius:36px;
+    border:8px solid #14192e;
+    box-shadow:0 20px 40px rgba(20,25,46,.25);
+    overflow:hidden;
+    position:relative;
+    display:flex; flex-direction:column;
+  }
+  .statusbar{
+    height:28px; flex:none; background:var(--bg-default);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 18px; font-size:11px; font-weight:600; color:var(--navy);
+  }
+  .notch{
+    position:absolute; top:8px; left:50%; transform:translateX(-50%);
+    width:90px; height:14px; background:#14192e; border-radius:10px; z-index:5;
+  }
+
+  .topbar{
+    flex:none; background:var(--navy); color:#fff;
+    padding:14px 16px 16px; position:relative;
+  }
+  .topbar .greet{ font-size:11px; color:#B9BDCC; font-weight:500; }
+  .topbar .title{ font-size:19px; font-weight:700; margin-top:2px; display:flex; align-items:center; gap:8px;}
+  .topbar .sub{ font-size:12px; color:#c9cee0; margin-top:2px; }
+  .bell{
+    position:absolute; right:16px; top:16px;
+    width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,.12);
+    display:flex; align-items:center; justify-content:center; font-size:14px;
+  }
+  .backbtn{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,.14);
+    font-size:14px; cursor:pointer; margin-right:2px;
+  }
+
+  .content{ flex:1; overflow-y:auto; background:var(--bg-subtle); padding:14px; }
+  .content::-webkit-scrollbar{ display:none; }
+
+  /* segmented control */
+  .segmented{
+    display:flex; background:#e7e9f1; border-radius:12px; padding:3px; margin-bottom:14px;
+  }
+  .segmented button{
+    flex:1; border:none; background:transparent; padding:8px 6px; font-size:12.5px; font-weight:600;
+    color:var(--slate); border-radius:9px; cursor:pointer; font-family:inherit;
+  }
+  .segmented button.active{ background:#fff; color:var(--navy); box-shadow:0 1px 3px rgba(20,25,46,.15); }
+
+  .search{
+    display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--neutral-200);
+    border-radius:12px; padding:9px 12px; font-size:13px; color:var(--slate-light); margin-bottom:12px;
+  }
+  .chips{ display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; padding-bottom:2px;}
+  .chip{
+    flex:none; font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:100px;
+    background:#fff; border:1px solid var(--neutral-200); color:var(--slate); cursor:pointer;
+    white-space:nowrap;
+  }
+  .chip.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+
+  .card{
+    background:#fff; border-radius:14px; padding:12px; margin-bottom:10px;
+    box-shadow:0 1px 2px rgba(20,25,46,.06); display:flex; gap:11px; cursor:pointer;
+    border:1px solid #eef0f5;
+  }
+  .thumb{
+    width:52px; height:52px; border-radius:11px; flex:none;
+    display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff;
+  }
+  .card-body{ flex:1; min-width:0; }
+  .card-title{ font-size:14px; font-weight:700; color:var(--navy); display:flex; justify-content:space-between; gap:6px;}
+  .card-sub{ font-size:12px; color:var(--slate); margin-top:2px; }
+  .card-meta{ font-size:11.5px; color:var(--slate-light); margin-top:5px; display:flex; gap:10px; align-items:center;}
+
+  .badge{ font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:100px; white-space:nowrap; }
+  .badge.empty{ background:#eef0f5; color:var(--slate); }
+  .badge.occupied{ background:#e4f5ea; color:var(--success); }
+  .badge.repair{ background:#fdeee8; color:var(--coral); }
+  .badge.active{ background:#e4f5ea; color:var(--success); }
+  .badge.ending{ background:#fdf1de; color:var(--orange); }
+  .badge.ended{ background:#eef0f5; color:var(--slate); }
+  .badge.draft{ background:#eef0f5; color:var(--slate); }
+  .badge.sent{ background:#e8eefd; color:var(--info); }
+  .badge.collected{ background:#e4f5ea; color:var(--success); }
+  .badge.overdue{ background:#fbe7e5; color:var(--error); }
+
+  .section-label{ font-size:12px; font-weight:700; color:var(--slate-light); text-transform:uppercase; letter-spacing:.05em; margin:14px 0 8px; }
+  .section-label:first-child{ margin-top:0; }
+
+  .fab{
+    position:absolute; right:16px; bottom:78px;
+    width:48px; height:48px; border-radius:16px; background:var(--orange); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700;
+    box-shadow:0 8px 16px rgba(239,159,39,.4); cursor:pointer; border:none;
+  }
+
+  .bottomnav{
+    flex:none; display:flex; background:#fff; border-top:1px solid #eceef3;
+    padding:8px 4px 14px;
+  }
+  .navitem{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    font-size:10px; font-weight:600; color:var(--slate-light); cursor:pointer; padding:4px 0;
+  }
+  .navitem .ic{ font-size:19px; line-height:1; }
+  .navitem.active{ color:var(--navy); }
+
+  .stat-row{ display:flex; gap:8px; margin-bottom:14px; }
+  .stat{ flex:1; background:#fff; border-radius:12px; padding:10px 10px; border:1px solid #eef0f5; }
+  .stat b{ display:block; font-size:16px; color:var(--navy); }
+  .stat span{ font-size:10.5px; color:var(--slate); }
+
+  .profile-head{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .avatar{
+    width:56px; height:56px; border-radius:50%; background:var(--navy); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700;
+  }
+  .profile-head h3{ margin:0; font-size:15px; color:var(--navy); }
+  .profile-head span{ font-size:12px; color:var(--slate); }
+  .role-pill{ display:inline-block; margin-top:4px; font-size:10px; font-weight:700; background:#eef0f5; color:var(--slate); padding:2px 8px; border-radius:100px; }
+
+  .menu-row{
+    display:flex; align-items:center; justify-content:space-between; background:#fff;
+    border-radius:12px; padding:13px 14px; margin-bottom:8px; border:1px solid #eef0f5; cursor:pointer;
+  }
+  .menu-row .left{ display:flex; align-items:center; gap:10px; font-size:13.5px; font-weight:600; color:var(--navy); }
+  .menu-row .arrow{ color:var(--neutral-200); font-size:14px; }
+  .menu-row.danger .left{ color:var(--error); }
+
+  .hidden{ display:none !important; }
+
+  .detail-block{ background:#fff; border-radius:14px; padding:14px; margin-bottom:12px; border:1px solid #eef0f5; }
+  .detail-block .row{ display:flex; justify-content:space-between; font-size:12.5px; padding:6px 0; border-bottom:1px dashed #eef0f5; gap:10px;}
+  .detail-block .row:last-child{ border-bottom:none; }
+  .detail-block .row .k{ color:var(--slate); flex:none; }
+  .detail-block .row .v{ color:var(--navy); font-weight:600; text-align:right; }
+  .cta-row{ display:flex; gap:6px; margin-top:4px; flex-wrap:wrap; }
+  .btn{ flex:1; min-width:70px; text-align:center; padding:11px 6px; border-radius:11px; font-size:11.5px; font-weight:700; cursor:pointer; border:none; font-family:inherit;}
+  .btn.primary{ background:var(--navy); color:#fff; }
+  .btn.accent{ background:var(--orange); color:#fff; }
+  .btn.ghost{ background:#eef0f5; color:var(--navy); }
+  .btn.danger{ background:#fbe7e5; color:var(--error); }
+
+  .caption{ font-size:11px; color:var(--slate-light); margin:2px 0 12px; line-height:1.5; }
+  .annot{
+    margin-top:14px; background:#fff; border-radius:12px; padding:12px 14px;
+    font-size:12px; color:var(--slate); line-height:1.55; max-width:320px;
+    border:1px dashed var(--neutral-200);
+  }
+  .annot b{ color:var(--navy); }
+
+  /* profile card mini (contract detail: tenant/room) */
+  .mini-profile{ display:flex; align-items:center; gap:10px; background:#fff; border-radius:14px; padding:11px; border:1px solid #eef0f5; margin-bottom:10px;}
+  .mini-profile .av{ width:40px; height:40px; border-radius:50%; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex:none;}
+  .mini-profile b{ font-size:13px; color:var(--navy); display:block; }
+  .mini-profile span{ font-size:11.5px; color:var(--slate); }
+
+  /* meter reading form */
+  .meter-card{ background:#fff; border-radius:14px; padding:13px; margin-bottom:10px; border:1px solid #eef0f5; }
+  .meter-card .mc-top{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .meter-card .mc-ic{ width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:17px; color:#fff; flex:none;}
+  .meter-card .mc-title{ font-size:13.5px; font-weight:700; color:var(--navy); }
+  .meter-card .mc-sub{ font-size:11px; color:var(--slate); }
+  .mc-status{ margin-left:auto; font-size:10px; font-weight:700; padding:3px 8px; border-radius:100px; }
+  .mc-status.done{ background:#e4f5ea; color:var(--success); }
+  .mc-status.todo{ background:#fdf1de; color:var(--orange); }
+  .mc-inputs{ display:flex; gap:8px; align-items:flex-end; }
+  .mc-field{ flex:1; }
+  .mc-field label{ font-size:10.5px; color:var(--slate-light); display:block; margin-bottom:3px; }
+  .mc-field .readonly{ background:#f3f4f8; border-radius:9px; padding:9px 10px; font-size:13px; font-weight:600; color:var(--slate); }
+  .mc-field input{
+    width:100%; border:1.5px solid var(--neutral-200); border-radius:9px; padding:8px 9px;
+    font-size:13px; font-weight:700; color:var(--navy); font-family:inherit;
+  }
+  .mc-field input:focus{ outline:none; border-color:var(--orange); }
+  .mc-usage{ font-size:11px; color:var(--success); font-weight:700; margin-top:6px; }
+  .progress-wrap{ background:#fff; border-radius:14px; padding:12px 13px; border:1px solid #eef0f5; margin-bottom:12px;}
+  .progress-bar{ height:7px; background:#eef0f5; border-radius:100px; overflow:hidden; margin-top:7px;}
+  .progress-bar > div{ height:100%; background:var(--orange); border-radius:100px; }
+
+  /* invoice timeline (contract-based, pre-scheduled) */
+  .timeline-row{ display:flex; gap:5px; overflow-x:auto; padding:2px 0 4px; }
+  .tchip{
+    flex:none; min-width:34px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:700; color:#fff; cursor:pointer; border:1.5px solid transparent;
+  }
+  .tchip.collected{ background:var(--success); }
+  .tchip.sent{ background:var(--info); }
+  .tchip.overdue{ background:var(--error); }
+  .tchip.current{ background:#fff; color:var(--orange); border-color:var(--orange); }
+  .tchip.scheduled{ background:#fff; color:var(--neutral-200); border:1.5px dashed var(--neutral-200); }
+
+  .contract-row{ background:#fff; border-radius:14px; padding:12px; margin-bottom:9px; border:1px solid #eef0f5; }
+  .contract-row .cr-top{ display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:700; color:var(--navy); margin-bottom:8px;}
+  .contract-row .cr-sub{ font-size:11px; color:var(--slate-light); margin:-5px 0 8px; }
+
+  .house-group-head{ display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--navy); margin:14px 0 8px;}
+  .house-group-head:first-child{ margin-top:0; }
+  .house-group-head .cnt{ font-size:10.5px; font-weight:700; color:var(--slate-light); background:#eef0f5; padding:2px 7px; border-radius:100px; }
+</style>
+</head>
+<body>
+
+<div class="page-title">BizTown Rent-Manager — mockup cấu trúc V3 (4 tab) · không phải file thật, chỉ để hình dung</div>
+
+<div class="rig">
+
+  <!-- ===================== TAB 1: HOME ===================== -->
+  <div class="phone-col">
+    <div class="phone-label">1 · Home — House / Room / Meter</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span>••• 5G 🔋</span></div>
+
+      <!-- HOME: house list -->
+      <div id="home-list">
+        <div class="topbar">
+          <div class="greet">Xin chào,</div>
+          <div class="title">Trần Văn Dũng <span class="bell" onclick="alert('Trung tâm thông báo (S-03)')">🔔</span></div>
+          <div class="sub">3 nhà · 18/24 phòng đang thuê</div>
+        </div>
+        <div class="content" style="position:relative;">
+          <div class="stat-row">
+            <div class="stat"><b>24</b><span>Tổng số phòng</span></div>
+            <div class="stat"><b>6</b><span>Phòng trống</span></div>
+          </div>
+          <div class="section-label">Nhà / Dãy trọ của bạn</div>
+
+          <div class="card" onclick="showScreen('home','home-detail')">
+            <div class="thumb" style="background:var(--navy);">🏠</div>
+            <div class="card-body">
+              <div class="card-title">Nhà trọ Bình An <span class="badge occupied">18/24</span></div>
+              <div class="card-sub">12 Lê Văn Sỹ, Q.3, TP.HCM</div>
+              <div class="card-meta">🔌 4 đồng hồ điện · 💧 3 đồng hồ nước</div>
+            </div>
+          </div>
+          <div class="card" onclick="showScreen('home','home-detail')">
+            <div class="thumb" style="background:var(--slate);">🏠</div>
+            <div class="card-body">
+              <div class="card-title">Chung cư mini Phú Nhuận <span class="badge empty">2/8</span></div>
+              <div class="card-sub">45 Nguyễn Trọng Tuyển, Phú Nhuận</div>
+              <div class="card-meta">🔌 2 đồng hồ điện · 💧 1 đồng hồ nước</div>
+            </div>
+          </div>
+          <div class="card" onclick="showScreen('home','home-detail')">
+            <div class="thumb" style="background:var(--coral);">🏠</div>
+            <div class="card-body">
+              <div class="card-title">Dãy trọ Tân Bình <span class="badge occupied">6/6</span></div>
+              <div class="card-sub">88 Cộng Hoà, Tân Bình</div>
+              <div class="card-meta">🔌 3 đồng hồ điện · 💧 3 đồng hồ nước</div>
+            </div>
+          </div>
+
+          <button class="fab" onclick="alert('H-02 — Thêm Nhà/Dãy trọ mới')">+</button>
+        </div>
+      </div>
+
+      <!-- HOME: house detail with sub-tabs Phòng / Đồng hồ -->
+      <div id="home-detail" class="hidden">
+        <div class="topbar">
+          <div class="title"><span class="backbtn" onclick="showScreen('home','home-list')">←</span> Nhà trọ Bình An</div>
+          <div class="sub">12 Lê Văn Sỹ, Q.3 · 18/24 phòng đang thuê</div>
+        </div>
+        <div class="content" style="position:relative;">
+          <div class="segmented">
+            <button id="seg-phong" class="active" onclick="switchHouseSeg('phong')">Phòng</button>
+            <button id="seg-dongho" onclick="switchHouseSeg('dongho')">Đồng hồ</button>
+          </div>
+
+          <div id="seg-view-phong">
+            <div class="chips">
+              <div class="chip active">Tất cả (24)</div>
+              <div class="chip">Trống (6)</div>
+              <div class="chip">Đã thuê (18)</div>
+              <div class="chip">Sửa chữa (0)</div>
+            </div>
+            <div class="card">
+              <div class="thumb" style="background:var(--navy);">🛏️</div>
+              <div class="card-body">
+                <div class="card-title">P.101 <span class="badge occupied">Đã thuê</span></div>
+                <div class="card-sub">22m² · 3.200.000đ/tháng (tham khảo)</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="thumb" style="background:var(--slate-light);">🛏️</div>
+              <div class="card-body">
+                <div class="card-title">P.102 <span class="badge empty">Trống</span></div>
+                <div class="card-sub">20m² · 3.000.000đ/tháng (tham khảo)</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="thumb" style="background:var(--coral);">🛏️</div>
+              <div class="card-body">
+                <div class="card-title">P.103 <span class="badge repair">Sửa chữa</span></div>
+                <div class="card-sub">18m² · 2.800.000đ/tháng (tham khảo)</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="seg-view-dongho" class="hidden">
+            <div class="section-label">Đồng hồ điện</div>
+            <div class="card">
+              <div class="thumb" style="background:var(--orange);">⚡</div>
+              <div class="card-body">
+                <div class="card-title">DHĐ-01</div>
+                <div class="card-sub">Gắn với: P.101, P.102 (2 phòng)</div>
+                <div class="card-meta">Đo gần nhất: 01/09 · Chỉ số 1.284 kWh</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="thumb" style="background:var(--orange);">⚡</div>
+              <div class="card-body">
+                <div class="card-title">DHĐ-02</div>
+                <div class="card-sub">Gắn với: P.103</div>
+                <div class="card-meta">Đo gần nhất: 01/09 · Chỉ số 902 kWh</div>
+              </div>
+            </div>
+            <div class="section-label">Đồng hồ nước</div>
+            <div class="card">
+              <div class="thumb" style="background:var(--info);">💧</div>
+              <div class="card-body">
+                <div class="card-title">DHN-01</div>
+                <div class="card-sub">Gắn với: P.101, P.102, P.103 (chung)</div>
+                <div class="card-meta">Đo gần nhất: 01/09 · Chỉ số 356 m³</div>
+              </div>
+            </div>
+            <button class="btn accent" style="width:100%; margin-top:4px;" onclick="showScreen('home','home-meter')">📋 Ghi chỉ số kỳ này</button>
+          </div>
+
+          <button class="fab" onclick="alert('Thêm Phòng hoặc Thêm Đồng hồ tuỳ tab đang xem')">+</button>
+        </div>
+      </div>
+
+      <!-- HOME: meter reading entry form -->
+      <div id="home-meter" class="hidden">
+        <div class="topbar">
+          <div class="title"><span class="backbtn" onclick="showScreen('home','home-detail')">←</span> Ghi chỉ số kỳ 09/2026</div>
+          <div class="sub">Nhà trọ Bình An · 2/3 đồng hồ đã ghi</div>
+        </div>
+        <div class="content" style="position:relative;">
+
+          <div class="progress-wrap">
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--slate); font-weight:600;">
+              <span>Tiến độ ghi số</span><span>2/3</span>
+            </div>
+            <div class="progress-bar"><div style="width:66%;"></div></div>
+          </div>
+
+          <div class="meter-card">
+            <div class="mc-top">
+              <div class="mc-ic" style="background:var(--orange);">⚡</div>
+              <div>
+                <div class="mc-title">DHĐ-01 <span class="card-sub">· P.101, P.102</span></div>
+                <div class="mc-sub">Kỳ trước: 01/08/2026</div>
+              </div>
+              <div class="mc-status done">✓ Đã ghi</div>
+            </div>
+            <div class="mc-inputs">
+              <div class="mc-field"><label>Chỉ số cũ</label><div class="readonly">1.284 kWh</div></div>
+              <div class="mc-field"><label>Chỉ số mới</label><input type="text" value="1.380"></div>
+            </div>
+            <div class="mc-usage">Tiêu thụ kỳ này: 96 kWh</div>
+          </div>
+
+          <div class="meter-card">
+            <div class="mc-top">
+              <div class="mc-ic" style="background:var(--info);">💧</div>
+              <div>
+                <div class="mc-title">DHN-01 <span class="card-sub">· cả 3 phòng</span></div>
+                <div class="mc-sub">Kỳ trước: 01/08/2026</div>
+              </div>
+              <div class="mc-status done">✓ Đã ghi</div>
+            </div>
+            <div class="mc-inputs">
+              <div class="mc-field"><label>Chỉ số cũ</label><div class="readonly">356 m³</div></div>
+              <div class="mc-field"><label>Chỉ số mới</label><input type="text" value="371"></div>
+            </div>
+            <div class="mc-usage">Tiêu thụ kỳ này: 15 m³</div>
+          </div>
+
+          <div class="meter-card" style="border-color:var(--orange);">
+            <div class="mc-top">
+              <div class="mc-ic" style="background:var(--orange);">⚡</div>
+              <div>
+                <div class="mc-title">DHĐ-02 <span class="card-sub">· P.103</span></div>
+                <div class="mc-sub">Kỳ trước: 01/08/2026</div>
+              </div>
+              <div class="mc-status todo">Chưa ghi</div>
+            </div>
+            <div class="mc-inputs">
+              <div class="mc-field"><label>Chỉ số cũ</label><div class="readonly">902 kWh</div></div>
+              <div class="mc-field"><label>Chỉ số mới</label><input type="text" placeholder="Nhập số..." style="color:var(--slate-light); font-weight:500;"></div>
+            </div>
+          </div>
+
+          <button class="btn accent" style="width:100%; margin-top:4px; padding:13px;" onclick="alert('Xong 3/3 → chuyển sang B-02 Create Invoice: preview tiền điện/nước theo chỉ số vừa nhập, thêm phí định kỳ, chọn kênh gửi')">Xong, tạo hoá đơn cho các phòng liên quan →</button>
+        </div>
+      </div>
+
+      <div class="bottomnav">
+        <div class="navitem active"><span class="ic">🏠</span>Home</div>
+        <div class="navitem"><span class="ic">👥</span>Tenant &amp; HĐ</div>
+        <div class="navitem"><span class="ic">🧾</span>Bills</div>
+        <div class="navitem"><span class="ic">👤</span>Profile</div>
+      </div>
+    </div>
+    <div class="annot"><b>Ghi chỉ số</b> liệt kê theo <b>đồng hồ</b> (không theo phòng) — mỗi thẻ hiện chỉ số cũ để đối chiếu, tự tính tiêu thụ. Đồng hồ dùng chung nhiều phòng (DHN-01) chỉ cần nhập 1 lần. Xong hết mới cho qua bước tạo hoá đơn.</div>
+  </div>
+
+  <!-- ===================== TAB 2: TENANT & CONTRACT ===================== -->
+  <div class="phone-col">
+    <div class="phone-label">2 · Tenant &amp; Contract</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span>••• 5G 🔋</span></div>
+
+      <div id="tc-list">
+        <div class="topbar">
+          <div class="title">Người thuê &amp; Hợp đồng</div>
+          <div class="sub" id="tc-sub">32 người thuê trong kho</div>
+        </div>
+        <div class="content" style="position:relative;">
+          <div class="segmented">
+            <button id="seg-tenant" class="active" onclick="switchTC('tenant')">Người thuê</button>
+            <button id="seg-contract" onclick="switchTC('contract')">Hợp đồng</button>
+          </div>
+
+          <div id="tc-view-tenant">
+            <div class="search">🔍 Tìm theo tên / SĐT</div>
+            <div class="chips">
+              <div class="chip active">Tất cả</div>
+              <div class="chip">Chưa gắn phòng</div>
+              <div class="chip">Đang thuê</div>
+            </div>
+            <div class="card">
+              <div class="thumb" style="background:var(--navy); border-radius:50%;">NA</div>
+              <div class="card-body">
+                <div class="card-title">Nguyễn Thị Anh</div>
+                <div class="card-sub">0909 123 456</div>
+                <div class="card-meta"><span class="badge occupied">Đang thuê — P.101</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="thumb" style="background:var(--slate); border-radius:50%;">LB</div>
+              <div class="card-body">
+                <div class="card-title">Lê Văn Bình</div>
+                <div class="card-sub">0912 222 333</div>
+                <div class="card-meta"><span class="badge empty">Chưa gắn phòng</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="thumb" style="background:var(--coral); border-radius:50%;">TC</div>
+              <div class="card-body">
+                <div class="card-title">Trần Thị Cẩm</div>
+                <div class="card-sub">0933 444 555</div>
+                <div class="card-meta"><span class="badge occupied">Đang thuê — P.103</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="tc-view-contract" class="hidden">
+            <div class="chips">
+              <div class="chip active">Tất cả nhà</div>
+              <div class="chip">Active (18)</div>
+              <div class="chip">Sắp hết hạn (2)</div>
+              <div class="chip">Ended</div>
+            </div>
+            <div class="card" onclick="showScreen('tc','tc-detail')">
+              <div class="thumb" style="background:var(--navy);">📄</div>
+              <div class="card-body">
+                <div class="card-title">P.101 — Nguyễn Thị Anh <span class="badge active">Active</span></div>
+                <div class="card-sub">Nhà trọ Bình An</div>
+                <div class="card-meta">Hết hạn 15/03/2027 · 3.200.000đ/tháng</div>
+              </div>
+            </div>
+            <div class="card" onclick="showScreen('tc','tc-detail')">
+              <div class="thumb" style="background:var(--orange);">📄</div>
+              <div class="card-body">
+                <div class="card-title">P.204 — Phạm Văn Đức <span class="badge ending">Sắp hết hạn</span></div>
+                <div class="card-sub">Chung cư mini Phú Nhuận</div>
+                <div class="card-meta">Hết hạn 20/09/2026 · còn 13 ngày</div>
+              </div>
+            </div>
+            <div class="card" onclick="showScreen('tc','tc-detail')">
+              <div class="thumb" style="background:var(--coral);">📄</div>
+              <div class="card-body">
+                <div class="card-title">P.103 — Trần Thị Cẩm <span class="badge active">Active</span></div>
+                <div class="card-sub">Nhà trọ Bình An</div>
+                <div class="card-meta">Hết hạn 02/06/2027 · 2.800.000đ/tháng</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="fab" onclick="alert('+ Thêm Người thuê hoặc Tạo Hợp đồng mới, tuỳ tab đang xem')">+</button>
+        </div>
+      </div>
+
+      <!-- Contract detail C-03 -->
+      <div id="tc-detail" class="hidden">
+        <div class="topbar">
+          <div class="title"><span class="backbtn" onclick="showScreen('tc','tc-list')">←</span> Hợp đồng P.101</div>
+          <div class="sub">Nhà trọ Bình An <span class="badge active" style="margin-left:6px;">Active</span></div>
+        </div>
+        <div class="content" style="position:relative;">
+
+          <div class="mini-profile">
+            <div class="av">NA</div>
+            <div><b>Nguyễn Thị Anh</b><span>0909 123 456 · CCCD đã lưu ✓</span></div>
+          </div>
+
+          <div class="section-label">Điều khoản hiện hành · v2 (Renewal, 15/03/2026)</div>
+          <div class="detail-block">
+            <div class="row"><span class="k">Ngày bắt đầu</span><span class="v">15/03/2026</span></div>
+            <div class="row"><span class="k">Ngày kết thúc</span><span class="v">15/03/2027</span></div>
+            <div class="row"><span class="k">Tiền cọc</span><span class="v">3.200.000đ</span></div>
+            <div class="row"><span class="k">Tiền thuê/tháng</span><span class="v">3.200.000đ</span></div>
+            <div class="row"><span class="k">Đơn giá điện</span><span class="v">3.800đ/kWh</span></div>
+            <div class="row"><span class="k">Đơn giá nước</span><span class="v">18.000đ/m³</span></div>
+            <div class="row"><span class="k">Phí định kỳ</span><span class="v">Internet 100k · Rác 30k</span></div>
+            <div class="row"><span class="k">Phạt trễ hạn</span><span class="v">2%/ngày sau hạn 5 ngày</span></div>
+            <div class="row"><span class="k">Môi giới</span><span class="v">Cò Minh · phí 500k</span></div>
+          </div>
+
+          <div class="cta-row">
+            <button class="btn primary" onclick="alert('Form Gia hạn → tạo contract_version mới, changeReason=Renewal')">Gia hạn</button>
+            <button class="btn ghost" onclick="alert('Form Sửa điều khoản → tạo contract_version mới, changeReason=Amendment')">Sửa điều khoản</button>
+            <button class="btn ghost" onclick="alert('C-04 Version History — v1 (New, 15/03/2025), v2 (Renewal, 15/03/2026)')">Lịch sử</button>
+            <button class="btn danger" onclick="alert('C-05 End Contract — đối soát cọc & công nợ, tạo contract_settlement')">Kết thúc HĐ</button>
+          </div>
+
+          <div class="section-label">Lịch hoá đơn (đã lên sẵn từ ngày ký)</div>
+          <div class="caption">Hệ thống tự tạo trước 1 dòng hoá đơn cho mỗi kỳ trong suốt thời hạn hợp đồng — không cần đợi tới tháng mới có.</div>
+          <div class="timeline-row">
+            <div class="tchip collected" onclick="alert('Kỳ 07/2026 — Collected, thu 05/07')">T7</div>
+            <div class="tchip collected" onclick="alert('Kỳ 08/2026 — Collected, thu 04/08')">T8</div>
+            <div class="tchip current" onclick="alert('Kỳ 09/2026 — Draft, đang chờ nhập chỉ số → B-02')">T9</div>
+            <div class="tchip scheduled" onclick="alert('Kỳ 10/2026 — Chưa tới kỳ, đã có sẵn dòng chờ')">T10</div>
+            <div class="tchip scheduled">T11</div>
+            <div class="tchip scheduled">T12</div>
+            <div class="tchip scheduled">T1</div>
+            <div class="tchip scheduled">T2</div>
+            <div class="tchip scheduled">T3</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottomnav">
+        <div class="navitem"><span class="ic">🏠</span>Home</div>
+        <div class="navitem active"><span class="ic">👥</span>Tenant &amp; HĐ</div>
+        <div class="navitem"><span class="ic">🧾</span>Bills</div>
+        <div class="navitem"><span class="ic">👤</span>Profile</div>
+      </div>
+    </div>
+    <div class="annot">Bấm vào 1 hợp đồng để xem <b>Contract Detail</b> đầy đủ: điều khoản hiện hành + <b>lịch hoá đơn</b> đã lên sẵn cho từng kỳ trong suốt thời hạn — kỳ hiện tại (viền cam) chờ nhập chỉ số, các kỳ sau (viền chấm xám) đã có chỗ chờ sẵn dù chưa tới hạn.</div>
+  </div>
+
+  <!-- ===================== TAB 3: BILLS ===================== -->
+  <div class="phone-col">
+    <div class="phone-label">3 · Bills — theo nhà, có lịch sẵn</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span>••• 5G 🔋</span></div>
+      <div class="topbar">
+        <div class="title">Hoá đơn</div>
+        <div class="sub">Kỳ 09/2026 · 14/24 đã thu</div>
+      </div>
+      <div class="content" style="position:relative;">
+        <div class="stat-row">
+          <div class="stat"><b>72,4tr</b><span>Tổng kỳ này</span></div>
+          <div class="stat"><b>18,1tr</b><span>Chưa thu</span></div>
+        </div>
+
+        <div class="chips" id="house-filter">
+          <div class="chip active" data-house="all" onclick="filterHouse('all')">Tất cả nhà</div>
+          <div class="chip" data-house="binhan" onclick="filterHouse('binhan')">Bình An</div>
+          <div class="chip" data-house="phunhuan" onclick="filterHouse('phunhuan')">Phú Nhuận</div>
+          <div class="chip" data-house="tanbinh" onclick="filterHouse('tanbinh')">Tân Bình</div>
+        </div>
+
+        <div id="bills-groups">
+          <div class="house-group" data-house="binhan">
+            <div class="house-group-head">🏠 Nhà trọ Bình An <span class="cnt">3 hợp đồng</span></div>
+
+            <div class="contract-row" onclick="alert('Mở kỳ hiện tại (09/2026) — B-03 Invoice Detail')">
+              <div class="cr-top">P.101 · Nguyễn Thị Anh <span class="badge draft">Draft</span></div>
+              <div class="cr-sub">3.200.000đ/tháng (tham khảo) · chưa nhập chỉ số kỳ này</div>
+              <div class="timeline-row">
+                <div class="tchip collected">T7</div>
+                <div class="tchip collected">T8</div>
+                <div class="tchip current">T9</div>
+                <div class="tchip scheduled">T10</div>
+                <div class="tchip scheduled">T11</div>
+                <div class="tchip scheduled">T12</div>
+                <div class="tchip scheduled">+3</div>
+              </div>
+            </div>
+
+            <div class="contract-row" onclick="alert('Mở kỳ hiện tại (09/2026) — đã gửi qua Zalo, chờ thu')">
+              <div class="cr-top">P.103 · Trần Thị Cẩm <span class="badge sent">Sent</span></div>
+              <div class="cr-sub">2.800.000đ/tháng · gửi 05/09 qua Zalo</div>
+              <div class="timeline-row">
+                <div class="tchip collected">T7</div>
+                <div class="tchip collected">T8</div>
+                <div class="tchip current">T9</div>
+                <div class="tchip scheduled">T10</div>
+                <div class="tchip scheduled">T11</div>
+                <div class="tchip scheduled">+4</div>
+              </div>
+            </div>
+
+            <div class="contract-row" onclick="alert('Hợp đồng P.06 quá hạn kỳ 08 — cần nhắc thu trước khi qua kỳ mới')">
+              <div class="cr-top">P.06 · Hoàng Gia Huy <span class="badge overdue">Overdue</span></div>
+              <div class="cr-sub">3.100.000đ/tháng · trễ kỳ 08, 6 ngày</div>
+              <div class="timeline-row">
+                <div class="tchip collected">T6</div>
+                <div class="tchip collected">T7</div>
+                <div class="tchip overdue">T8</div>
+                <div class="tchip current">T9</div>
+                <div class="tchip scheduled">T10</div>
+                <div class="tchip scheduled">+4</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="house-group" data-house="phunhuan">
+            <div class="house-group-head">🏠 Chung cư mini Phú Nhuận <span class="cnt">1 hợp đồng</span></div>
+            <div class="contract-row" onclick="alert('Sắp hết hạn kỳ 09 — vẫn có dòng hoá đơn chờ sẵn')">
+              <div class="cr-top">P.204 · Phạm Văn Đức <span class="badge collected">Collected</span></div>
+              <div class="cr-sub">2.960.000đ/tháng · thu 02/09</div>
+              <div class="timeline-row">
+                <div class="tchip collected">T7</div>
+                <div class="tchip collected">T8</div>
+                <div class="tchip collected">T9</div>
+                <div class="tchip scheduled">T10*</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="house-group" data-house="tanbinh">
+            <div class="house-group-head">🏠 Dãy trọ Tân Bình <span class="cnt">2 hợp đồng</span></div>
+            <div class="contract-row" onclick="alert('Kỳ hiện tại đã Draft sẵn, chờ nhập chỉ số')">
+              <div class="cr-top">P.301 · Đỗ Thu Hà <span class="badge draft">Draft</span></div>
+              <div class="cr-sub">3.500.000đ/tháng · chưa nhập chỉ số kỳ này</div>
+              <div class="timeline-row">
+                <div class="tchip collected">T7</div>
+                <div class="tchip collected">T8</div>
+                <div class="tchip current">T9</div>
+                <div class="tchip scheduled">T10</div>
+                <div class="tchip scheduled">+5</div>
+              </div>
+            </div>
+            <div class="contract-row" onclick="alert('Đã thu kỳ này')">
+              <div class="cr-top">P.302 · Vũ Đình Khoa <span class="badge collected">Collected</span></div>
+              <div class="cr-sub">3.400.000đ/tháng · thu 03/09</div>
+              <div class="timeline-row">
+                <div class="tchip collected">T7</div>
+                <div class="tchip collected">T8</div>
+                <div class="tchip collected">T9</div>
+                <div class="tchip scheduled">T10</div>
+                <div class="tchip scheduled">+5</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="fab" onclick="alert('B-02 Create Invoice — chọn phòng/hợp đồng, nhập chỉ số điện/nước, preview, chọn kênh gửi (thường mở thẳng từ Draft có sẵn ở trên, ít khi phải tự tạo mới)')">+</button>
+      </div>
+      <div class="bottomnav">
+        <div class="navitem"><span class="ic">🏠</span>Home</div>
+        <div class="navitem"><span class="ic">👥</span>Tenant &amp; HĐ</div>
+        <div class="navitem active"><span class="ic">🧾</span>Bills</div>
+        <div class="navitem"><span class="ic">👤</span>Profile</div>
+      </div>
+    </div>
+    <div class="annot">Lọc theo nhà ở trên cùng. Mỗi hợp đồng hiện thành 1 khối riêng, gom theo nhà — có sẵn <b>dải kỳ hoá đơn</b> (viền cam = kỳ hiện tại, chấm xám = kỳ tương lai đã lên lịch, xanh/đỏ = đã thu/quá hạn). Không cần đợi tới tháng mới thấy hoá đơn xuất hiện.</div>
+  </div>
+
+  <!-- ===================== TAB 4: PROFILE ===================== -->
+  <div class="phone-col">
+    <div class="phone-label">4 · Profile <span style="font-weight:400; text-transform:none;">(trước là User Setting)</span></div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span>••• 5G 🔋</span></div>
+      <div class="topbar">
+        <div class="title">Hồ sơ &amp; Cài đặt</div>
+      </div>
+      <div class="content" style="position:relative;">
+        <div class="profile-head">
+          <div class="avatar">TD</div>
+          <div>
+            <h3>Trần Văn Dũng</h3>
+            <span>0909 888 777</span>
+            <div class="role-pill">Main Manager (Chủ trọ)</div>
+          </div>
+        </div>
+
+        <div class="section-label">Tài khoản</div>
+        <div class="menu-row"><div class="left">📇 Hồ sơ cá nhân</div><div class="arrow">›</div></div>
+        <div class="menu-row"><div class="left">🏦 Số tài khoản nhận tiền</div><div class="arrow">›</div></div>
+        <div class="menu-row"><div class="left">🔒 Đổi mật khẩu</div><div class="arrow">›</div></div>
+
+        <div class="section-label">Quản lý (chỉ Main Manager)</div>
+        <div class="menu-row" onclick="alert('U-02 Manager Management List → U-03 cấp quyền theo từng Nhà/Dãy trọ')">
+          <div class="left">🧑‍💼 Quản lý tài khoản Manager <span class="badge occupied" style="margin-left:6px;">3</span></div>
+          <div class="arrow">›</div>
+        </div>
+
+        <div class="section-label">Khác</div>
+        <div class="menu-row"><div class="left">🔔 Trung tâm thông báo</div><div class="arrow">›</div></div>
+        <div class="menu-row danger"><div class="left">🚪 Đăng xuất</div><div class="arrow">›</div></div>
+      </div>
+      <div class="bottomnav">
+        <div class="navitem"><span class="ic">🏠</span>Home</div>
+        <div class="navitem"><span class="ic">👥</span>Tenant &amp; HĐ</div>
+        <div class="navitem"><span class="ic">🧾</span>Bills</div>
+        <div class="navitem active"><span class="ic">👤</span>Profile</div>
+      </div>
+    </div>
+    <div class="annot">Nếu người đăng nhập là <b>Manager</b> (không phải Main Manager) thì mục "Quản lý tài khoản Manager" và "Số tài khoản nhận tiền" sẽ ẩn đi — chỉ Main Manager mới thấy.</div>
+  </div>
+
+</div>
+
+<script>
+  function showScreen(group, id){
+    document.querySelectorAll('[data-group="'+group+'"]').forEach(function(el){ el.classList.add('hidden'); });
+    document.getElementById(id).classList.remove('hidden');
+  }
+  // tag each top-level screen with its group for showScreen() to toggle siblings
+  ['home-list','home-detail','home-meter'].forEach(function(id){ document.getElementById(id).setAttribute('data-group','home'); });
+  ['tc-list','tc-detail'].forEach(function(id){ document.getElementById(id).setAttribute('data-group','tc'); });
+
+  function switchHouseSeg(which){
+    document.getElementById('seg-phong').classList.toggle('active', which==='phong');
+    document.getElementById('seg-dongho').classList.toggle('active', which==='dongho');
+    document.getElementById('seg-view-phong').classList.toggle('hidden', which!=='phong');
+    document.getElementById('seg-view-dongho').classList.toggle('hidden', which!=='dongho');
+  }
+  function switchTC(which){
+    document.getElementById('seg-tenant').classList.toggle('active', which==='tenant');
+    document.getElementById('seg-contract').classList.toggle('active', which==='contract');
+    document.getElementById('tc-view-tenant').classList.toggle('hidden', which!=='tenant');
+    document.getElementById('tc-view-contract').classList.toggle('hidden', which!=='contract');
+    document.getElementById('tc-sub').textContent = which==='tenant' ? '32 người thuê trong kho' : '26 hợp đồng đang theo dõi';
+  }
+  function filterHouse(house){
+    document.querySelectorAll('#house-filter .chip').forEach(function(c){
+      c.classList.toggle('active', c.getAttribute('data-house')===house);
+    });
+    document.querySelectorAll('#bills-groups .house-group').forEach(function(g){
+      g.classList.toggle('hidden', house!=='all' && g.getAttribute('data-house')!==house);
+    });
+  }
+</script>
+</body>
+</html>

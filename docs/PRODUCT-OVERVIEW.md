@@ -1,6 +1,6 @@
 # Product Overview — BizTown Rent-Manager
-> **Trạng thái tài liệu:** Version 2 **Last updated:** 2026-09-03
-> **Thay đổi lớn so với Version 1:** Phase 1 **thu hẹp phạm vi** lại chỉ còn đối tượng **Landlord (Chủ trọ) + Manager (tài khoản quản lý phụ do Landlord tạo)** — **bỏ hẳn app/tài khoản Tenant** ở giai đoạn này. Xem quyết định đầy đủ tại [DECISIONS.md](DECISIONS.md) (2026-09-03).
+> **Trạng thái tài liệu:** Version 3 **Last updated:** 2026-09-08
+> **Thay đổi lớn so với Version 2:** Cấu trúc app đổi từ **5 menu → 4 tab**. Vai trò **Chủ nhà (owner)/Quản lý (manager) không còn gắn vào loại tài khoản** — mọi người dùng 1 luồng đăng ký duy nhất, vai trò xác định theo **từng Nhà/Dãy trọ**. Thêm nghiệp vụ ghi chỉ số điện/nước (3 loại), hợp đồng nhiều phòng, và tự động hoá hoá đơn sâu hơn (chu kỳ tiền nhà, phí dịch vụ theo m², mã QR VietQR). Xem [DECISIONS.md](DECISIONS.md) 2026-09-08.
 
 ---
 
@@ -9,66 +9,66 @@
 **Tên sản phẩm:** Rent-Manager
 **Nền tảng**: Mobile app - Flutter (mobile app, iOS/Android) + Supabase (Postgres DB, Auth, Storage, Edge Functions)
 
-**Description:** BizTown Rent-Manager (Phase 1) là công cụ nội bộ dành cho Chủ trọ (Landlord) và người quản lý được Chủ trọ uỷ quyền (Manager) để quản lý nhà/phòng, người thuê, hợp đồng, và **tự động tạo & gửi hoá đơn điện nước hàng tháng**. Người thuê (Tenant) trong Phase 1 **không cài app, không có tài khoản** — chỉ là hồ sơ dữ liệu trong hệ thống và là người nhận hoá đơn/nhắc thanh toán qua SMS/Zalo.
+**Description:** BizTown Rent-Manager (Phase 1) là công cụ quản lý nhà cho thuê dành cho người đứng tên (chủ nhà) và người được uỷ quyền vận hành hộ (quản lý) — quản lý nhà/phòng, ghi chỉ số điện nước, người thuê, hợp đồng (kể cả hợp đồng nhiều phòng), và **tự động tạo & gửi hoá đơn điện nước hàng tháng kèm mã QR thanh toán**. Người thuê (Tenant) trong Phase 1 **không cài app, không có tài khoản** — chỉ là hồ sơ dữ liệu trong hệ thống và là người nhận hoá đơn/nhắc thanh toán qua SMS/Zalo.
 
 ## 2. Vấn đề cần giải quyết (Problem Statement)
-- Chủ trọ hiện quản lý phòng/khách thuê thủ công qua Excel, sổ tay, hoặc nhóm Zalo — dễ sai sót khi tính tiền điện nước, quên nhắc thu tiền, khó theo dõi dòng tiền tổng thể khi có nhiều phòng/nhiều dãy trọ.
-- Chủ trọ quản lý nhiều dãy trọ thường cần người phụ giúp (quản lý/nhân viên) theo dõi từng dãy trọ cụ thể, nhưng không có cơ chế phân quyền rõ ràng, dễ rủi ro khi chia sẻ chung 1 tài khoản.
-- Việc tính hoá đơn điện nước hàng tháng và gửi cho người thuê tốn nhiều thời gian thủ công, dễ sai số, dễ quên gửi/quên nhắc thanh toán.
-- Các phần mềm hiện có trên thị trường (Smartos, iTro/Khutro, DigiStay...) thường thiên về **web-based cho chủ trọ**, chưa tối ưu cho việc quản lý nhanh trên điện thoại. (Chưa có số liệu phân tích thị trường, research thực tế)
+- Chủ nhà hiện quản lý phòng/khách thuê thủ công qua Excel, sổ tay, hoặc nhóm Zalo — dễ sai sót khi tính tiền điện nước, quên nhắc thu tiền, khó theo dõi dòng tiền tổng thể khi có nhiều phòng/nhiều dãy trọ.
+- **Ghi chỉ số điện/nước và tính hoá đơn là 2 việc tách rời nhau về thời gian trong thực tế** (đi ghi số cả nhà một lượt, tính hoá đơn sau) — công cụ nhập chỉ số ngay lúc tạo hoá đơn (như Version 2) không khớp cách làm thật, và khi đổi khách giữa tháng dễ tính nhầm tiền điện/nước của khách cũ sang khách mới nếu không có đủ 3 loại chỉ số (định kỳ, nhận phòng, trả phòng) nối liền nhau.
+- Chủ nhà quản lý nhiều dãy trọ, đôi khi đứng tên người khác trong gia đình (vợ, con), thường cần người phụ giúp theo dõi, nhưng mô hình "1 tài khoản = 1 vai trò cố định" không biểu diễn được ca một người vừa là chủ ở nhà này vừa là người quản lý hộ ở nhà khác.
+- Việc tính hoá đơn điện nước hàng tháng, thu tiền theo tầng/phòng ghép, và gửi cho người thuê tốn nhiều thời gian thủ công, dễ sai số.
+- Các phần mềm hiện có trên thị trường (Smartos, iTro/Khutro, DigiStay...) thường thiên về web-based cho chủ trọ, chưa tối ưu cho việc quản lý nhanh trên điện thoại. (Chưa có số liệu phân tích thị trường, research thực tế)
 
-> **Ghi chú phạm vi:** Bài toán "người thuê cần kênh minh bạch xem hoá đơn/gửi yêu cầu trong app" (từng là 1 phần vấn đề ở Version 1) được **dời sang Phase 2+** — xem mục 5.2.
+> **Ghi chú phạm vi:** Bài toán "người thuê cần kênh minh bạch xem hoá đơn/gửi yêu cầu trong app" được **dời sang Phase 2+** — xem mục 5.2.
 
 ## 3. Đối tượng người dùng (Target Users)
-Phase 1 phục vụ **nội bộ phía chủ trọ**: nhiều Landlord, mỗi Landlord có thể tạo thêm các tài khoản Manager để chia việc quản lý.
 
-### 3.1 Vai trò chính (Roles)
-| Vai trò | Mô tả | Ghi chú |
+### 3.1 Vai trò chính (Roles) — vai trò gắn theo TỪNG Nhà/Dãy trọ, không gắn vào tài khoản
+
+Phase 1 chỉ có **1 loại tài khoản** (`tb_user`), đăng ký qua 1 luồng SĐT + OTP duy nhất. Vai trò **Chủ nhà (owner)** hay **Quản lý (manager)** được xác định **riêng cho từng Nhà/Dãy trọ** (`tb_user_house_access`) — cùng 1 tài khoản có thể vừa là chủ ở nhà mình tự tạo, vừa là quản lý ở nhà của một chủ trọ khác (kể cả không quen biết), xem [BUSINESS-RULES](BUSINESS-RULES.md) mục 4.
+
+| Vai trò (theo từng nhà) | Mô tả | Ghi chú |
 |---|---|---|
-| **Chủ trọ (Landlord)** | Chủ tài khoản gốc. Tạo tài khoản, đăng ký Nhà/Phòng, quản lý Người thuê (hồ sơ), tạo/quản lý Hợp đồng, tạo & gửi hoá đơn, tạo và cấp quyền cho tài khoản Manager. | Toàn quyền trên toàn bộ dữ liệu của mình. |
-| **Quản lý (Manager)** | Tài khoản phụ **do Landlord tạo** (không tự đăng ký), được cấp quyền truy cập theo **từng Nhà/Dãy trọ cụ thể** (không mặc định thấy toàn bộ dữ liệu của Landlord). Thực hiện các nghiệp vụ vận hành hàng ngày: đăng ký/quản lý phòng, đăng ký/quản lý người thuê, tạo/quản lý hợp đồng, tạo/quản lý hoá đơn trong phạm vi được cấp. | Không tự tạo Manager khác, không quản lý tài khoản Landlord. |
-| **Người thuê (Tenant)** | **Không phải người dùng app trong Phase 1** — chỉ là hồ sơ dữ liệu (tên, SĐT, CCCD/CMND...) do Landlord/Manager tạo và gắn vào hợp đồng. Nhận hoá đơn & nhắc thanh toán qua SMS/Zalo (một chiều, ngoài app), thanh toán/trao đổi trực tiếp với Landlord ngoài app. | Có thể trở thành người dùng app ở Phase 2 (xem mục 5.2). |
+| **Chủ nhà (`owner`)** | Tự động có được khi tạo 1 Nhà/Dãy trọ mới. Toàn quyền trên nhà đó: sửa thông tin nhà/chủ sở hữu hiển thị/tài khoản nhận tiền, mời/thu hồi quyền quản lý, và mọi nghiệp vụ vận hành. | 1 tài khoản có thể là owner của nhiều nhà. |
+| **Quản lý (`manager`)** | Được 1 chủ nhà mời bằng số điện thoại vào 1 hoặc nhiều nhà cụ thể. Thực hiện nghiệp vụ vận hành hàng ngày (phòng, người thuê, hợp đồng, ghi chỉ số, hoá đơn) trong phạm vi được cấp — không sửa được thông tin chủ sở hữu/tài khoản nhận tiền, không mời/thu hồi quyền của người khác. | Không tự tạo quyền quản lý cho ai khác. |
+| **Người thuê (Tenant)** | **Không phải người dùng app** — chỉ là hồ sơ dữ liệu (tên, SĐT, CCCD/CMND...) do người có quyền (owner/manager) tạo và gắn vào hợp đồng. Nhận hoá đơn (kèm mã QR) & nhắc thanh toán qua SMS/Zalo (một chiều, ngoài app). | Có thể trở thành người dùng app ở Phase 2. |
 
 ### 3.2 Persona sơ bộ
-- **Persona A — Chủ trọ nhỏ lẻ:** quản lý 1 dãy trọ (5-10 phòng), tự làm mọi việc, chưa dùng phần mềm quản lý nào trước đó. Độ tuổi khoảng 50 trở lên, thiết bị chính là smartphone, kênh liên lạc quen dùng là Zalo. Không cần tạo Manager.
-- **Persona B — Chủ trọ/chủ đầu tư quy mô vừa:** quản lý nhiều dãy trọ hoặc chung cư mini, cần chia việc cho người quản lý riêng từng dãy trọ (con/nhân viên) qua tài khoản Manager, cần báo cáo doanh thu tổng hợp. Độ tuổi khoảng 40 trở lên.
-- **Persona C — Manager (nhân viên/người thân được uỷ quyền):** được Landlord cấp tài khoản để quản lý vận hành 1 hoặc vài dãy trọ cụ thể (ghi số điện nước, tạo hoá đơn, theo dõi thu tiền) mà không cần thấy toàn bộ dữ liệu kinh doanh của Landlord.
+- **Persona A — Chủ nhà nhỏ lẻ:** quản lý 1 dãy trọ (5-10 phòng), tự làm mọi việc với vai trò `owner`. Độ tuổi khoảng 50 trở lên, thiết bị chính là smartphone, kênh liên lạc quen dùng là Zalo. Không cần mời ai làm quản lý.
+- **Persona B — Chủ nhà quy mô vừa, đứng tên nhiều nhà khác nhau trong gia đình:** ví dụ đứng tên 1 nhà, vợ đứng tên 1 nhà, con gái đứng tên 1 nhà — nhưng cùng 1 người quản lý vận hành (con gái) được mời làm `manager` ở cả 3 nhà dù mỗi nhà có "chủ sở hữu hiển thị" khác nhau. Độ tuổi khoảng 40 trở lên.
+- **Persona C — Người quản lý (con/nhân viên/người thân được uỷ quyền):** được 1 hoặc nhiều chủ nhà mời làm `manager` cho 1 vài nhà cụ thể — có thể đồng thời là `manager` cho những chủ nhà hoàn toàn không liên quan tới nhau, và cũng có thể tự đứng ra làm `owner` một nhà của riêng mình bằng cùng 1 tài khoản.
 - ~~Persona người thuê~~ — không còn là người dùng trực tiếp của app trong Phase 1.
 
 ## 4. Giá trị cốt lõi (Value Proposition)
 | Đối tượng | Giá trị mang lại |
 |---|---|
-| Chủ trọ | Quản lý phòng/hợp đồng/người thuê tập trung trên điện thoại; **tự động tính & gửi hoá đơn điện nước hàng tháng qua SMS/Zalo** (chức năng cốt lõi); nhắc đo chỉ số điện nước định kỳ, thu tiền tự động; chia việc an toàn cho Manager theo từng dãy trọ; lưu lịch sử thay đổi hợp đồng (version history) để tránh tranh chấp điều khoản. |
-| Manager | Công cụ vận hành gọn nhẹ, chỉ thấy đúng phạm vi (nhà/dãy trọ) được Landlord cấp quyền — không cần truy cập số liệu kinh doanh tổng thể. |
-| Người thuê | Nhận hoá đơn rõ ràng, đúng hạn qua SMS/Zalo (không cần cài thêm app trong Phase 1). |
+| Chủ nhà | Quản lý phòng/hợp đồng/người thuê tập trung trên điện thoại; ghi chỉ số điện nước tách biệt khỏi lúc tạo hoá đơn, đúng thực tế vận hành; hợp đồng gộp nhiều phòng cho 1 người đại diện thuê chung tầng; **tự động tính & gửi hoá đơn kèm mã QR chuyển khoản qua SMS/Zalo hàng tháng** (chức năng cốt lõi); chu kỳ thu tiền nhà cấu hình linh hoạt (VD 2 tháng/lần) độc lập với chu kỳ điện nước; mời người quản lý bằng số điện thoại mà không cần tạo tài khoản hộ; lưu lịch sử thay đổi hợp đồng để tránh tranh chấp điều khoản. |
+| Quản lý | Công cụ vận hành gọn nhẹ, chỉ thấy đúng phạm vi nhà được cấp quyền — có thể nhận nhiều lời mời từ nhiều chủ nhà không liên quan tới nhau bằng cùng 1 tài khoản duy nhất. |
+| Người thuê | Nhận hoá đơn rõ ràng, đúng hạn qua SMS/Zalo kèm mã QR chuyển khoản sẵn sàng quét, không cần cài thêm app. |
 
 ## 5. Phạm vi sản phẩm (Product Scope)
 
-### 5.1 Phase 1 — Cấu trúc app: 5 menu chính (Bottom Navigation)
+### 5.1 Phase 1 — Cấu trúc app: 4 tab chính (Bottom Navigation)
 
-Phase 1 tổ chức toàn bộ nghiệp vụ quanh **5 menu chính** dành cho Landlord + Manager, thay cho mô hình "8 core flows 2 chiều" ở Version 1. Chức năng quan trọng nhất (core) là **Bill Management — tự động tạo và gửi hoá đơn hàng tháng**. Xem chi tiết luồng ở [USER-FLOWS.md](USER-FLOWS.md) và đặc tả màn hình ở [SCREEN-SPEC.md](SCREEN-SPEC.md).
+Version 3 đổi cấu trúc từ "5 menu" (Version 2) sang **4 tab**, giảm số lần bấm và đưa Hoá đơn thành 1 tab riêng vì đây là chức năng cốt lõi. Xem chi tiết luồng ở [USER-FLOWS.md](USER-FLOWS.md) và đặc tả màn hình ở [SCREEN-SPEC.md](SCREEN-SPEC.md).
 
-1. **House/Room Management** — Quản lý Nhà/Dãy trọ (tên, địa chỉ, mô tả, ảnh) & Phòng (số phòng, diện tích, giá tham khảo, tiện ích, phí định kỳ mặc định, ảnh, trạng thái Trống/Đã thuê/Đang sửa chữa).
-2. **Tenant Management** — Quản lý "kho" Người thuê (Tenant Pool) dùng chung cho cả Landlord: hồ sơ tên, SĐT, giới tính, ngày sinh, email, CCCD/CMND (2 mặt), ghi chú. Có thể tạo mới ngay trong lúc tạo hợp đồng (không bắt buộc tạo hồ sơ trước).
-3. **Contract Management** — Danh sách hợp đồng (filter theo tên nhà, số phòng, tên người thuê, sort tên nhà, số phòng, sắp hết hạn), tạo hợp đồng mới, xem chi tiết hợp đồng kèm **lịch sử phiên bản điều khoản (version history: New/Renewal/Amendment)**, kết thúc hợp đồng kèm đối soát cọc/công nợ (settlement).
-4. **Bill Management (core)** — Danh sách hoá đơn (filter/sort theo trạng thái Draft/Sent/Collected/Overdue và theo tháng hoặc kỳ quy định trong hợp đồng), tạo hoá đơn từ chỉ số điện/nước mới nhập và chi phí cố định khác như tiền thuê, tiền dịch vụ,..., xem chi tiết, **tự động gửi hoá đơn cho người thuê qua SMS/Zalo**.
-5. **User Setting** — Hồ sơ Chủ nhà (thông tin cá nhân, CCCD, mã số thuế, số tài khoản ngân hàng), quản lý tài khoản Manager (tạo, cấp/thu quyền theo từng Nhà/Dãy trọ), đăng nhập/đăng xuất.
+1. **Home** — Quản lý Nhà/Dãy trọ & Phòng (tên, địa chỉ, loại nhà, ảnh, chủ sở hữu hiển thị, tài khoản nhận tiền; số phòng, diện tích m², giá tham khảo, tiện ích, trạng thái) **+ nghiệp vụ ghi chỉ số điện/nước định kỳ hàng tháng** cho mọi phòng.
+2. **Tenant & Contract** — Chuyển qua lại bằng segmented control giữa "kho" Người thuê (Tenant Pool) và Hợp đồng: tạo hợp đồng **gồm 1 hoặc nhiều phòng** (chặn bằng chỉ số nhận phòng bắt buộc), gia hạn/sửa điều khoản (2 màn tách riêng), lịch sử phiên bản, xem trước lịch hoá đơn sắp tới, kết thúc hợp đồng (chặn bằng chỉ số trả phòng bắt buộc, đối soát cọc/công nợ).
+3. **Bills (core)** — Tạo hoá đơn **đơn lẻ hoặc hàng loạt** (theo cả 1 Nhà/Dãy trọ + 1 kỳ), tự động đọc lại chỉ số đã ghi, tự tính tiền nhà theo chu kỳ cấu hình được, phí dịch vụ theo m², sinh **mã QR VietQR/NAPAS-247**, gửi qua SMS/Zalo, danh sách hoá đơn nhóm theo nhà → hợp đồng với chip kỳ tương lai "Scheduled".
+4. **Profile** — Hồ sơ cá nhân, tài khoản ngân hàng nhận tiền theo từng nhà, đổi mật khẩu, mời/thu hồi quyền quản lý theo từng Nhà/Dãy trọ bằng số điện thoại (không tạo tài khoản hộ), đăng nhập/đăng xuất.
 
-> Xem diagram tóm tắt (entity + luồng theo từng menu): FigJam board `PAuYWdSon7WcPKdRQStoPR` (link nội bộ do Dream chia sẻ, 2026-09-03).
+> Xem diagram tóm tắt (entity + luồng theo cấu trúc mới): FigJam board `PAuYWdSon7WcPKdRQStoPR`, khu vực "Version 3 — CURRENT" (Dream, cập nhật 07-08/09/2026).
 
 ### 5.2 Ngoài phạm vi Phase 1 (Later / Phase 2+)
 
-So với Version 1, danh sách "ngoài phạm vi" mở rộng đáng kể do thu hẹp scope:
-
-- **App/tài khoản Tenant** — đăng nhập, tìm phòng (House/Room Search/Discovery), xem & tự thanh toán hoá đơn trong app, gửi yêu cầu sửa chữa trong app. Trong Phase 1, mọi tương tác với Tenant diễn ra **một chiều qua SMS/Zalo** (gửi hoá đơn, nhắc hạn) hoặc trực tiếp ngoài app.
-- **Service Request Management** (yêu cầu sửa chữa/bảo trì/đăng ký lưu trú qua app) — không còn trong 5 menu Phase 1, vì đối tượng gửi yêu cầu (Tenant) không có app.
-- **Revenue Report** (báo cáo doanh thu tổng hợp riêng biệt) — không phải 1 trong 5 menu Phase 1; số liệu tổng/đã thu/chưa thu có thể xem tạm qua filter/sort trong Bill Management, báo cáo trực quan đầy đủ dời sang Phase 2.
-- Thêm phân quyền chi tiết hơn 2 cấp Landlord/Manager (VD: Manager chỉ xem không sửa).
+- **App/tài khoản Tenant** — đăng nhập, tìm phòng (House/Room Search/Discovery), xem & tự thanh toán hoá đơn trong app, gửi yêu cầu sửa chữa trong app. Mọi tương tác với Tenant diễn ra **một chiều qua SMS/Zalo** hoặc trực tiếp ngoài app.
+- **Service Request Management** (yêu cầu sửa chữa/bảo trì qua app).
+- **Revenue Report** (báo cáo doanh thu tổng hợp riêng biệt, biểu đồ/xuất file) — số liệu tổng/đã thu/chưa thu xem tạm qua filter trong Bills.
+- **Thanh toán online trong app** — Phase 1 chỉ sinh mã QR chuyển khoản tĩnh (VietQR/NAPAS-247), không xử lý giao dịch thật trong app.
+- **Đăng ký/quản lý công tơ dạng thiết bị, đọc số tự động qua IoT** — Phase 1 chỉ nhập tay, 1 phòng = 1 công tơ ảo gắn trực tiếp vào phòng.
+- Nhiều Tenant đại diện trên 1 hợp đồng (ở ghép nhiều người cùng đứng tên).
 - Chat trong app giữa các bên.
-- Đa ngôn ngữ, cổng thanh toán online (VNPay/Momo/ZaloPay), e-signature.
+- Đa ngôn ngữ, e-signature.
 - Marketplace tìm phòng công khai/SEO/quảng cáo trả phí.
-
-> ✅ **Đã chốt lại (2026-09-03):** Đây là thay đổi phạm vi lớn nhất kể từ khi bắt đầu — Dream đã trao đổi với sếp và quyết định thu hẹp Phase 1 để tập trung làm chắc phần lõi (quản lý + hoá đơn tự động) trước, mở rộng sang Tenant app/Service Request/Revenue Report ở Phase 2 sau khi Phase 1 vận hành ổn định. Xem đầy đủ rationale tại [DECISIONS.md](DECISIONS.md).
 
 ## 6. Business model
 - Phase 1 hoàn toàn miễn phí
@@ -79,32 +79,36 @@ Tham khảo nhanh các sản phẩm cùng phân khúc tại Việt Nam (quản l
 
 | Sản phẩm | Điểm mạnh quan sát được | Ghi chú |
 |---|---|---|
-| **Smartos** | Phần mềm/PMS quản lý BĐS cho thuê, có bản web + app, tính năng khá đầy đủ (quản lý phòng, hợp đồng, hoá đơn, báo cáo). | Nguồn: smartos.space — `NEEDS INPUT`: dùng thử thực tế để so sánh UX. |
-| **iTro (Khutro)** | Phần mềm quản lý nhà trọ phổ biến tại VN. | chưa có dữ liệu chi tiết, đang khảo sát thêm tính năng cụ thể. |
-| **DigiStay** | chưa có dữ liệu chi tiết, khảo sát thêm tính năng cụ thể. | |
+| **Smartos** | Phần mềm/PMS quản lý BĐS cho thuê, có bản web + app, tính năng khá đầy đủ. | Nguồn: smartos.space — `NEEDS INPUT`: dùng thử thực tế để so sánh UX. |
+| **iTro (Khutro)** | Phần mềm quản lý nhà trọ phổ biến tại VN. | chưa có dữ liệu chi tiết. |
+| **DigiStay** | chưa có dữ liệu chi tiết. | |
 
 **Định hướng khác biệt hoá đề xuất**:
-- Tập trung làm chắc phần lõi: quản lý phòng/hợp đồng + **tự động hoá tạo & gửi hoá đơn** qua kênh người Việt hay dùng (SMS/Zalo), thay vì dàn trải nhiều tính năng 2 chiều ngay từ đầu.
-- Phân quyền Manager theo từng dãy trọ — phù hợp chủ trọ quy mô vừa có người phụ quản lý.
+- Tập trung làm chắc phần lõi: quản lý phòng/hợp đồng + **tự động hoá tạo & gửi hoá đơn kèm QR** qua kênh người Việt hay dùng (SMS/Zalo).
+- Mô hình phân quyền theo TỪNG nhà (không phải theo tài khoản) — phù hợp thực tế nhiều chủ trọ đứng tên khác nhau trong gia đình nhưng dùng chung 1 người vận hành.
+- Ghi chỉ số điện/nước tách biệt khỏi tạo hoá đơn, đúng quy trình vận hành thật ngoài đời — chặn được lỗi tính tiền gấp đôi khi đổi khách giữa tháng.
 - Flow đơn giản, tối thiểu số bước.
 
 ## 8. Success Metrics (KPIs)
-- Xây dựng được MVP Phase 1 (5 menu) hoàn chỉnh trong thời gian  1 tháng
-- Landlord có thể tự vận hành trọn vẹn 1 chu kỳ: đăng ký nhà/phòng → tạo hợp đồng → ghi chỉ số → tạo & gửi hoá đơn → đánh dấu đã thu tiền, không cần hỗ trợ thủ công.
+- Xây dựng được MVP Phase 1 (4 tab, 32 màn) hoàn chỉnh trong thời gian hợp lý.
+- Chủ nhà có thể tự vận hành trọn vẹn 1 chu kỳ: đăng ký nhà/phòng → ghi chỉ số định kỳ → tạo hợp đồng (kể cả nhiều phòng) → tạo & gửi hoá đơn hàng loạt kèm QR → đánh dấu đã thu tiền, không cần hỗ trợ thủ công.
+- Đổi khách giữa tháng không phát sinh lỗi tính tiền điện/nước gấp đôi (kiểm chứng bằng kịch bản Mr. Han — xem [`시뮬레이션 케이스 (Mr.Han).md`](시뮬레이션%20케이스%20(Mr.Han).md)).
 
 ## 9. Giả định & Rủi ro (Assumptions & Risks)
 
-- **Giả định:** Chủ trọ và Manager sẵn sàng cài app; Người thuê **không cần cài app** trong Phase 1 — giảm rủi ro về tỉ lệ tenant chịu cài app đã ghi nhận ở Version 1.
-- **Giả định:** Việc ghi chỉ số điện/nước là nhập tay bởi Landlord/Manager (chưa có tích hợp IoT/đồng hồ thông minh).
-- **Rủi ro:** Vì Tenant không có app/tài khoản, mọi xác nhận thanh toán phụ thuộc hoàn toàn vào Landlord/Manager tự đánh dấu thủ công — cần UX rõ ràng để tránh quên xác nhận/nhầm trạng thái hoá đơn.
-- **Rủi ro:** Gửi SMS/Zalo tự động cần tích hợp bên thứ 3 (Zalo/SMS brandname) — có chi phí & cần pháp lý (xem [BUSINESS-RULES.md](BUSINESS-RULES.md)).
-- **Rủi ro:** Phân quyền Manager theo từng Nhà/Dãy trọ cần thiết kế RLS (Row Level Security) cẩn thận để tránh Manager truy cập ngoài phạm vi được cấp.
+- **Giả định:** Chủ nhà và người quản lý sẵn sàng cài app; Người thuê **không cần cài app** trong Phase 1.
+- **Giả định:** Việc ghi chỉ số điện/nước là nhập tay (chưa có tích hợp IoT/đồng hồ thông minh).
+- **Rủi ro:** Vì Tenant không có app/tài khoản, mọi xác nhận thanh toán phụ thuộc hoàn toàn vào người có quyền tự đánh dấu thủ công.
+- **Rủi ro:** Gửi SMS/Zalo tự động cần tích hợp bên thứ 3 (Zalo/SMS brandname) — có chi phí & cần pháp lý.
+- **Rủi ro:** Mô hình phân quyền theo từng nhà (không cache vai trò vào session) đòi hỏi mọi màn hình phải luôn biết "đang thao tác trên nhà nào" — dễ làm sai nếu dev không nắm rõ, cần RLS (Row Level Security) thiết kế cẩn thận (xem [BUSINESS-RULES.md](BUSINESS-RULES.md) mục 7).
+- **Rủi ro:** Nghiệp vụ ghi chỉ số bắt buộc tại 2 mốc hợp đồng (nhận/trả phòng) có thể bị người dùng cảm thấy vướng nếu UX không rõ ràng lý do — cần giải thích ngay tại chỗ (không chỉ chặn nút mà không rõ nguyên nhân).
 
 ## 10. Tài liệu liên quan
-- [USER-FLOWS](USER-FLOWS.md) - flow nghiệp vụ chính (5 menu)
+- [USER-FLOWS](USER-FLOWS.md) - flow nghiệp vụ chính (4 tab)
 - [REQUIREMENTS](REQUIREMENTS.md) - yêu cầu chức năng/phi chức năng
 - [BUSINESS-RULES](BUSINESS-RULES.md) - quy tắc nghiệp vụ
-- [SCREEN-SPEC](SCREEN-SPEC.md) - mô tả màn hình
+- [SCREEN-SPEC](SCREEN-SPEC.md) - mô tả màn hình (32 màn)
+- [DATABASE](DATABASE.md) - schema dữ liệu (12 bảng, tiền tố `tb_`)
 - [DESIGN](DESIGN.md) - hệ thống thiết kế
 - [DECISIONS](DECISIONS.md) - lịch sử quyết định
 - [CLAUDE](CLAUDE.md) - hướng dẫn cho dev/Claude Code khi phát triển
