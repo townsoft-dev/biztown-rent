@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/supabase_client.dart';
@@ -33,20 +34,9 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.home_work_outlined, color: Colors.white, size: 56),
-            const SizedBox(height: 12),
-            Text(
-              'BizTown Rent-Manager',
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            const Text('Simple rental management', style: TextStyle(color: Color(0xFFC9CEE0), fontSize: 12)),
-          ],
-        ),
+        // design/Logo/biztown-rent-manager-lockup-on-navy.svg đã tự vẽ nền navy +
+        // icon + wordmark + tagline bên trong, không cần dựng lại từng phần.
+        child: SvgPicture.asset('assets/logo/biztown-rent-manager-lockup-on-navy.svg', width: 280),
       ),
     );
   }

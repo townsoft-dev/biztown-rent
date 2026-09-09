@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/theme.dart';
@@ -59,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 48),
-                const Icon(Icons.home_work_outlined, color: AppColors.primary, size: 40),
+                SvgPicture.asset('assets/logo/biztown-rent-manager-lockup.svg', width: 200),
                 const SizedBox(height: 16),
                 Text('Welcome to BizTown', style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
                 const SizedBox(height: 4),
