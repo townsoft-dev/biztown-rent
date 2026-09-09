@@ -270,3 +270,24 @@ dungtv xác nhận sẵn sàng bắt đầu code UI (design Figma "ready to buil
 **Bài học quy trình (áp dụng cho các màn tiếp theo):** viết code UI xong không tính là hoàn thành — phải build thật + chụp màn hình tự xem lại bằng mắt trước khi báo xong, vì lỗi màu/hiển thị kiểu này `flutter analyze` không bắt được (chỉ bắt lỗi cú pháp/type, không bắt lỗi styling khiến chữ vô hình).
 
 **Chưa làm/chưa test**: luồng gửi + xác thực OTP thật (cần chọn nhà cung cấp SMS trước, `send-otp-sms` vẫn TODO), rate-limit đăng nhập sai 5 lần, "Quên mật khẩu" (chưa nối), S-03 và H-01 thật.
+
+## 2026-09-09 (Đợt 11) — Sửa S-00/S-01/S-02 khớp đúng Figma thật, sau phản hồi "chưa giống thiết kế"
+
+Bản Auth code ở Đợt 10 build từ mô tả text trong `SCREEN-SPEC.md`/`DESIGN-SYSTEMS.md` (không có ảnh Figma thật do bị giới hạn quota MCP đúng lúc cần). dungtv xem app chạy thật, phản hồi **rõ ràng chưa giống Figma**, gửi trực tiếp 2 ảnh chụp màn hình (Figma S-00/S-01/S-02/S-03 ghép 4 khung, và ảnh app chạy thật) để so sánh — không cần chờ Figma MCP nữa.
+
+**Nguyên nhân gốc (tự nhận, không đổ lỗi công cụ):** mô tả text trong docs chỉ liệt kê **có gì trên màn** (input SĐT, nút Đăng nhập...), không mô tả được **cách trình bày** (canh trái hay canh giữa, label cố định hay floating, nguyên văn copy chính xác) — nên phần đó bị tự suy diễn/tự viết lại, sai khá nhiều so với bản thật.
+
+**Đối chiếu cụ thể tìm được qua ảnh:**
+- Toàn bộ heading/label/form ở Figma **canh trái**, bản code canh giữa.
+- Copy sai hoàn toàn: Figma "Log in"/"Welcome! Please sign in to continue."; bản code tự viết "Welcome to BizTown"/"Manage your rentals...".
+- Figma dùng **label tĩnh phía trên** mỗi field; bản code dùng floating label kiểu Material mặc định.
+- "Forgot password?" Figma canh **phải**; bản code canh giữa.
+- **Cấu trúc màn Đăng ký khác hẳn:** Figma là **1 màn liên tục** (AppBar "Create account"/"Main Manager" + thanh tiến trình 4 chấm + phần "Verify your phone" và "STEP 3 — SET PASSWORD" cùng hiện trên 1 trang); bản code tách thành 3 bước chuyển đổi nội dung hoàn toàn riêng biệt (dù cùng 1 widget, không phải 3 route khác nhau, nhưng UI thay thế hẳn chứ không cộng dồn).
+- Splash dùng nhầm tagline cũ ("Simple rental management" — sót lại từ thời chưa có bản dịch/copy chính thức) thay vì đúng "Houses and Rooms Renting Management Tool".
+- Logo dùng icon Material (`Icons.home_work_outlined`) generic thay vì asset thật trong `design/Logo/`.
+
+**Đã sửa toàn bộ 3 màn theo đúng ảnh:** dùng logo SVG thật (`biztown-rent-manager-lockup.svg` nền sáng, `-lockup-on-navy.svg` cho Splash), Login/Signup đổi sang canh trái + `_FieldLabel` widget tĩnh phía trên field, copy đúng nguyên văn tiếng Anh, nút full-width (`SizedBox(width: double.infinity)`), Signup viết lại thành 1 màn liên tục với `_ProgressDots` (4 chấm, màu xanh/cam/xám theo bước) + 2 section (Verify phone, Set password) cộng dồn hiển thị khi `_otpVerified=true` thay vì switch-case thay thế hoàn toàn.
+
+**Kỹ thuật kiểm chứng:** vì không gọi được OTP thật (chưa có SMS provider), tạm sửa 2 dòng khởi tạo state (`_step`/`_otpVerified`) để ép hiển thị thẳng section "STEP 3" mà không cần OTP thật, chụp màn hình so khớp, rồi **revert lại ngay** 2 dòng debug đó trước khi commit — không để lại code test tạm trong commit.
+
+**Tác động cần dev lưu ý:** ⚠️ Cơ chế chính xác OTP+Password "cộng dồn trên 1 màn" mới chỉ là suy đoán hợp lý nhất từ 1 ảnh tĩnh (không thấy được animation/tương tác thật của prototype Figma) — cần verify lại khi Figma MCP hết giới hạn quota hoặc hỏi Dream trực tiếp, trước khi coi đây là chuẩn cuối cùng cho các màn nhiều-bước khác (nếu có) trong app.

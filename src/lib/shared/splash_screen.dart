@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/supabase_client.dart';
 import '../core/theme.dart';
 
-/// S-00 — Splash. Xem docs/SCREEN-SPEC.md mục 2.1.
+/// S-00 — Splash. Xem docs/SCREEN-SPEC.md mục 2.1 + ảnh Figma thật (09/09/2026).
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -34,9 +34,18 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: Center(
-        // design/Logo/biztown-rent-manager-lockup-on-navy.svg đã tự vẽ nền navy +
-        // icon + wordmark + tagline bên trong, không cần dựng lại từng phần.
-        child: SvgPicture.asset('assets/logo/biztown-rent-manager-lockup-on-navy.svg', width: 280),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset('assets/logo/biztown-rent-manager-lockup-on-navy.svg', width: 260),
+            const SizedBox(height: 20),
+            const Text(
+              'Houses and Rooms Renting Management Tool',
+              style: TextStyle(color: Color(0xFFAEBBD4), fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
