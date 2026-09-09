@@ -154,33 +154,46 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final onStep1 = _page == _SignupPage.verifyPhone;
-    return Scaffold(
-      backgroundColor: AppColors.bgDefault,
-      body: Column(
-        children: [
-          TopBar(
-            title: 'Create account',
-            opacity: _accountCreated ? 0.3 : 1,
-            onBack: () {
-              if (onStep1) {
-                context.go('/login');
-              } else {
-                setState(() => _page = _SignupPage.verifyPhone);
-              }
-            },
-          ),
-          Expanded(
-            child: Opacity(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handleBack(context);
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.bgDefault,
+        body: Column(
+          children: [
+            TopBar(
+              title: 'Create account',
               opacity: _accountCreated ? 0.3 : 1,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-                child: onStep1 ? _buildVerifyPhonePage() : _buildSetPasswordPage(),
+              onBack: () => _handleBack(context),
+            ),
+            Expanded(
+              child: Opacity(
+                opacity: _accountCreated ? 0.3 : 1,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                  child: onStep1 ? _buildVerifyPhonePage() : _buildSetPasswordPage(),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  void _handleBack(BuildContext context) {
+    if (_page == _SignupPage.verifyPhone) {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/login');
+      }
+    } else {
+      setState(() => _page = _SignupPage.verifyPhone);
+    }
   }
 
   Widget _buildVerifyPhonePage() {

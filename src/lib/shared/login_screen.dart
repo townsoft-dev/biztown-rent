@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 5),
                 Center(
                   child: GestureDetector(
-                    onTap: () => context.go('/signup'),
+                    onTap: () => context.push('/signup'),
                     child: Text(
                       "Don't have an account?  Sign up",
                       style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
