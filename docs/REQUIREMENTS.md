@@ -66,9 +66,9 @@
 | FR-CTR-02 | Bắt buộc đã có chỉ số **nhận phòng (`MOVE_IN`)** cho từng phòng thuộc hợp đồng mới trước khi lưu | Must | Xem FR-READ-02 |
 | FR-CTR-03 | Xem danh sách hợp đồng, lọc theo nhà, sắp hết hạn | Must | |
 | FR-CTR-04 | Xem chi tiết 1 hợp đồng, gồm danh sách phòng, điều khoản hiện hành | Must | |
-| FR-CTR-05 | Lịch sử phiên bản điều khoản (Version History) — mỗi lần gia hạn/sửa điều khoản/đổi danh sách phòng tạo 1 bản ghi `contract_version` mới | Must | |
+| FR-CTR-05 | Lịch sử phiên bản điều khoản (Version History) — mỗi lần gia hạn/sửa điều khoản tạo 1 bản ghi `contract_version` mới | Must | |
 | FR-CTR-06 | Gia hạn hợp đồng (`changeReason=Renewal`) — không đo lại chỉ số nếu giữ nguyên Tenant/phòng | Must | |
-| FR-CTR-07 | Sửa điều khoản hợp đồng đang hiệu lực, kể cả thêm/bớt phòng (`changeReason=Amendment`) | Should | Phòng bị loại ra cần chỉ số trả phòng riêng — xem BR-CTR-07 |
+| FR-CTR-07 | Sửa điều khoản hợp đồng đang hiệu lực (`changeReason=Amendment`) — cùng màn hình với Gia hạn (T-07) | Should | ~~kể cả thêm/bớt phòng~~ **bỏ khỏi Phase 1** (dời Phase 2) — xem BR-CTR-07 |
 | FR-CTR-08 | Kết thúc hợp đồng / trả phòng — bắt buộc đã có chỉ số **trả phòng (`MOVE_OUT`)** cho từng phòng, tổng kết công nợ, đối soát tiền cọc (trừ hư hỏng nếu có), xác nhận số tiền hoàn/thu thêm | Must | Xem FR-READ-03 |
 | FR-CTR-09 | Nhiều Tenant trên cùng 1 hợp đồng/phòng (ở ghép, nhiều người đại diện) | Won't (Phase 1) | Phase 1 chỉ 1 người đại diện (`tenantId`) mỗi hợp đồng, dù hợp đồng có nhiều phòng |
 | FR-CTR-10 | Ký hợp đồng điện tử (e-signature) trong app | Won't (MVP) | Phase 2 |
@@ -149,4 +149,4 @@ Các thực thể chính (12 bảng, tiền tố `tb_` — **đảo ngược quy
 ---
 
 ## 6. Ngoài phạm vi (Out of Scope cho Phase 1)
-Xem chi tiết tại [PRODUCT-OVERVIEW](PRODUCT-OVERVIEW.md) mục 5.2. Tóm tắt: toàn bộ app/tài khoản Tenant (đăng nhập, tìm phòng/marketplace, xem & tự thanh toán hoá đơn trong app, gửi yêu cầu sửa chữa), Service Request Management, Revenue Report riêng biệt (biểu đồ/xuất file), thanh toán online trong app (chỉ dừng ở sinh mã QR tĩnh), đăng ký công tơ/IoT tự động đọc số, nhiều Tenant đại diện trên 1 hợp đồng, chat trong app, e-signature. ~~Đa ngôn ngữ~~ — **không còn ngoài phạm vi** từ 09/09/2026 cho 3 ngôn ngữ English/Tiếng Việt/한국어 (ngôn ngữ khác vẫn để Phase 2), xem `NFR-02`/`FR-MGR-05`.
+Xem chi tiết tại [PRODUCT-OVERVIEW](PRODUCT-OVERVIEW.md) mục 5.2. Tóm tắt: toàn bộ app/tài khoản Tenant (đăng nhập, tìm phòng/marketplace, xem & tự thanh toán hoá đơn trong app, gửi yêu cầu sửa chữa), Service Request Management, Revenue Report riêng biệt (biểu đồ/xuất file), thanh toán online trong app (chỉ dừng ở sinh mã QR tĩnh), đăng ký công tơ/IoT tự động đọc số, nhiều Tenant đại diện trên 1 hợp đồng, chat trong app, e-signature, **đổi danh sách phòng của hợp đồng đang Active (thêm/bớt phòng qua Amendment — bỏ khỏi Phase 1, 09/09/2026, xem `BR-CTR-07`; muốn đổi phòng thì kết thúc hợp đồng cũ rồi tạo hợp đồng mới)**. ~~Đa ngôn ngữ~~ — **không còn ngoài phạm vi** từ 09/09/2026 cho 3 ngôn ngữ English/Tiếng Việt/한국어 (ngôn ngữ khác vẫn để Phase 2), xem `NFR-02`/`FR-MGR-05`.

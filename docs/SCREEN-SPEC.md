@@ -235,7 +235,7 @@
 - **Trạng thái:** Nhập liệu → Xác nhận.
 - **Hành động & điều hướng:** Lưu → tạo `tb_contract_version` mới (`changeReason=Renewal` hoặc `Amendment` tuỳ ngữ cảnh mở màn) → T-05.
 - **Dữ liệu hiển thị:** Điều khoản phiên bản hiện hành (để so sánh trong khối "CHANGED VS").
-- **⚠️ Khoảng trống cần Dream xác nhận:** Mô tả `BR-CTR`/`FR-CTR` bản trước có nhắc Amend "gồm cả đổi danh sách phòng trong hợp đồng" (thêm/bớt phòng, kèm bắt buộc ghi chỉ số MOVE_IN/MOVE_OUT tương ứng) — nhưng màn Figma thật **không có** UI chọn/sửa danh sách phòng nào cả, chỉ có các field tiền/đơn giá/ngày như trên. Chưa rõ đây là tính năng bị bỏ khỏi Phase 1, hay chưa build kịp trên Figma. Tạm thời tài liệu này mô tả đúng theo Figma (không có phần đổi phòng) — **cần Dream xác nhận lại trước khi code UI** cho màn này, vì nếu tính năng đổi phòng giữa kỳ vẫn cần thì phải bổ sung thêm UI/logic không có trong Figma hiện tại.
+- **Đã chốt (09/09/2026):** Bỏ hẳn tính năng đổi danh sách phòng qua Amendment khỏi Phase 1 (dời Phase 2) — khớp đúng thực tế Figma (không có UI chọn/sửa phòng ở màn này). Lý do nghiệp vụ: đổi phòng thuê về bản chất là chấm dứt quan hệ thuê cũ và bắt đầu quan hệ mới, nên xử lý bằng kết thúc hợp đồng (T-09) + tạo hợp đồng mới (T-06) rõ ràng hơn là sửa ngầm vào hợp đồng đang có. Xem `BR-CTR-07`, [DECISIONS.md](DECISIONS.md).
 - **Edge cases:** Không có (theo Figma hiện tại — chưa có nhánh xử lý đổi phòng nên chưa có edge case liên quan).
 
 ### T-08 — Version History

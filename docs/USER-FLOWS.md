@@ -134,11 +134,8 @@ flowchart TD
     R --> S{Hành động sau này}
     S -- Gia hạn --> T[contract_version mới changeReason=Renewal - không đo lại chỉ số]
     T --> R
-    S -- Sửa điều khoản/đổi danh sách phòng --> U[contract_version mới changeReason=Amendment]
-    U --> U2{Có phòng bị loại khỏi hợp đồng?}
-    U2 -- Có --> U3[Bắt buộc ghi chỉ số MOVE_OUT riêng cho phòng bị loại]
-    U2 -- Không --> R
-    U3 --> R
+    S -- Sửa điều khoản (tiền/đơn giá/phí) --> U[contract_version mới changeReason=Amendment - dùng chung màn với Gia hạn]
+    U --> R
     S -- Xem lịch sử --> V[Version History]
     S -- Kết thúc hợp đồng --> W{Đã có đủ chỉ số MOVE_OUT cho từng phòng chưa?}
     W -- Chưa --> X[Bắt buộc ghi chỉ số trả phòng cho từng phòng - trừ phòng NOT_BILLED]

@@ -66,6 +66,7 @@ Version 3 đổi cấu trúc từ "5 menu" (Version 2) sang **4 tab**, giảm s�
 - **Thanh toán online trong app** — Phase 1 chỉ sinh mã QR chuyển khoản tĩnh (VietQR/NAPAS-247), không xử lý giao dịch thật trong app.
 - **Đăng ký/quản lý công tơ dạng thiết bị, đọc số tự động qua IoT** — Phase 1 chỉ nhập tay, 1 phòng = 1 công tơ ảo gắn trực tiếp vào phòng.
 - Nhiều Tenant đại diện trên 1 hợp đồng (ở ghép nhiều người cùng đứng tên).
+- **Đổi danh sách phòng của 1 hợp đồng đang Active** (thêm/bớt phòng qua Amendment) — bỏ khỏi Phase 1, 09/09/2026 (khớp thực tế Figma, không có UI cho việc này). Đổi phòng thuê xử lý bằng kết thúc hợp đồng cũ + tạo hợp đồng mới. Xem `BR-CTR-07`.
 - Chat trong app giữa các bên.
 - e-signature.
 - Marketplace tìm phòng công khai/SEO/quảng cáo trả phí.

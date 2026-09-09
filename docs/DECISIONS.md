@@ -220,3 +220,14 @@ Dream báo hiệu design đã "ready to build" (commit cuối `43555b0`). Trư�
 4. Chưa xử lý 2 phát hiện phụ khác đã biết từ trước (không thuộc phạm vi yêu cầu lần này): B-01 vẫn dùng 4-chip lọc nhà (T-02 đã đổi dropdown, chưa đồng bộ); H-03 chưa chốt tab mặc định (House detail hay Rooms).
 
 **Tác động cần dev lưu ý:** Chỉ ảnh hưởng tài liệu (`docs/*.md`), không phát sinh thay đổi schema DB hay Edge Function nào. Khi code UI tab Tenant & Contract, dùng đúng số T-0x mới trong `SCREEN-SPEC.md` (đã khớp Figma) — không dùng lại số cũ trong các phiên bản trước đó của tài liệu.
+
+## 2026-09-09 (Đợt 7) — Chốt bỏ tính năng đổi danh sách phòng (Amendment) khỏi Phase 1
+
+Nối tiếp khoảng trống để ngỏ ở Đợt 6 (màn T-07 Renew/Amend không có UI đổi phòng). Trao đổi trực tiếp với dungtv, không cần hỏi lại Dream — dungtv tự đánh giá và quyết định dựa trên phân tích của Claude về mức độ ảnh hưởng:
+
+- **Quyết định: bỏ hẳn tính năng đổi danh sách phòng của 1 hợp đồng đang Active (thêm/bớt phòng qua Amendment) khỏi Phase 1, dời Phase 2.** Khớp đúng thực tế Figma (T-07 không có UI cho việc này).
+- **Lý do kỹ thuật (Claude phân tích):** Nếu giữ tính năng này, `tb_contract_room` (bảng nối hợp đồng↔phòng) cần thêm cơ chế **versioning theo từng `contract_version`** để giữ đúng "danh sách phòng tại thời điểm phát hành mỗi hoá đơn cũ" — nhưng schema hiện tại trong `DATABASE.md` chưa thiết kế cơ chế này (`tb_contract_room` chỉ là bảng nối phẳng theo `contractId`, không theo version). Bỏ tính năng này giúp **giữ nguyên schema đơn giản đã có**, không cần thiết kế thêm.
+- **Lý do nghiệp vụ (dungtv xác nhận):** Đổi phòng thuê về bản chất là chấm dứt quan hệ thuê cũ, bắt đầu quan hệ thuê mới — hợp lý hơn khi xử lý bằng **kết thúc hợp đồng cũ (T-09) + tạo hợp đồng mới (T-06)** thay vì sửa ngầm vào hợp đồng đang có, kể cả về mặt pháp lý/giấy tờ.
+- Cập nhật: `BUSINESS-RULES.md` (BR-CTR-07 đánh dấu bỏ, BR-VER-03/BR-VER-06 sửa lại không còn nhắc đổi phòng), `REQUIREMENTS.md` (FR-CTR-05/07, mục 6 Ngoài phạm vi), `PRODUCT-OVERVIEW.md` (mục 5.2), `USER-FLOWS.md` (Flow #4, bỏ nhánh MOVE_OUT khi loại phòng), `SCREEN-SPEC.md` (T-07, đổi từ "chờ Dream xác nhận" thành quyết định dứt khoát).
+
+**Tác động cần dev lưu ý:** Không có thay đổi schema DB nào phát sinh (ngược lại, tránh được 1 thay đổi đáng lẽ phải thêm). `tb_contract_version.contractAreaSqm` giờ chốt cứng vĩnh viễn từ lúc tạo hợp đồng (`changeReason=New`), không đổi được nữa qua Amendment.

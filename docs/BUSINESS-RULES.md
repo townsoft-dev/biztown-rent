@@ -52,7 +52,7 @@
 | BR-CTR-04 | 1 phòng chỉ có 1 hợp đồng `Active` tại 1 thời điểm (enforce bằng ràng buộc UNIQUE trên `tb_contract_room` — xem [DATABASE.md](DATABASE.md)); **1 hợp đồng có thể gồm NHIỀU phòng**, 1 hợp đồng chỉ có 1 Tenant đại diện (`tenantId`) | Nới lỏng so với Version 2 — ở ghép nhiều Tenant/hợp đồng vẫn ngoài phạm vi Phase 1 |
 | BR-CTR-05 | Mọi phòng trong **cùng 1 hợp đồng** phải thuộc **cùng 1 Nhà/Dãy trọ** — vì hoá đơn in tên nhà và tài khoản nhận tiền theo nhà | Mới |
 | BR-CTR-06 | Hoá đơn tách điện/nước theo **từng phòng** (mỗi phòng × mỗi loại tiện ích = 1 dòng trong `utilityLines`), nhưng **tiền nhà, phí dịch vụ, phí định kỳ chỉ 1 dòng cho cả hợp đồng** | Mới — hệ quả trực tiếp của BR-CTR-04 |
-| BR-CTR-07 | Đổi danh sách phòng của 1 hợp đồng (thêm/bớt phòng) → phải tạo **phiên bản hợp đồng mới** (`changeReason=Amendment`); phòng bị loại ra khỏi hợp đồng cần ghi chỉ số **trả phòng (MOVE_OUT)** riêng cho đúng phòng đó trước khi loại | Mới |
+| BR-CTR-07 | ~~Đổi danh sách phòng của 1 hợp đồng (thêm/bớt phòng)~~ — **ngoài phạm vi Phase 1, dời Phase 2** | Bỏ khỏi Phase 1, 09/09/2026 (đợt 6) — Figma thật không có UI cho việc này, xem [DECISIONS.md](DECISIONS.md). Muốn đổi phòng thuê trong Phase 1 thì phải kết thúc hợp đồng cũ (T-09) rồi tạo hợp đồng mới (T-06) |
 | BR-CTR-08 | Gia hạn hoặc sửa điều khoản hợp đồng tạo bản ghi `contract_version` mới, không ghi đè bản cũ | Kế thừa Version 2 — xem mục 3ter |
 | BR-CTR-09 | Tenant có thể được đăng ký **độc lập** với hợp đồng, tồn tại ở "Tenant Pool" chưa gắn phòng, cho tới khi được chọn khi tạo hợp đồng | Kế thừa Version 2 |
 | BR-CTR-10 | Chỉ số điện/nước **bắt buộc** phải có tại 2 mốc: **nhận phòng** (`MOVE_IN`, chặn nút "Lưu hợp đồng" nếu thiếu) và **trả phòng** (`MOVE_OUT`, chặn việc tính thanh lý cọc nếu thiếu). Không áp dụng khi phòng/hợp đồng có `electricityBillingMethod`/`waterBillingMethod = NOT_BILLED` | **Thay thế hoàn toàn** BR-CTR-07 cũ của Version 2 ("chỉ số nhập trực tiếp lúc tạo hoá đơn, không có màn ghi số riêng") — xem mục 6 |
@@ -68,10 +68,10 @@
 |---|---|
 | BR-VER-01 | Khi tạo hợp đồng mới, hệ thống tạo `tb_contract` (`tenantId`, `status=Active`) + 1 dòng `tb_contract_room` cho **mỗi phòng** được chọn + `tb_contract_version` #1 (`changeReason=New`) chứa toàn bộ điều khoản (ngày, tiền thuê, cọc, đơn giá/phương thức tính điện nước, chu kỳ thu tiền nhà, ngày đến hạn thanh toán, phí dịch vụ theo m², phí định kỳ, phạt trễ hạn, môi giới). |
 | BR-VER-02 | Gia hạn hợp đồng → tạo `contract_version` mới với `changeReason=Renewal`, `versionNo` tăng dần, `startDate` mới nối tiếp `endDate` bản trước (hoặc theo Landlord/Manager chỉnh). Gia hạn với cùng Tenant/phòng thì **không đo lại chỉ số** — chuỗi `previousReadingId` tiếp tục liền mạch. |
-| BR-VER-03 | Sửa điều khoản giữa kỳ (VD đổi đơn giá điện, đổi danh sách phòng) → tạo `contract_version` mới với `changeReason=Amendment`. |
+| BR-VER-03 | Sửa điều khoản giữa kỳ (VD đổi đơn giá điện, tiền thuê, phí dịch vụ...) → tạo `contract_version` mới với `changeReason=Amendment`. **Không đổi được danh sách phòng** trong hợp đồng đang Active — xem BR-CTR-07 (dời Phase 2). |
 | BR-VER-04 | `contract.currentVersionId` luôn trỏ tới phiên bản mới nhất — dùng làm điều khoản áp dụng cho hoá đơn kế tiếp. |
 | BR-VER-05 | Hoá đơn (`invoice`) lưu `contractVersionId` tại thời điểm tạo (snapshot) — sửa/gia hạn hợp đồng sau đó **không** làm thay đổi hoá đơn đã phát hành trước đó. |
-| BR-VER-06 | `contractAreaSqm` và `serviceFeeAmount` chỉ thay đổi khi tạo phiên bản `Amendment` mới có thay đổi danh sách phòng hoặc đơn giá — **không tự động tính lại** khi diện tích phòng gốc (`tb_room.areaSqm`) bị sửa sau đó. |
+| BR-VER-06 | `contractAreaSqm` **chốt cứng tại thời điểm tạo hợp đồng** (`changeReason=New`), không đổi được sau đó vì danh sách phòng không đổi được trong Phase 1 (xem BR-CTR-07). `serviceFeeAmount` vẫn có thể đổi qua phiên bản `Amendment` khi Landlord/Manager sửa tay `serviceFeeRatePerSqm` (đơn giá) — công thức lại là `serviceFeeRatePerSqm × contractAreaSqm` (giữ nguyên diện tích ban đầu). Cả 2 field **không tự động tính lại** khi diện tích phòng gốc (`tb_room.areaSqm`) bị sửa sau đó. |
 
 ---
 
