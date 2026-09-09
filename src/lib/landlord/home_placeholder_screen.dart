@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/supabase_client.dart';
 import '../data/auth_repository.dart';
@@ -19,6 +20,12 @@ class HomePlaceholderScreen extends StatelessWidget {
           children: [
             Text('Đăng nhập thành công: $phone'),
             const SizedBox(height: 16),
+            // TODO: tạm để verify S-03 tới khi H-01 thật có bell icon trên Topbar.
+            ElevatedButton(
+              onPressed: () => context.push('/notifications'),
+              child: const Text('Xem Notifications (S-03)'),
+            ),
+            const SizedBox(height: 8),
             ElevatedButton(
               onPressed: () => authRepository.signOut(),
               child: const Text('Đăng xuất'),

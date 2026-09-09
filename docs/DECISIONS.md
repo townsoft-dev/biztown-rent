@@ -291,3 +291,16 @@ Bản Auth code ở Đợt 10 build từ mô tả text trong `SCREEN-SPEC.md`/`D
 **Kỹ thuật kiểm chứng:** vì không gọi được OTP thật (chưa có SMS provider), tạm sửa 2 dòng khởi tạo state (`_step`/`_otpVerified`) để ép hiển thị thẳng section "STEP 3" mà không cần OTP thật, chụp màn hình so khớp, rồi **revert lại ngay** 2 dòng debug đó trước khi commit — không để lại code test tạm trong commit.
 
 **Tác động cần dev lưu ý:** ⚠️ Cơ chế chính xác OTP+Password "cộng dồn trên 1 màn" mới chỉ là suy đoán hợp lý nhất từ 1 ảnh tĩnh (không thấy được animation/tương tác thật của prototype Figma) — cần verify lại khi Figma MCP hết giới hạn quota hoặc hỏi Dream trực tiếp, trước khi coi đây là chuẩn cuối cùng cho các màn nhiều-bước khác (nếu có) trong app.
+
+## 2026-09-09 (Đợt 12) — Figma MCP có Editor access thật (tài khoản CEO): rebuild S-00→S-03 bằng dữ liệu chính xác, xác nhận nghi ngờ ở Đợt 11 là đúng
+
+dungtv tự đăng nhập Figma bằng tài khoản CEO (`ceo@townsoftvina.com`, seat Full trên gói Pro, đúng team sở hữu file BizTown) và re-auth lại kết nối Figma MCP phía Claude (qua Settings → Connectors, không phải việc AI tự làm được). `whoami` xác nhận đổi danh tính thành công; `get_metadata`/`get_design_context` gọi được không giới hạn.
+
+**2 phát hiện quan trọng, sửa lại quyết định đã ghi ở Đợt 11:**
+
+1. **Cấu trúc Sign Up thật sự KHÁC** với suy đoán ở Đợt 11: Figma có **3 frame riêng** — "S-02 Sign Up Step 1" (SĐT + OTP gộp chung 1 trang, không tách rời như suy đoán ban đầu trước đó nữa, mà đúng là 1 trang cho cả 2 việc), "Step 2" (SET PASSWORD, **trang điều hướng riêng**, không phải section cộng dồn trong cùng 1 trang), và "Step 3" — thực chất là **bottom sheet thành công** hiện đè lên Step 2 (đang mờ 30%) sau khi tạo tài khoản xong, không phải 1 bước nhập liệu. Stepper chỉ có **3 chấm** (không phải 4 như bản đoán trước), vẽ bằng toạ độ SVG gốc (dot r=4 tại x=4/52/100, line dài 28px). Rebuild lại `signup_screen.dart` thành 2 trang điều hướng nội bộ (`_SignupPage` enum) + `showModalBottomSheet` cho thành công.
+2. **File SVG logo trong `design/Logo/` bị sai tỉ lệ** (viewBox 354×164, dư khoảng trắng đáy) so với artwork thật xuất từ Figma (viewBox chuẩn 279.589×93.986 cho bản OnNavy, 199.706×67.133 cho bản Light) — đây chính là nguyên nhân dungtv hỏi lại "khoảng cách dưới RENT MANAGER có đúng không". Đã tải lại đúng file SVG qua `download_assets`/export URL của Figma, ghi đè cả `design/Logo/` (nguồn thiết kế) và `src/assets/logo/` (asset app dùng).
+
+**Bài học quy trình quan trọng nhất:** việc chủ động ghi chú nghi ngờ ngay trong code/DECISIONS.md khi phải suy đoán từ ảnh tĩnh (như đã làm ở Đợt 11 với dòng "⚠️ Chưa chắc 100%...") có giá trị thật — khi có dữ liệu chính xác, biết ngay chỗ nào cần rà soát lại thay vì phải đoán lại từ đầu toàn bộ màn hình.
+
+**Đã verify bằng build thật + chụp màn hình trên emulator** cho cả 4 màn (S-00, S-01, S-02×2 trang+sheet, S-03 — màn hoàn toàn mới, build lần đầu). Phần OTP/Set Password/bottom sheet phải tạm ép state debug để chụp (chưa có SMS provider thật) — đã revert sạch trước khi commit (`grep DEBUG TEMP` rỗng).

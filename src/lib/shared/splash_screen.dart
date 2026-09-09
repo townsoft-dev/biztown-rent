@@ -37,11 +37,11 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SvgPicture.asset('assets/logo/biztown-rent-manager-lockup-on-navy.svg', width: 260),
-            const SizedBox(height: 20),
+            SvgPicture.asset('assets/logo/biztown-rent-manager-lockup-on-navy.svg', width: 280),
+            const SizedBox(height: 12),
             const Text(
               'Houses and Rooms Renting Management Tool',
-              style: TextStyle(color: Color(0xFFAEBBD4), fontSize: 13),
+              style: TextStyle(color: Color(0xFFC9CEE0), fontSize: 13, height: 18 / 13),
               textAlign: TextAlign.center,
             ),
           ],

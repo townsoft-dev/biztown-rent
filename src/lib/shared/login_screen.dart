@@ -1,10 +1,11 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme.dart';
 import '../data/auth_repository.dart';
+import 'field_label.dart';
 
 /// S-01 — Đăng nhập. Layout/copy khớp ảnh Figma thật (09/09/2026) — không suy
 /// diễn từ text spec nữa, xem ảnh gửi kèm trong changelog/2026-09-09.md.
@@ -19,21 +20,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  late final TapGestureRecognizer _signUpTap;
   bool _isLoading = false;
   String? _errorText;
-
-  @override
-  void initState() {
-    super.initState();
-    _signUpTap = TapGestureRecognizer()..onTap = () => context.go('/signup');
-  }
 
   @override
   void dispose() {
     _phoneController.dispose();
     _passwordController.dispose();
-    _signUpTap.dispose();
     super.dispose();
   }
 
@@ -64,47 +57,51 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: AppColors.bgDefault,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.screenPadding),
+          padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 24),
-                SvgPicture.asset('assets/logo/biztown-rent-manager-lockup.svg', width: 180),
-                const SizedBox(height: 28),
-                Text('Log in', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                const Text('Welcome! Please sign in to continue.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                const SizedBox(height: 24),
-                const _FieldLabel('Phone number'),
+                SvgPicture.asset('assets/logo/biztown-rent-manager-lockup.svg', width: 200),
+                const SizedBox(height: 40),
+                Text('Log in', style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w700, height: 34 / 28, color: AppColors.textPrimary)),
+                const SizedBox(height: 12),
+                Text(
+                  'Welcome! Please sign in to continue.',
+                  style: GoogleFonts.inter(fontSize: 13, height: 18 / 13, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 32),
+                const FieldLabel('Phone number'),
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
+                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
                   validator: (v) => (v == null || v.trim().isEmpty) ? 'Nhập số điện thoại' : null,
                 ),
-                const SizedBox(height: 16),
-                const _FieldLabel('Password'),
+                const SizedBox(height: 12),
+                const FieldLabel('Password'),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
+                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
                   validator: (v) => (v == null || v.isEmpty) ? 'Nhập mật khẩu' : null,
                 ),
                 if (_errorText != null) ...[
                   const SizedBox(height: 8),
                   Text(_errorText!, style: const TextStyle(color: AppColors.error, fontSize: 12)),
                 ],
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     // TODO: luồng "Quên mật khẩu" dùng lại OTP của SignupScreen — chưa nối.
                     onPressed: () {},
                     style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-                    child: const Text('Forgot password?'),
+                    child: Text('Forgot password?', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.info)),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -114,19 +111,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         : const Text('Log in'),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 5),
                 Center(
-                  child: RichText(
-                    text: TextSpan(
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
-                      children: [
-                        const TextSpan(text: "Don't have an account? "),
-                        TextSpan(
-                          text: 'Sign up',
-                          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
-                          recognizer: _signUpTap,
-                        ),
-                      ],
+                  child: GestureDetector(
+                    onTap: () => context.go('/signup'),
+                    child: Text(
+                      "Don't have an account?  Sign up",
+                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
                     ),
                   ),
                 ),
@@ -135,19 +126,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(text, style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
     );
   }
 }

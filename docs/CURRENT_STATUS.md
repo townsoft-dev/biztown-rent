@@ -68,6 +68,7 @@
   - Chưa test được: luồng gửi/xác thực OTP thật (cần chọn nhà cung cấp SMS trước — `send-otp-sms` Edge Function vẫn là TODO), rate-limit sau 5 lần sai, "Quên mật khẩu" (chưa nối).
 - [x] **Sửa lại S-00/S-01/S-02 khớp đúng ảnh Figma thật** (09/09/2026) — bản đầu code từ mô tả text trong docs, dungtv phản hồi chưa giống Figma. dungtv gửi trực tiếp ảnh chụp Figma (S-00/S-01/S-02/S-03) vì Figma MCP bị giới hạn quota lúc đó. Sửa: dùng đúng logo thật `design/Logo/*.svg` (trước đó dùng icon Material chung chung), đổi toàn bộ layout Login từ canh giữa sang canh trái + label cố định phía trên field (trước đó dùng floating label kiểu Material) + đúng nguyên văn copy tiếng Anh ("Log in"/"Welcome! Please sign in to continue." thay vì tự viết), nút full-width, "Forgot password?" canh phải. Viết lại hẳn cấu trúc Signup: **1 màn liên tục** có thanh tiến trình (progress dots) + AppBar "Create account/Main Manager", phần OTP và "STEP 3 — SET PASSWORD" cùng hiện trên 1 màn (trước đó tách rời hoàn toàn 3 bước như 3 màn khác nhau). Verify lại bằng ảnh chụp emulator so trực tiếp với ảnh Figma — khớp rõ rệt hơn nhiều.
   - ⚠️ Vẫn còn 1 điểm chưa chắc chắn (ảnh tĩnh không thấy được tương tác thật): cơ chế chính xác OTP/Password có thật sự hiện cùng lúc trên 1 màn hay có bước chuyển tiếp nào khác — đã note trong code, cần Dream xác nhận khi có thể truy cập Figma lại.
+- [x] **Figma MCP có Editor access thật (tài khoản CEO) — rebuild S-00→S-03 bằng `get_design_context` chính xác, không còn suy đoán** (09/09/2026) — sửa 2 điểm sai từ bản trước: (1) cấu trúc Sign Up thật là **2 trang điều hướng riêng** (Step 1: SĐT+OTP chung 1 trang; Step 2: Set Password) **+ 1 bottom sheet thành công**, không phải "1 màn liên tục cộng dồn" như suy đoán ở Đợt 11 (điểm ⚠️ ở dòng trên); (2) file SVG logo trong `design/Logo/` sai tỉ lệ (dư khoảng trắng đáy) so với artwork thật — đã tải lại đúng file từ Figma export. Viết mới `shared/top_bar.dart`, `shared/signup_stepper.dart`, `shared/segmented_control.dart`, `shared/field_label.dart` (component dùng chung). Build mới hoàn toàn **S-03 Notification Center**. Verify toàn bộ bằng build thật + chụp màn hình trên emulator — xem chi tiết [DECISIONS.md](DECISIONS.md) Đợt 12.
 
 ## Đang làm / Tiếp theo
 
@@ -76,4 +77,5 @@
 - [ ] Chọn nhà cung cấp SMS Việt Nam (eSMS/Speedsms) + đăng ký Zalo ZNS/OA
 - [ ] Tạo project Firebase (miễn phí, chỉ dùng cho FCM push) khi tới lúc code `send-notification` thật
 - [ ] Setup Scheduled Trigger (pg_cron) cho job nhắc thanh toán quá hạn + nhắc ghi chỉ số định kỳ
-- [ ] Nối S-03 (Trung tâm thông báo) + màn Home tab thật (H-01→H-06) theo Figma, tiếp nối sau khung Auth vừa xong
+- [ ] Code màn Home tab thật (H-01→H-06) theo Figma — S-00→S-03 (Auth + Notification Center) đã xong ở trên
+- [ ] S-03 hiện chỉ vào được qua nút tạm ở Home placeholder — cần thay bằng bell icon thật trên Topbar của H-01 khi code tới đó

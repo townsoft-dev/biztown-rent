@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../shared/login_screen.dart';
+import '../shared/notification_center_screen.dart';
 import '../shared/signup_screen.dart';
 import '../shared/splash_screen.dart';
 import '../landlord/home_placeholder_screen.dart';
@@ -45,5 +46,6 @@ final appRouter = GoRouter(
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
     // TODO: thay bằng H-01 thật (bottom nav 4 tab) khi code tới Home tab.
     GoRoute(path: '/home', builder: (context, state) => const HomePlaceholderScreen()),
+    GoRoute(path: '/notifications', builder: (context, state) => const NotificationCenterScreen()),
   ],
 );

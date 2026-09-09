@@ -1,22 +1,21 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
 import '../core/theme.dart';
 import '../data/auth_repository.dart';
+import 'field_label.dart';
+import 'signup_stepper.dart';
+import 'top_bar.dart';
 
-enum _SignupStep { enterPhone, verifyAndSetPassword }
-
-/// S-02 — Đăng ký. Layout/copy khớp ảnh Figma thật (09/09/2026): AppBar "Create
-/// account / Main Manager", progress dots, phần "Verify your phone" (OTP) và
-/// "STEP 3 — SET PASSWORD" cùng nằm trên 1 màn liên tục (không chuyển route).
-///
-/// ⚠️ Chưa chắc 100% cơ chế hiện/ẩn 2 phần này khớp Figma thật (ảnh tĩnh không
-/// thấy được animation/trạng thái trung gian) — hiện làm: nhập đủ 6 số OTP thì
-/// tự verify, verify xong mới hiện phần "Set password" bên dưới, KHÔNG ẩn phần
-/// OTP đi (khớp ảnh: cả 2 phần cùng hiển thị). Cần Dream xác nhận lại nếu sai.
+/// S-02 — Sign Up. Trên Figma đây là 2 trang điều hướng riêng (Step 1: SĐT +
+/// OTP chung 1 trang; Step 2: đặt mật khẩu) + 1 bottom sheet thành công khi
+/// tạo tài khoản xong (node 220:2214, 347:2941, 347:3087 — lấy qua Figma MCP
+/// 09/09/2026, không phải suy đoán từ ảnh chụp nữa).
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -24,15 +23,19 @@ class SignupScreen extends StatefulWidget {
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
+enum _SignupPage { verifyPhone, setPassword }
+
 class _SignupScreenState extends State<SignupScreen> {
-  _SignupStep _step = _SignupStep.enterPhone;
+  _SignupPage _page = _SignupPage.verifyPhone;
   final _phoneController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   String _otp = '';
+  bool _otpSent = false;
   bool _otpVerified = false;
   bool _isLoading = false;
+  bool _accountCreated = false;
   String? _errorText;
   String? _confirmPasswordError;
 
@@ -75,7 +78,7 @@ class _SignupScreenState extends State<SignupScreen> {
     });
     try {
       await authRepository.sendOtp(_phoneController.text.trim());
-      setState(() => _step = _SignupStep.verifyAndSetPassword);
+      setState(() => _otpSent = true);
       _startResendCountdown();
     } catch (e) {
       setState(() => _errorText = 'Không gửi được OTP, thử lại sau');
@@ -126,6 +129,9 @@ class _SignupScreenState extends State<SignupScreen> {
         phone: _phoneController.text.trim(),
         fullName: _fullNameController.text.trim().isEmpty ? null : _fullNameController.text.trim(),
       );
+      if (!mounted) return;
+      setState(() => _accountCreated = true);
+      await _showSuccessSheet();
       // go_router redirect tự chuyển sang /home khi có session (đã có từ lúc verifyOtp).
     } catch (e) {
       setState(() => _errorText = 'Không tạo được tài khoản, thử lại');
@@ -134,84 +140,89 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
+  Future<void> _showSuccessSheet() {
+    return showModalBottomSheet<void>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: AppColors.bgDefault,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => _SignupSuccessSheet(onGetStarted: () => Navigator.of(context).pop()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final onStep1 = _page == _SignupPage.verifyPhone;
     return Scaffold(
       backgroundColor: AppColors.bgDefault,
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/login')),
-        title: const Text('Create account'),
-        titleTextStyle: Theme.of(context).textTheme.titleLarge,
-        toolbarHeight: kToolbarHeight + 8,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(20),
-          child: Padding(
-            padding: const EdgeInsets.only(left: 56, bottom: 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Main Manager', style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 12)),
+      body: Column(
+        children: [
+          TopBar(
+            title: 'Create account',
+            opacity: _accountCreated ? 0.3 : 1,
+            onBack: () {
+              if (onStep1) {
+                context.go('/login');
+              } else {
+                setState(() => _page = _SignupPage.verifyPhone);
+              }
+            },
+          ),
+          Expanded(
+            child: Opacity(
+              opacity: _accountCreated ? 0.3 : 1,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                child: onStep1 ? _buildVerifyPhonePage() : _buildSetPasswordPage(),
+              ),
             ),
           ),
-        ),
+        ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.screenPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+
+  Widget _buildVerifyPhonePage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SignupStepper(current: 1),
+        const SizedBox(height: 12),
+        Text('Verify your phone', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, height: 26 / 20, color: AppColors.textPrimary)),
+        const SizedBox(height: 12),
+        const FieldLabel('Phone number'),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+          decoration: BoxDecoration(
+            color: AppColors.bgDefault,
+            border: Border.all(color: AppColors.neutral200, width: 1.5),
+            borderRadius: BorderRadius.circular(AppRadii.inputField),
+          ),
+          child: Row(
             children: [
-              const SizedBox(height: 12),
-              _ProgressDots(step: _step == _SignupStep.enterPhone ? 0 : (_otpVerified ? 2 : 1)),
-              const SizedBox(height: 20),
-              if (_step == _SignupStep.enterPhone) _buildPhoneStep() else _buildVerifyAndPasswordStep(),
+              Expanded(
+                child: TextField(
+                  controller: _phoneController,
+                  enabled: !_otpSent,
+                  keyboardType: TextInputType.phone,
+                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
+                  decoration: const InputDecoration.collapsed(hintText: ''),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _SendOtpChip(loading: _isLoading && !_otpSent, onTap: _otpSent ? null : _sendOtp),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPhoneStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Sign up', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 4),
-        const Text("Let's get your account started.", style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-        const SizedBox(height: 24),
-        const _FieldLabel('Phone number'),
-        TextField(controller: _phoneController, keyboardType: TextInputType.phone),
-        if (_errorText != null) ...[
-          const SizedBox(height: 8),
-          Text(_errorText!, style: const TextStyle(color: AppColors.error, fontSize: 12)),
-        ],
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _sendOtp,
-            child: _isLoading
-                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Send code'),
+        if (_otpSent) ...[
+          const SizedBox(height: 12),
+          Text(
+            'We sent a 6-digit code to ${_phoneController.text.trim()}. The code expires in $_mmss.',
+            style: GoogleFonts.inter(fontSize: 13, height: 18 / 13, color: AppColors.textSecondary),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVerifyAndPasswordStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Verify your phone', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 4),
-        Text(
-          'We sent a 6-digit code to ${_phoneController.text}. The code expires in $_mmss.',
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ),
-        const SizedBox(height: 20),
-        Center(
-          child: PinCodeTextField(
+          const SizedBox(height: 12),
+          PinCodeTextField(
             appContext: context,
             length: 6,
             enabled: !_otpVerified,
@@ -221,107 +232,154 @@ class _SignupScreenState extends State<SignupScreen> {
             pinTheme: PinTheme(
               shape: PinCodeFieldShape.box,
               borderRadius: BorderRadius.circular(AppRadii.inputField),
-              fieldHeight: 48,
-              fieldWidth: 42,
+              fieldHeight: 52,
+              fieldWidth: 46,
               activeColor: AppColors.accentOrange,
               selectedColor: AppColors.accentOrange,
               inactiveColor: AppColors.neutral200,
             ),
+            textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
-        ),
+          const SizedBox(height: 12),
+          Center(
+            child: _resendSecondsLeft > 0
+                ? Text('Resend code  ·  $_mmss', style: GoogleFonts.inter(fontSize: 12, color: AppColors.secondaryLight))
+                : TextButton(onPressed: _isLoading ? null : _sendOtp, child: const Text('Resend code')),
+          ),
+        ],
         if (_errorText != null) ...[
           const SizedBox(height: 8),
           Text(_errorText!, style: const TextStyle(color: AppColors.error, fontSize: 12), textAlign: TextAlign.center),
         ],
-        const SizedBox(height: 8),
-        Center(
-          child: _resendSecondsLeft > 0
-              ? Text('Resend code · $_mmss', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12))
-              : TextButton(onPressed: _isLoading ? null : _sendOtp, child: const Text('Resend code')),
+        const SizedBox(height: 60),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _otpVerified ? () => setState(() => _page = _SignupPage.setPassword) : null,
+            child: const Text('Next - Set up your password'),
+          ),
         ),
-        if (_otpVerified) ...[
-          const SizedBox(height: 28),
-          const Text('STEP 3 — SET PASSWORD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: AppColors.textSecondary)),
-          const SizedBox(height: 16),
-          const _FieldLabel('Full name'),
-          TextField(controller: _fullNameController),
-          const SizedBox(height: 16),
-          const _FieldLabel('Password'),
-          TextField(controller: _passwordController, obscureText: true, onChanged: (_) => _onConfirmPasswordChanged(_confirmPasswordController.text)),
-          const SizedBox(height: 16),
-          const _FieldLabel('Confirm password'),
-          TextField(
-            controller: _confirmPasswordController,
-            obscureText: true,
-            onChanged: _onConfirmPasswordChanged,
-            decoration: _confirmPasswordError == null
-                ? null
-                : InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.inputField), borderSide: const BorderSide(color: AppColors.error)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.inputField), borderSide: const BorderSide(color: AppColors.error, width: 1.5)),
-                  ),
-          ),
-          if (_confirmPasswordError != null) ...[
-            const SizedBox(height: 4),
-            Text(_confirmPasswordError!, style: const TextStyle(color: AppColors.error, fontSize: 12)),
-          ],
-          if (_errorText != null) ...[
-            const SizedBox(height: 8),
-            Text(_errorText!, style: const TextStyle(color: AppColors.error, fontSize: 12)),
-          ],
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _createAccount,
-              child: _isLoading
-                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Create account'),
-            ),
-          ),
+      ],
+    );
+  }
+
+  Widget _buildSetPasswordPage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SignupStepper(current: 2),
+        const SizedBox(height: 12),
+        Text('SET PASSWORD', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, height: 26 / 20, color: AppColors.textPrimary)),
+        const SizedBox(height: 12),
+        const FieldLabel('Full name'),
+        TextFormField(controller: _fullNameController, style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary)),
+        const SizedBox(height: 12),
+        const FieldLabel('Password'),
+        TextFormField(
+          controller: _passwordController,
+          obscureText: true,
+          style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
+          onChanged: (_) => _onConfirmPasswordChanged(_confirmPasswordController.text),
+        ),
+        const SizedBox(height: 12),
+        const FieldLabel('Confirm password'),
+        TextFormField(
+          controller: _confirmPasswordController,
+          obscureText: true,
+          style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
+          onChanged: _onConfirmPasswordChanged,
+          decoration: _confirmPasswordError == null
+              ? null
+              : InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.inputField), borderSide: const BorderSide(color: AppColors.error, width: 1.5)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.inputField), borderSide: const BorderSide(color: AppColors.error, width: 1.5)),
+                ),
+        ),
+        if (_confirmPasswordError != null) ...[
+          const SizedBox(height: 4),
+          Text(_confirmPasswordError!, style: GoogleFonts.inter(fontSize: 12, color: AppColors.error)),
         ],
+        if (_errorText != null) ...[
+          const SizedBox(height: 8),
+          Text(_errorText!, style: const TextStyle(color: AppColors.error, fontSize: 12)),
+        ],
+        const SizedBox(height: 28),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _createAccount,
+            child: _isLoading
+                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Text('Create account'),
+          ),
+        ),
       ],
     );
   }
 }
 
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
+class _SendOtpChip extends StatelessWidget {
+  final bool loading;
+  final VoidCallback? onTap;
+  const _SendOtpChip({required this.loading, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(text, style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+    final enabled = onTap != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: enabled ? AppColors.primary : AppColors.neutral200,
+          borderRadius: BorderRadius.circular(AppRadii.inputField),
+        ),
+        child: loading
+            ? const SizedBox(height: 11, width: 11, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            : Text('Send OTP', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, height: 14 / 11, color: Colors.white)),
+      ),
     );
   }
 }
 
-/// 4 chấm tiến trình trên đầu màn Đăng ký — khớp ảnh Figma (xanh=xong,
-/// cam=đang làm, xám=chưa tới). `step`: 0=nhập SĐT, 1=xác thực OTP, 2=đặt mật khẩu.
-class _ProgressDots extends StatelessWidget {
-  final int step;
-  const _ProgressDots({required this.step});
+/// Bottom sheet thành công (S-02 — Sign Up - Step 3, node 347:3087) hiện sau
+/// khi tạo tài khoản xong, đè lên trang Set Password (đang mờ 30% phía sau).
+class _SignupSuccessSheet extends StatelessWidget {
+  final VoidCallback onGetStarted;
+  const _SignupSuccessSheet({required this.onGetStarted});
 
   @override
   Widget build(BuildContext context) {
-    Color colorFor(int index) {
-      if (index < step) return AppColors.success;
-      if (index == step) return AppColors.accentOrange;
-      return AppColors.neutral200;
-    }
-
-    return Row(
-      children: List.generate(4, (i) {
-        return Expanded(
-          child: Container(
-            height: 4,
-            margin: EdgeInsets.only(right: i == 3 ? 0 : 6),
-            decoration: BoxDecoration(color: colorFor(i), borderRadius: BorderRadius.circular(2)),
-          ),
-        );
-      }),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 36, height: 4, decoration: BoxDecoration(color: AppColors.borderSubtle, borderRadius: BorderRadius.circular(100))),
+            const SizedBox(height: 30),
+            SvgPicture.asset('assets/icons/signup_success.svg', width: 123, height: 123),
+            const SizedBox(height: 30),
+            Text(
+              'Congratulation! Account created.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, height: 20 / 14, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 15),
+            Text(
+              'Your account is ready. From here you can keep track of your properties, tenants, and bills — all in one place. Take a look around.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(fontSize: 13, height: 18 / 13, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 30),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(onPressed: onGetStarted, child: const Text('Get started')),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -24,6 +24,8 @@ class AppColors {
 
   static const bgDefault = Color(0xFFFFFFFF);
   static const bgSubtle = Color(0xFFF5F6F9);
+  static const bgTrack = Color(0xFFE7E9F1); // nền track của Segmented control
+  static const textTertiary = Color(0xFF868DA7); // = secondaryLight, dùng cho meta/caption phụ
   static const textPrimary = Color(0xFF23305E); // = primary
   static const textSecondary = Color(0xFF5A6B8A); // = secondary
   static const borderSubtle = Color(0xFFEEF0F5);
@@ -93,6 +95,8 @@ ThemeData buildAppTheme() {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: AppColors.bgDefault,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+      hintStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.secondaryLight),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadii.inputField),
         borderSide: const BorderSide(color: AppColors.neutral200),
@@ -107,9 +111,10 @@ ThemeData buildAppTheme() {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        minimumSize: const Size(88, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
-        textStyle: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700),
+        textStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700),
       ),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
