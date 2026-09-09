@@ -10,7 +10,7 @@
 - Migration `supabase/migrations/20260903121605_initial_schema.sql` (11 bảng, đã áp lên Supabase dev thật) được viết theo schema **Version 1** — đã lạc hậu từ đợt Version 2, và nay **càng lạc hậu hơn nữa** với Version 3 (khác cả tên bảng lẫn cấu trúc: không tiền tố → tiền tố `tb_`, 1 hợp đồng 1 phòng → nhiều phòng, không có bảng chỉ số → 2 bảng chỉ số mới...). Cần viết migration mới từ đầu.
 - Edge Function `generate-invoice` cần viết lại hoàn toàn theo mô hình đọc lại chỉ số đã ghi (thay vì nhận chỉ số nhập tay), hỗ trợ tạo hàng loạt, và sinh mã QR.
 - Edge Function `create-manager-user` (tạo tài khoản Manager qua Admin API) **cần xoá hẳn** — không còn phù hợp với mô hình vai trò-theo-từng-nhà.
-- Figma wireframe MVP hiện tại (link tại [DESIGN.md](DESIGN.md)) vẫn là **22 màn hình theo Version 2** — cần build lại theo 32 màn/4 tab của [SCREEN-SPEC.md](SCREEN-SPEC.md) trước khi code UI theo Version 3.
+- Figma wireframe MVP (link tại [DESIGN.md](DESIGN.md)) **đã được build lại theo 32 màn/4 tab Version 3** (08/09/2026) — không còn là bản 22 màn/Version 2 cũ, prototype đã nối lại đầy đủ. Có thể dùng trực tiếp làm nguồn thiết kế khi bắt đầu code UI.
 
 ## Đã xong
 
@@ -27,6 +27,7 @@
 - [x] **FigJam board cập nhật đầy đủ theo Version 3** (khu vực "Version 3 — CURRENT")
 - [x] **Toàn bộ `docs/*.md` viết lại theo Version 3** (2026-09-08)
 - [x] **Đồng bộ docs theo 3 chỉnh sửa trực tiếp trong FigJam cùng ngày** (đợt 2): bỏ `unitPrice`/`totalAmount` khỏi 2 bảng chỉ số, gộp 3 màn ghi/xem/sửa chỉ số thành 1 màn H-06 (còn 32 màn), làm rõ quan hệ mặc định `recurringFees` house→room — xem [DECISIONS.md](DECISIONS.md)
+- [x] **Build lại Figma wireframe theo 32 màn/4 tab Version 3 + nối lại prototype** (đợt 3, cùng ngày): tổ chức lại Home tab đúng 6 màn H-01→H-06 theo SCREEN-SPEC.md (gộp ghi/xem/sửa chỉ số vào H-06, xoá màn trùng lặp "House Detail (Readings)"), bỏ hiển thị mã đồng hồ theo phòng (đúng BR-READ-01), thêm field `recurringFees` mặc định ở House/Room, rà soát và sửa toàn bộ trích dẫn `BR-xxx` cho khớp BUSINESS-RULES.md — xem [DECISIONS.md](DECISIONS.md)
 
 ## Còn thiếu để dev thật được (máy local)
 
@@ -44,4 +45,4 @@
 - [ ] Chọn thư viện/API sinh mã QR chuẩn VietQR/NAPAS-247
 - [ ] Tạo project Firebase (miễn phí, chỉ dùng cho FCM push) khi tới lúc code `send-notification` thật
 - [ ] Setup Scheduled Trigger (pg_cron) cho job nhắc thanh toán quá hạn + nhắc ghi chỉ số định kỳ
-- [ ] Bắt đầu code UI theo thứ tự 4 tab chính trong [USER-FLOWS.md](USER-FLOWS.md), dựa theo Figma Version 3 sau khi build xong
+- [ ] Bắt đầu code UI theo thứ tự 4 tab chính trong [USER-FLOWS.md](USER-FLOWS.md), dựa theo Figma Version 3 (đã build xong wireframe + prototype)
