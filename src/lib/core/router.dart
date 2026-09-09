@@ -33,11 +33,21 @@ final appRouter = GoRouter(
   redirect: (context, state) {
     final loggedIn = supabase.auth.currentSession != null;
     final atSplash = state.matchedLocation == '/splash';
-    final atAuth = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+    final atLogin = state.matchedLocation == '/login';
+    final atSignup = state.matchedLocation == '/signup';
 
     if (atSplash) return null; // S-00 tự quyết định điều hướng, xem splash_screen.dart
-    if (!loggedIn && !atAuth) return '/login';
-    if (loggedIn && atAuth) return '/home';
+    if (!loggedIn && !atLogin && !atSignup) return '/login';
+    // KHÔNG tự redirect sang /home khi loggedIn (kể cả lúc đang ở /login) — chỉ dùng
+    // redirect này để CHẶN truy cập khi chưa đăng nhập. Lý do: SignupScreen dùng
+    // context.push('/signup') (để nút Back hoạt động đúng — xem Đợt 09/09 16:00), mà
+    // push() không đổi state.matchedLocation ở đây (vẫn báo "/login" dù đang hiện
+    // SignupScreen) — nếu còn rule "loggedIn && atLogin → /home", Supabase tạo
+    // session ngay sau verifyOTP (trước khi đặt mật khẩu) sẽ bị hiểu nhầm là "đang ở
+    // /login đã đăng nhập" và bắn thẳng sang /home, bỏ qua hẳn bước Set password.
+    // Điều hướng sau khi đăng nhập/đăng ký giờ làm tường minh: LoginScreen tự
+    // context.go('/home') sau signInWithPassword; SignupScreen tự context.go('/home')
+    // sau khi bấm "Get started" ở bottom sheet thành công.
     return null;
   },
   routes: [

@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
         phone: _phoneController.text.trim(),
         password: _passwordController.text,
       );
-      // go_router redirect (xem core/router.dart) tự chuyển sang /home khi có session.
+      if (mounted) context.go('/home');
     } catch (e) {
       // TODO: rate-limit sau 5 lần sai (edge case trong SCREEN-SPEC.md) — chưa
       // implement, cần đếm số lần thử ở phía server/Edge Function.

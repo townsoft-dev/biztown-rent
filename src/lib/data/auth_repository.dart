@@ -13,19 +13,29 @@ class AuthRepository {
 
   Session? get currentSession => _client.auth.currentSession;
 
+  /// Chuẩn hoá SĐT nhập kiểu VN (`0909 888 777`, có/không dấu cách) về chuẩn
+  /// E.164 (`+84909888777`) mà Supabase Auth yêu cầu. Số đã có `+` thì giữ nguyên.
+  static String normalizeVnPhone(String raw) {
+    final digits = raw.trim().replaceAll(RegExp(r'[^0-9+]'), '');
+    if (digits.startsWith('+')) return digits;
+    if (digits.startsWith('0')) return '+84${digits.substring(1)}';
+    if (digits.startsWith('84')) return '+$digits';
+    return '+84$digits';
+  }
+
   /// S-01: đăng nhập bằng SĐT + mật khẩu.
   Future<void> signInWithPassword({required String phone, required String password}) async {
-    await _client.auth.signInWithPassword(phone: phone, password: password);
+    await _client.auth.signInWithPassword(phone: normalizeVnPhone(phone), password: password);
   }
 
   /// S-02 bước 1 / "Quên mật khẩu": gửi OTP qua Send SMS Hook (nhà cung cấp SMS VN).
   Future<void> sendOtp(String phone) async {
-    await _client.auth.signInWithOtp(phone: phone);
+    await _client.auth.signInWithOtp(phone: normalizeVnPhone(phone));
   }
 
   /// S-02 bước 2: xác thực OTP — tạo session nếu đúng.
   Future<void> verifyOtp({required String phone, required String token}) async {
-    await _client.auth.verifyOTP(phone: phone, token: token, type: OtpType.sms);
+    await _client.auth.verifyOTP(phone: normalizeVnPhone(phone), token: token, type: OtpType.sms);
   }
 
   /// S-02 bước 3 (tài khoản mới) / khôi phục sau OTP quên mật khẩu: đặt mật khẩu.
@@ -39,10 +49,11 @@ class AuthRepository {
   Future<void> ensureUserProfile({required String phone, String? fullName}) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;
+    final normalizedPhone = normalizeVnPhone(phone);
     await _client.from('tb_user').upsert({
       'id': userId,
-      'phone': phone,
-      'full_name': fullName ?? phone,
+      'phone': normalizedPhone,
+      'full_name': fullName ?? normalizedPhone,
     });
   }
 

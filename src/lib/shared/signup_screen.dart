@@ -147,7 +147,12 @@ class _SignupScreenState extends State<SignupScreen> {
       enableDrag: false,
       backgroundColor: AppColors.bgDefault,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => _SignupSuccessSheet(onGetStarted: () => Navigator.of(context).pop()),
+      builder: (context) => _SignupSuccessSheet(
+        onGetStarted: () {
+          Navigator.of(context).pop();
+          context.go('/home');
+        },
+      ),
     );
   }
 
