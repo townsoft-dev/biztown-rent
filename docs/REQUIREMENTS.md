@@ -101,7 +101,7 @@
 | ID | Requirement | Priority | Ghi chú |
 |---|---|---|---|
 | FR-NOTI-01 | Push notification cho người có quyền trên Nhà/Dãy trọ liên quan (hoá đơn mới tạo, đến hạn ghi chỉ số định kỳ, hợp đồng sắp hết hạn) | Must | "Đến hạn ghi chỉ số" điều hướng đúng tới màn Ghi chỉ số (không phải màn Tạo hoá đơn) — xem BR-NOTI-05 |
-| FR-NOTI-02 | Gửi SMS/Zalo cho Tenant khi có hoá đơn mới (kèm QR) và khi nhắc thanh toán | Must | Kênh duy nhất tiếp cận Tenant. **Nội dung cố định tiếng Anh và tiếng Việt ở Phase 1, tiếng việt bên trên tiếng anh bên dưới ở Phase 1** — không theo ngôn ngữ hiển thị của người tạo hoá đơn (mới, 09/09/2026, xem `BR-NOTI-07`) |
+| FR-NOTI-02 | Gửi SMS/Zalo cho Tenant khi có hoá đơn mới (kèm QR) và khi nhắc thanh toán | Must | Kênh duy nhất tiếp cận Tenant. **Nội dung cố định tiếng Việt ở Phase 1** (không song ngữ Anh+Việt — tránh tăng độ dài tin nhắn, đội chi phí gửi tin) — không theo ngôn ngữ hiển thị của người tạo hoá đơn (sửa lại 09/09/2026 đợt 5, xem `BR-NOTI-07`) |
 | FR-NOTI-03 | Trung tâm thông báo (notification inbox) trong app | Must | |
 | FR-NOTI-04 | Thông báo khi được mời làm quản lý 1 Nhà/Dãy trọ | Should | Xem BR-NOTI-06 |
 

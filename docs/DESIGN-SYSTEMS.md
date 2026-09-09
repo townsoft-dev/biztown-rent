@@ -8,7 +8,7 @@
 
 **Bản thiết kế (Figma/FigJam) vẫn dựng bằng tiếng Anh** làm ngôn ngữ chuẩn cho wireframe/hi-fi — không cần dựng lại 2 bản ngôn ngữ trên Figma, việc song ngữ xử lý ở tầng code (i18n).
 
-**Lưu ý phân biệt (mới, 09/09/2026 — đợt 3):** 3 ngôn ngữ ở trên chỉ áp dụng cho **giao diện tài khoản** (chủ nhà/quản lý, chọn ở P-01). Nội dung SMS/Zalo gửi cho **Tenant** (hoá đơn, nhắc thanh toán) là một khái niệm hoàn toàn độc lập — cố định **cố định tiếng Anh và tiếng Việt ở Phase 1, tiếng việt bên trên tiếng anh bên dưới** ở Phase 1 bất kể người tạo hoá đơn đang dùng ngôn ngữ nào, xem `BR-NOTI-07`.
+**Lưu ý phân biệt (mới, 09/09/2026 — đợt 3, sửa lại đợt 5):** 3 ngôn ngữ ở trên chỉ áp dụng cho **giao diện tài khoản** (chủ nhà/quản lý, chọn ở P-01). Nội dung SMS/Zalo gửi cho **Tenant** (hoá đơn, nhắc thanh toán) là một khái niệm hoàn toàn độc lập — cố định **tiếng Việt** ở Phase 1 (không dùng song ngữ Anh+Việt vì làm tăng độ dài tin nhắn, đội chi phí gửi tin) bất kể người tạo hoá đơn đang dùng ngôn ngữ nào, xem `BR-NOTI-07`.
 
 ---
 
