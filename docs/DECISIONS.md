@@ -187,3 +187,36 @@ Dream tự sửa trực tiếp vào repo một phần của đợt 4 (đổi `BR
 3. **Cập nhật `CHANGELOG.md`** (file gốc ở `docs/`, khác với nhật ký hàng ngày `changelog/*.md`) — đây là phát hiện D còn tồn đọng từ `PHASE1GAPANALYSISV3.md` (chưa cập nhật từ 2026-09-04), nay bổ sung đầy đủ các mục "Changed" cho toàn bộ đợt 2/3/4/5 trong ngày 09/09/2026, coi như đóng phát hiện D.
 
 **Tác động cần dev lưu ý:** Không có thay đổi schema DB mới ở đợt này (chỉ thêm chú thích cho field đã có). Nếu backend/Edge Function `send-notification` đã bắt đầu code theo hướng song ngữ (đợt 4 cũ) thì cần sửa lại chỉ dùng 1 template tiếng Việt.
+
+## 2026-09-09 (Đợt 6) — Đối chiếu số màn T-0x (Tenant & Contract) với Figma thật, sửa SCREEN-SPEC.md theo Figma
+
+Dream báo hiệu design đã "ready to build" (commit cuối `43555b0`). Trước khi bắt đầu viết lại migration/Edge Function theo schema Version 3, dungtv yêu cầu Claude đọc trực tiếp Figma (qua Figma MCP) đối chiếu với `SCREEN-SPEC.md` để tìm điểm bất hợp lý còn sót — đây chính là phát hiện phụ "nhãn số màn T-03→T-10 lệch so với Figma" đã ghi nhận nhưng chưa xử lý ở `CURRENT_STATUS.md` (đợt "Figma prototype", 09/09).
+
+**Phát hiện qua `get_metadata`/`get_screenshot` trực tiếp trên file Figma (fileKey `AElzfTBuL8YyA8OJ85f7aX`, page "MVP Wireframes (EN) — Version 3"):**
+
+- Toàn bộ số thứ tự T-01→T-10 trong `SCREEN-SPEC.md` (soạn trước khi Figma build xong) lệch với tên/thứ tự frame thật trên Figma — chỉ T-05 (Contract Detail) và T-08 (Version History) khớp sẵn, 8/10 màn còn lại lệch số.
+- **Phát hiện thêm 1 màn Figma đã có nhưng `SCREEN-SPEC.md` bản cũ chưa mô tả:** "Tenant Detail (View)" — màn xem hồ sơ Tenant (đọc/không sửa), có nút Call/Zalo liên hệ nhanh và danh sách các hợp đồng của Tenant đó. Đã đọc nội dung qua screenshot, viết spec mới cho màn này (nay là T-03).
+- **Phát hiện thực chất (không chỉ lệch số):** `SCREEN-SPEC.md` bản cũ mô tả "Renew Contract" và "Amend Contract" là **2 màn tách riêng** (T-06/T-07 theo số cũ). Nhưng Figma thật chỉ có **1 frame duy nhất** "Contract Renew / Amend" — đã đọc metadata + screenshot, xác nhận nội dung chỉ có các field kiểu Renew (ngày, tiền, đơn giá, khối so sánh "CHANGED VS...") — **không có UI đổi danh sách phòng** (thêm/bớt phòng) như mô tả "Amend" trong bản cũ.
+
+**Quyết định (theo yêu cầu dungtv "làm theo Figma mới"):** Coi Figma là nguồn đúng (mới nhất, đã "ready to build"), sửa lại `SCREEN-SPEC.md` khớp hoàn toàn theo Figma thật, không chờ Dream xác nhận lại số màn. Cụ thể:
+
+1. Viết lại bảng Screen Inventory mục 1.4 và toàn bộ đặc tả chi tiết mục 2.3 (T-01→T-10) theo đúng tên/nội dung Figma. Bảng mapping số cũ → số mới:
+
+   | Cũ | Mới | Màn hình |
+   |---|---|---|
+   | T-01 | T-01 | Tenant Pool List (nay là tab "Tenants" của màn gộp) |
+   | T-03 | T-02 | Contract List (nay là tab "Contracts" của màn gộp) |
+   | — | T-03 | **Tenant Detail (View) — mới** |
+   | T-02 | T-04 | Tenant Profile Create/Edit |
+   | T-05 | T-05 | Contract Detail (không đổi) |
+   | T-04 | T-06 | Create Contract |
+   | T-06 + T-07 | T-07 | **Gộp Renew + Amend thành 1 màn** |
+   | T-08 | T-08 | Version History (không đổi) |
+   | T-10 | T-09 | End Contract (Settlement) |
+   | T-09 | T-10 | Invoice Schedule Preview |
+
+2. Cập nhật toàn bộ tham chiếu chéo T-0x bị ảnh hưởng ở các file khác: `REQUIREMENTS.md` (FR-CTR-11), `BUSINESS-RULES.md` (BR-CTR-13) — cả 2 đổi "T-04" → "T-06"; `DESIGN-SYSTEMS.md` mục note kỳ hoá đơn tương lai — đổi "T-09" → "T-10".
+3. **Chưa xử lý, để ngỏ:** khoảng trống "Amend có đổi được danh sách phòng hay không" — vì Figma hiện không có UI cho việc này dù `BUSINESS-RULES.md`/`REQUIREMENTS.md` mô tả trước đó có nhắc tới. Đã ghi rõ trong `SCREEN-SPEC.md` T-07 là "cần Dream xác nhận trước khi code UI màn này" — khác với cách xử lý phần renumbering (làm luôn theo Figma), vì đây là khoảng trống về **tính năng** chứ không đơn thuần là lệch tài liệu.
+4. Chưa xử lý 2 phát hiện phụ khác đã biết từ trước (không thuộc phạm vi yêu cầu lần này): B-01 vẫn dùng 4-chip lọc nhà (T-02 đã đổi dropdown, chưa đồng bộ); H-03 chưa chốt tab mặc định (House detail hay Rooms).
+
+**Tác động cần dev lưu ý:** Chỉ ảnh hưởng tài liệu (`docs/*.md`), không phát sinh thay đổi schema DB hay Edge Function nào. Khi code UI tab Tenant & Contract, dùng đúng số T-0x mới trong `SCREEN-SPEC.md` (đã khớp Figma) — không dùng lại số cũ trong các phiên bản trước đó của tài liệu.

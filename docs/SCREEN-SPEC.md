@@ -35,22 +35,24 @@
 | H-03 | Room List (theo 1 House) | Filter theo trạng thái |
 | H-04 | Room Detail (View) | **Tách riêng khỏi Create/Edit** (khác Version 2) |
 | H-05 | Room Create/Edit | |
-| H-06 | Record Monthly Reading (PERIODIC) | **Gộp 3 màn cũ (Reading Entry + Reading History + Reading Correction) thành 1** (09/08, sửa trực tiếp trong FigJam) — liệt kê theo phòng, nhập chỉ số mới; tap vào 1 phòng ra detail view (lịch sử `previousReadingId`); sửa ngay tại đó khi `isLocked=false`. Chỉ ghi `PERIODIC` — `MOVE_IN`/`MOVE_OUT` vẫn nằm trong flow Hợp đồng (T-04/T-05), không gộp vào đây |
+| H-06 | Record Monthly Reading (PERIODIC) | **Gộp 3 màn cũ (Reading Entry + Reading History + Reading Correction) thành 1** (09/08, sửa trực tiếp trong FigJam) — liệt kê theo phòng, nhập chỉ số mới; tap vào 1 phòng ra detail view (lịch sử `previousReadingId`); sửa ngay tại đó khi `isLocked=false`. Chỉ ghi `PERIODIC` — `MOVE_IN`/`MOVE_OUT` vẫn nằm trong flow Hợp đồng (T-06/T-09), không gộp vào đây |
 
 ### 1.4 Tenant & Contract (T) — 10 màn
 
 | # | Màn hình | Ghi chú |
 |---|---|---|
-| T-01 | Tenant Pool List | |
-| T-02 | Tenant Profile (Create/Edit) | Có thể mở shortcut từ T-04 |
-| T-03 | Contract List | Filter theo nhà, sắp hết hạn |
-| T-04 | Create Contract | Chọn 1..N phòng cùng 1 nhà; chặn nếu thiếu chỉ số nhận phòng |
+| T-01 | Tenant & Contract (tab Tenants) | Tenant Pool List — 1 trong 2 state của segmented control |
+| T-02 | Tenant & Contract (tab Contracts) | Contract List — state còn lại; filter theo tên nhà (dropdown) |
+| T-03 | Tenant Detail (View) | **Mới, phát hiện 09/09/2026** — xem hồ sơ + nút Call/Zalo + danh sách hợp đồng của Tenant này |
+| T-04 | Tenant Create/Edit | Có thể mở shortcut từ T-06 |
 | T-05 | Contract Detail | Điểm vào Renew/Amend/Kết thúc/Version History/Invoice Schedule |
-| T-06 | Renew Contract | **Tách riêng khỏi T-05** (khác Version 2) |
-| T-07 | Amend Contract | **Tách riêng khỏi T-05**, gồm cả đổi danh sách phòng |
+| T-06 | Create Contract | Chọn 1..N phòng cùng 1 nhà; chặn nếu thiếu chỉ số nhận phòng |
+| T-07 | Contract Renew / Amend | **1 màn dùng chung cho cả Renew và Amend** (khác mô tả cũ "tách riêng 2 màn") — xem ghi chú dưới |
 | T-08 | Version History | Danh sách `tb_contract_version` theo thời gian |
-| T-09 | Invoice Schedule Preview | Bản xem trước các kỳ hoá đơn sắp tới của hợp đồng (chip "Scheduled") — mới |
-| T-10 | End Contract (Settlement) | Chặn nếu thiếu chỉ số trả phòng; đối soát cọc & công nợ |
+| T-09 | End Contract (Settlement) | Chặn nếu thiếu chỉ số trả phòng; đối soát cọc & công nợ |
+| T-10 | Invoice Schedule Preview | Bản xem trước các kỳ hoá đơn sắp tới của hợp đồng (chip "Scheduled") |
+
+> ⚠️ **Đối chiếu lại với Figma thật (09/09/2026):** Số thứ tự T-0x ở trên đã sửa lại cho khớp đúng tên/thứ tự frame thật trên Figma (trước đó lệch gần hết, chỉ T-05/T-08 khớp sẵn). Xem [DECISIONS.md](DECISIONS.md) 2026-09-09 để biết chi tiết đối chiếu.
 
 ### 1.5 Bills (B) — 5 màn (core)
 
@@ -147,7 +149,7 @@
 
 ### H-04 — Room Detail (View)
 - **Mục đích:** Xem chi tiết 1 phòng, điểm vào Contract (nếu Empty) hoặc xem hợp đồng hiện tại (nếu Occupied), và xem lịch sử chỉ số.
-- **Thành phần chính:** Ảnh, số phòng, diện tích, giá tham khảo, tiện ích, phí định kỳ mặc định, badge trạng thái, nút "Sửa" → H-05, nút "Xem lịch sử chỉ số" → H-06 (mở thẳng detail view của phòng này), nút "Tạo hợp đồng" (chỉ hiện khi Empty) → T-04, hoặc thẻ tóm tắt hợp đồng hiện tại (khi Occupied) → T-05.
+- **Thành phần chính:** Ảnh, số phòng, diện tích, giá tham khảo, tiện ích, phí định kỳ mặc định, badge trạng thái, nút "Sửa" → H-05, nút "Xem lịch sử chỉ số" → H-06 (mở thẳng detail view của phòng này), nút "Tạo hợp đồng" (chỉ hiện khi Empty) → T-06, hoặc thẻ tóm tắt hợp đồng hiện tại (khi Occupied) → T-05.
 - **Trạng thái:** Empty / Occupied / UnderRepair.
 - **Hành động & điều hướng:** Tap "Sửa" → H-05. Tap hợp đồng hiện tại → T-05.
 - **Dữ liệu hiển thị:** Thông tin phòng + trạng thái.
@@ -162,7 +164,7 @@
 - **Edge cases:** Trùng số phòng trong cùng nhà → cảnh báo, không chặn. Sửa diện tích của phòng đang có hợp đồng Active → cảnh báo "không ảnh hưởng tới hợp đồng hiện tại" (vì `contractAreaSqm` đã chốt cứng — BR-VER-06).
 
 ### H-06 — Record Monthly Reading (PERIODIC)
-> **Gộp 3 màn cũ của bản draft trước (09/08, sửa trực tiếp trong FigJam):** Reading Entry + Reading History + Reading Correction nay là **1 màn duy nhất**, đúng theo ghi chú trên node FigJam: *"reading, detail view, edit chỉ sửa được khi isLocked = false"*. Màn này **chỉ xử lý `PERIODIC`** — `MOVE_IN`/`MOVE_OUT` vẫn là bước bắt buộc riêng trong flow Hợp đồng (T-04 khi nhận phòng, T-05/T-09 khi trả phòng), **không** gộp vào đây.
+> **Gộp 3 màn cũ của bản draft trước (09/08, sửa trực tiếp trong FigJam):** Reading Entry + Reading History + Reading Correction nay là **1 màn duy nhất**, đúng theo ghi chú trên node FigJam: *"reading, detail view, edit chỉ sửa được khi isLocked = false"*. Màn này **chỉ xử lý `PERIODIC`** — `MOVE_IN`/`MOVE_OUT` vẫn là bước bắt buộc riêng trong flow Hợp đồng (T-06 khi nhận phòng, T-09 khi trả phòng), **không** gộp vào đây.
 - **Mục đích:** Ghi chỉ số điện/nước **định kỳ hàng tháng** cho MỌI phòng của 1 nhà (kể cả phòng trống), xem chi tiết lịch sử theo từng phòng, và sửa tại chỗ khi chưa lên hoá đơn — cả 3 việc trong cùng 1 màn hình.
 - **Thành phần chính:**
   - **View liệt kê (entry):** Header tên nhà + kỳ (tháng/năm), list mọi phòng của nhà (số phòng, chỉ số cũ hiển thị sẵn để đối chiếu, input chỉ số điện mới, input chỉ số nước mới — bỏ qua phòng cấu hình `NOT_BILLED`), tuỳ chọn chụp ảnh công tơ từng phòng (optional), nút "Lưu tất cả".
@@ -177,61 +179,64 @@
 
 ## 2.3 Tenant & Contract (T-01 → T-10)
 
-### T-01 — Tenant Pool List
-- **Mục đích:** Quản lý "kho" hồ sơ Tenant dùng chung theo Nhà/Dãy trọ.
-- **Thành phần chính:** Dropdown lọc theo **Nhà/Dãy trọ** (nếu có quyền truy cập nhiều hơn 1 nhà — mỗi Tenant thuộc đúng 1 nhà từ 09/09/2026, xem `BR-DATA-05`), ô tìm kiếm (tên/SĐT), chip filter (Tất cả/Chưa gắn phòng/Đang thuê), list mỗi Tenant (avatar, họ tên, SĐT, trạng thái gắn phòng), nút nổi "+".
+> ⚠️ Số thứ tự trong mục này đã sửa lại 09/09/2026 để khớp đúng Figma thật (trước đó soạn trước khi Figma build xong, lệch gần hết số — xem [DECISIONS.md](DECISIONS.md)).
+
+### T-01 — Tenant & Contract (tab Tenants)
+- **Mục đích:** Quản lý "kho" hồ sơ Tenant dùng chung theo Nhà/Dãy trọ. Đây là 1 trong 2 state của màn "Tenant & Contract" (chuyển qua lại bằng segmented control ở đầu trang, state còn lại là T-02).
+- **Thành phần chính:** Segmented control (Tenants/Contracts), dropdown lọc theo **Nhà/Dãy trọ** (nếu có quyền truy cập nhiều hơn 1 nhà — mỗi Tenant thuộc đúng 1 nhà, xem `BR-DATA-05`), ô tìm kiếm (tên/SĐT), chip filter (Tất cả/Chưa gắn phòng/Đang thuê), list mỗi Tenant (avatar, họ tên, SĐT, trạng thái gắn phòng), nút nổi "+".
 - **Trạng thái:** Có dữ liệu / Rỗng.
-- **Hành động & điều hướng:** Tap "+" → T-02 (tạo mới theo nhà đang lọc, hoặc bắt chọn nhà nếu đang xem "Tất cả nhà"). Tap 1 Tenant → T-02 (xem/sửa).
+- **Hành động & điều hướng:** Tap "+" → T-04 (tạo mới theo nhà đang lọc, hoặc bắt chọn nhà nếu đang xem "Tất cả nhà"). Tap 1 Tenant → T-03 (xem chi tiết).
 - **Dữ liệu hiển thị:** Union Tenant của mọi nhà đang có quyền truy cập, mỗi bản ghi vẫn thuộc đúng 1 `houseId`.
 - **Edge cases:** `role=manager` chỉ thấy Tenant thuộc nhà được cấp quyền (không thấy Tenant Pool của nhà khác dù cùng 1 chủ sở hữu thật).
 
-### T-02 — Tenant Profile (Create/Edit)
-- **Mục đích:** Tạo/sửa 1 hồ sơ Tenant, độc lập với hợp đồng.
-- **Thành phần chính:** **Nhà/Dãy trọ** (bắt buộc — quy định phạm vi Tenant Pool của hồ sơ này, mới 09/09/2026 xem `BR-DATA-05`; auto-chọn & ẩn field nếu mở shortcut từ T-04 theo hợp đồng đang tạo), Ảnh đại diện (optional), Họ tên (bắt buộc), SĐT (bắt buộc), Giới tính, Ngày sinh, Email (optional), Số CCCD/CMND (bắt buộc), Ảnh CCCD 2 mặt (bắt buộc), Ghi chú (optional), nút Lưu/Huỷ.
-- **Trạng thái:** Tạo mới / Chỉnh sửa / Lỗi validate.
-- **Hành động & điều hướng:** Lưu → T-01, hoặc nếu mở shortcut từ T-04 → quay lại T-04 với Tenant vừa tạo đã chọn sẵn.
-- **Dữ liệu hiển thị:** Hồ sơ Tenant (nếu sửa).
-- **Edge cases:** SĐT trùng hồ sơ có sẵn **trong cùng 1 nhà** → cảnh báo, gợi ý mở hồ sơ cũ (SĐT trùng ở nhà khác không cảnh báo — Tenant Pool độc lập theo từng nhà).
-
-### T-03 — Contract List
-- **Mục đích:** Xem toàn bộ hợp đồng.
-- **Thành phần chính:** Filter theo tên nhà (dropdown), trạng thái (Tất cả/Active/Sắp hết hạn/Ended), list card (danh sách phòng trong hợp đồng, tên Tenant, ngày hết hạn, badge trạng thái).
+### T-02 — Tenant & Contract (tab Contracts)
+- **Mục đích:** Xem toàn bộ hợp đồng. State còn lại của segmented control (state kia là T-01).
+- **Thành phần chính:** Segmented control (Tenants/Contracts), filter theo tên nhà (**dropdown** — đổi từ chip sang dropdown 09/09/2026), trạng thái (Tất cả/Active/Sắp hết hạn/Ended), list card (danh sách phòng trong hợp đồng, tên Tenant, ngày hết hạn, badge trạng thái).
 - **Trạng thái:** Theo filter.
 - **Hành động & điều hướng:** Tap card → T-05.
 - **Dữ liệu hiển thị:** Hợp đồng thuộc phạm vi các nhà đang có quyền.
 - **Edge cases:** Rỗng theo filter.
 
-### T-04 — Create Contract
+### T-03 — Tenant Detail (View)
+- **Mục đích:** Xem chi tiết 1 hồ sơ Tenant (read-only) và toàn bộ hợp đồng liên quan. **Màn mới — SCREEN-SPEC.md bản trước không có, phát hiện khi đối chiếu lại Figma thật 09/09/2026.**
+- **Thành phần chính:** Header (avatar, họ tên, SĐT), 2 nút **Call** / **Zalo** (liên hệ nhanh ra ngoài app), khối chi tiết (Giới tính, Ngày sinh, Email, Số CCCD/CMND, Ghi chú), mục "ID Photos" (ảnh CCCD mặt trước/sau), mục "Contracts" — list card mỗi hợp đồng Tenant này từng/đang tham gia (mã hợp đồng, tên nhà, badge trạng thái Active/Ended, khoảng thời gian, version hiện hành, tiền thuê hoặc ghi chú đã hoàn cọc nếu Ended).
+- **Trạng thái:** Có dữ liệu.
+- **Hành động & điều hướng:** Nút "⋮" (menu, chưa xác nhận rõ label) → T-04 (Sửa hồ sơ). Tap 1 hợp đồng trong list "Contracts" → T-05.
+- **Dữ liệu hiển thị:** Hồ sơ Tenant + toàn bộ hợp đồng gắn với `tenantId` này (mọi trạng thái, không chỉ Active).
+- **Edge cases:** Tenant chưa từng có hợp đồng nào → mục "Contracts" rỗng, empty state phù hợp.
+
+### T-04 — Tenant Create/Edit
+- **Mục đích:** Tạo/sửa 1 hồ sơ Tenant, độc lập với hợp đồng.
+- **Thành phần chính:** **Nhà/Dãy trọ** (bắt buộc — quy định phạm vi Tenant Pool của hồ sơ này, xem `BR-DATA-05`; auto-chọn & ẩn field nếu mở shortcut từ T-06 theo hợp đồng đang tạo), Ảnh đại diện (optional), Họ tên (bắt buộc), SĐT (bắt buộc), Giới tính, Ngày sinh, Email (optional), Số CCCD/CMND (bắt buộc), Ảnh CCCD 2 mặt (bắt buộc), Ghi chú (optional), nút Lưu/Huỷ.
+- **Trạng thái:** Tạo mới / Chỉnh sửa / Lỗi validate.
+- **Hành động & điều hướng:** Lưu → T-01 (nếu tạo/sửa độc lập) hoặc T-03 (nếu sửa từ T-03), hoặc nếu mở shortcut từ T-06 → quay lại T-06 với Tenant vừa tạo đã chọn sẵn.
+- **Dữ liệu hiển thị:** Hồ sơ Tenant (nếu sửa).
+- **Edge cases:** SĐT trùng hồ sơ có sẵn **trong cùng 1 nhà** → cảnh báo, gợi ý mở hồ sơ cũ (SĐT trùng ở nhà khác không cảnh báo — Tenant Pool độc lập theo từng nhà).
+
+### T-05 — Contract Detail
+- **Mục đích:** Xem toàn bộ thông tin hợp đồng (điều khoản hiện hành = `currentVersionId`).
+- **Thành phần chính:** Thông tin Tenant đại diện, **danh sách phòng thuộc hợp đồng**, điều khoản hiện hành (ngày, tiền cọc, tiền thuê/tháng, đơn giá/phương thức điện nước, chu kỳ thu tiền nhà, hạn thanh toán, phí dịch vụ, phí định kỳ, phạt trễ hạn, môi giới nếu có), badge trạng thái (Active/Sắp hết hạn/Ended), nút "Gia hạn / Sửa điều khoản" → T-07, nút "Xem lịch sử phiên bản" → T-08, nút "Xem lịch hoá đơn sắp tới" → T-10, nút "Kết thúc hợp đồng" → T-09.
+- **Trạng thái:** Active / Sắp hết hạn (cảnh báo số ngày còn lại, ngưỡng 30 ngày) / Ended (ẩn các nút hành động, chỉ xem).
+- **Hành động & điều hướng:** Như trên.
+- **Dữ liệu hiển thị:** Toàn bộ dữ liệu hợp đồng + phiên bản hiện hành + danh sách phòng.
+- **Edge cases:** Hợp đồng Ended nhưng còn hoá đơn chưa `Collected` → liên kết rõ tới T-09 để xem lại đối soát.
+
+### T-06 — Create Contract
 - **Mục đích:** Gắn 1 Tenant vào **1 hoặc nhiều phòng cùng 1 Nhà/Dãy trọ**, tạo hợp đồng.
-- **Thành phần chính:** **2 thứ tự chọn Nhà/phòng và Tenant (mới, 09/09/2026 — xem `BR-CTR-13`):** (a) **Nhà/phòng trước (mặc định):** chọn Nhà/Dãy trọ → chọn **nhiều phòng đang Empty** (multi-select, chỉ trong nhà đã chọn) → mục chọn Tenant chỉ hiện **Tenant Pool đã lọc theo đúng nhà này**; Tenant Pool rỗng → nút "Thêm nhanh" → T-02 (Nhà tự điền sẵn, ẩn field). (b) **Tenant trước:** chọn Tenant từ **toàn bộ Tenant Pool** đang có quyền truy cập → mục chọn Nhà/phòng tự **lọc lại chỉ còn đúng Nhà của Tenant đã chọn**. Sau khi đã chọn đủ Nhà/phòng + Tenant (theo chiều nào cũng vậy): **kiểm tra & bắt buộc ghi chỉ số nhận phòng (MOVE_IN) cho từng phòng chưa có** (mở inline hoặc điều hướng nhanh sang màn ghi chỉ số rồi quay lại), Ngày bắt đầu, Kỳ hạn, Tiền cọc (cho cả hợp đồng), Tiền thuê/tháng (cho cả hợp đồng, mặc định gợi ý = tổng giá tham khảo các phòng), phương thức + đơn giá điện/nước (theo chỉ số/khoán/không thu), Chu kỳ thu tiền nhà (số tháng + kỳ neo), Ngày cố định hạn thanh toán, Phí dịch vụ (tự tính = tổng diện tích các phòng × đơn giá/m², cho sửa tay), Phí định kỳ (từng dòng, "+"), Phạt trễ hạn (optional), Môi giới (optional), nút Lưu/Huỷ.
+- **Thành phần chính:** **2 thứ tự chọn Nhà/phòng và Tenant (xem `BR-CTR-13`):** (a) **Nhà/phòng trước (mặc định):** chọn Nhà/Dãy trọ → chọn **nhiều phòng đang Empty** (multi-select, chỉ trong nhà đã chọn) → mục chọn Tenant chỉ hiện **Tenant Pool đã lọc theo đúng nhà này**; Tenant Pool rỗng → nút "Thêm nhanh" → T-04 (Nhà tự điền sẵn, ẩn field). (b) **Tenant trước:** chọn Tenant từ **toàn bộ Tenant Pool** đang có quyền truy cập → mục chọn Nhà/phòng tự **lọc lại chỉ còn đúng Nhà của Tenant đã chọn**. Sau khi đã chọn đủ Nhà/phòng + Tenant (theo chiều nào cũng vậy): **kiểm tra & bắt buộc ghi chỉ số nhận phòng (MOVE_IN) cho từng phòng chưa có** (mở inline hoặc điều hướng nhanh sang màn ghi chỉ số rồi quay lại), Ngày bắt đầu, Kỳ hạn, Tiền cọc (cho cả hợp đồng), Tiền thuê/tháng (cho cả hợp đồng, mặc định gợi ý = tổng giá tham khảo các phòng), phương thức + đơn giá điện/nước (theo chỉ số/khoán/không thu), Chu kỳ thu tiền nhà (số tháng + kỳ neo), Ngày cố định hạn thanh toán, Phí dịch vụ (tự tính = tổng diện tích các phòng × đơn giá/m², cho sửa tay), Phí định kỳ (từng dòng, "+"), Phạt trễ hạn (optional), Môi giới (optional), nút Lưu/Huỷ.
 - **Trạng thái:** Chọn Nhà/phòng hoặc Tenant trước (2 chiều) → Chọn vế còn lại (đã lọc) → Kiểm tra chỉ số nhận phòng → Nhập điều khoản → Xác nhận.
 - **Hành động & điều hướng:** Lưu → mọi phòng chuyển "Occupied" → gửi SMS/Zalo thông báo hợp đồng cho Tenant → T-05.
 - **Dữ liệu hiển thị:** Thông tin Tenant đã chọn + gợi ý từ các phòng.
 - **Edge cases:** Thiếu chỉ số nhận phòng cho 1 trong các phòng đã chọn → chặn nút Lưu, chỉ rõ phòng nào thiếu. Phòng vừa chọn đã có hợp đồng Active khác (race condition) → chặn lưu, báo lỗi. Chọn phòng khác nhà (khi đang ở chiều "Nhà/phòng trước") → chặn ngay lúc chọn. Tenant đã chọn không thuộc Nhà đang chọn (trường hợp hiếm do đổi ý giữa chừng) → chặn lưu, yêu cầu chọn lại 1 trong 2 vế cho khớp nhà.
 
-### T-05 — Contract Detail
-- **Mục đích:** Xem toàn bộ thông tin hợp đồng (điều khoản hiện hành = `currentVersionId`).
-- **Thành phần chính:** Thông tin Tenant đại diện, **danh sách phòng thuộc hợp đồng**, điều khoản hiện hành (ngày, tiền cọc, tiền thuê/tháng, đơn giá/phương thức điện nước, chu kỳ thu tiền nhà, hạn thanh toán, phí dịch vụ, phí định kỳ, phạt trễ hạn, môi giới nếu có), badge trạng thái (Active/Sắp hết hạn/Ended), nút "Gia hạn" → T-06, nút "Sửa điều khoản" → T-07, nút "Xem lịch sử phiên bản" → T-08, nút "Xem lịch hoá đơn sắp tới" → T-09, nút "Kết thúc hợp đồng" → T-10.
-- **Trạng thái:** Active / Sắp hết hạn (cảnh báo số ngày còn lại, ngưỡng 30 ngày) / Ended (ẩn các nút hành động, chỉ xem).
-- **Hành động & điều hướng:** Như trên.
-- **Dữ liệu hiển thị:** Toàn bộ dữ liệu hợp đồng + phiên bản hiện hành + danh sách phòng.
-- **Edge cases:** Hợp đồng Ended nhưng còn hoá đơn chưa `Collected` → liên kết rõ tới T-10 để xem lại đối soát.
-
-### T-06 — Renew Contract
-- **Mục đích:** Gia hạn hợp đồng đang hiệu lực. **Tách riêng khỏi T-05** (khác Version 2, nơi gộp "Gia hạn"/"Sửa điều khoản" thành 1 nút mở chung 1 form).
-- **Thành phần chính:** Hiển thị điều khoản hiện hành (read-only tham khảo), input ngày bắt đầu mới (mặc định nối tiếp `endDate` cũ), input kỳ hạn mới, cho phép sửa các điều khoản tiền/đơn giá nếu có thay đổi kèm gia hạn, nút Lưu/Huỷ.
-- **Trạng thái:** Nhập liệu / Xác nhận.
-- **Hành động & điều hướng:** Lưu → tạo `tb_contract_version` mới (`changeReason=Renewal`) → T-05. **Không yêu cầu ghi lại chỉ số** nếu giữ nguyên Tenant/phòng.
-- **Dữ liệu hiển thị:** Điều khoản phiên bản hiện hành.
-- **Edge cases:** Không có.
-
-### T-07 — Amend Contract
-- **Mục đích:** Sửa điều khoản giữa kỳ, **kể cả thêm/bớt phòng trong hợp đồng**. **Tách riêng khỏi T-05.**
-- **Thành phần chính:** Toàn bộ field điều khoản như T-04 (cho sửa), thêm mục **"Danh sách phòng"** (thêm phòng Empty khác cùng nhà / bỏ bớt phòng hiện có), nút Lưu/Huỷ.
-- **Trạng thái:** Nhập liệu / Xác nhận.
-- **Hành động & điều hướng:** Lưu → tạo `tb_contract_version` mới (`changeReason=Amendment`); nếu có phòng bị loại ra → **bắt buộc điều hướng ghi chỉ số trả phòng (MOVE_OUT)** riêng cho phòng đó trước khi hoàn tất → T-05. Nếu có phòng thêm vào → kiểm tra/bắt buộc chỉ số nhận phòng (MOVE_IN) cho phòng mới như T-04.
-- **Dữ liệu hiển thị:** Điều khoản phiên bản hiện hành + danh sách phòng hiện tại.
-- **Edge cases:** Bỏ phòng đang thiếu chỉ số trả phòng → chặn lưu tới khi bổ sung.
+### T-07 — Contract Renew / Amend
+- **Mục đích:** Gia hạn HOẶC sửa điều khoản giữa kỳ của hợp đồng. **1 màn hình duy nhất dùng chung cho cả 2 việc** — khác mô tả bản trước của tài liệu này (từng ghi là 2 màn tách riêng T-06 Renew/T-07 Amend); đối chiếu Figma thật (09/09/2026) chỉ thấy **1 frame** tên "Contract Renew / Amend", nội dung y hệt nhau cho cả 2 trường hợp.
+- **Thành phần chính:** Banner giải thích (tạo phiên bản hợp đồng mới, các version cũ + hoá đơn đã phát hành không đổi), input ngày bắt đầu/kết thúc mới (mặc định nối tiếp `endDate` cũ khi Renew), ghi chú "Pre-filled to continue from previous end date", Tiền cọc + Tiền thuê/tháng, Đơn giá điện/nước, Ngày cố định hạn thanh toán, Phí định kỳ (tên + số tiền), Phạt trễ hạn (textarea), Ghi chú đặc biệt (textarea), khối **"CHANGED VS [version trước]"** (bảng so sánh field nào đổi, giá trị cũ → mới), nút Cancel / "Create version [vN]".
+- **Trạng thái:** Nhập liệu → Xác nhận.
+- **Hành động & điều hướng:** Lưu → tạo `tb_contract_version` mới (`changeReason=Renewal` hoặc `Amendment` tuỳ ngữ cảnh mở màn) → T-05.
+- **Dữ liệu hiển thị:** Điều khoản phiên bản hiện hành (để so sánh trong khối "CHANGED VS").
+- **⚠️ Khoảng trống cần Dream xác nhận:** Mô tả `BR-CTR`/`FR-CTR` bản trước có nhắc Amend "gồm cả đổi danh sách phòng trong hợp đồng" (thêm/bớt phòng, kèm bắt buộc ghi chỉ số MOVE_IN/MOVE_OUT tương ứng) — nhưng màn Figma thật **không có** UI chọn/sửa danh sách phòng nào cả, chỉ có các field tiền/đơn giá/ngày như trên. Chưa rõ đây là tính năng bị bỏ khỏi Phase 1, hay chưa build kịp trên Figma. Tạm thời tài liệu này mô tả đúng theo Figma (không có phần đổi phòng) — **cần Dream xác nhận lại trước khi code UI** cho màn này, vì nếu tính năng đổi phòng giữa kỳ vẫn cần thì phải bổ sung thêm UI/logic không có trong Figma hiện tại.
+- **Edge cases:** Không có (theo Figma hiện tại — chưa có nhánh xử lý đổi phòng nên chưa có edge case liên quan).
 
 ### T-08 — Version History
 - **Mục đích:** Xem toàn bộ lịch sử thay đổi điều khoản hợp đồng.
@@ -241,7 +246,15 @@
 - **Dữ liệu hiển thị:** Toàn bộ `tb_contract_version` của hợp đồng đang xem.
 - **Edge cases:** Không có.
 
-### T-09 — Invoice Schedule Preview
+### T-09 — End Contract (Settlement)
+- **Mục đích:** Xử lý trả phòng: tổng kết công nợ, đối soát tiền cọc.
+- **Thành phần chính:** **Kiểm tra & bắt buộc ghi chỉ số trả phòng (MOVE_OUT) cho từng phòng chưa có** (trừ phòng `NOT_BILLED`), danh sách hoá đơn chưa `Collected` (tính `unpaidInvoicesTotal`), số tiền cọc đã nhận (`depositAmount`, theo cả hợp đồng), ô nhập khoản trừ hư hỏng (`damageDeduction`, kèm ghi chú lý do), tổng kết cuối cùng (`refundAmount` = cọc − công nợ − khoản trừ), nút "Xác nhận trả phòng".
+- **Trạng thái:** Thiếu chỉ số trả phòng (chặn) / Đang tổng kết / Đã xác nhận.
+- **Hành động & điều hướng:** Xác nhận → ghi settlement vào `tb_contract` (kèm `settlementConfirmedAt`) → `status=Ended` → tạo hoá đơn cuối với số tiền đã tính (`refundAmount` âm hoặc dương) → mọi phòng trong hợp đồng chuyển "Empty" → quay lại H-04 (phòng đầu tiên) hoặc T-02.
+- **Dữ liệu hiển thị:** Công nợ & tiền cọc của hợp đồng đang kết thúc.
+- **Edge cases:** Thiếu chỉ số trả phòng cho bất kỳ phòng nào (không `NOT_BILLED`) → chặn nút "Xác nhận trả phòng", điều hướng ghi chỉ số ngay tại chỗ.
+
+### T-10 — Invoice Schedule Preview
 - **Mục đích:** Xem trước lịch các kỳ hoá đơn sắp tới của 1 hợp đồng, dựa trên chu kỳ thu tiền nhà và chu kỳ điện/nước hàng tháng.
 - **Thành phần chính:** List các kỳ sắp tới (VD 3-6 kỳ), mỗi dòng: khoảng thời gian kỳ, có thu tiền nhà kỳ này hay không (theo `rentCycleMonths`/`rentCycleAnchorYm`), chip "Scheduled" (chưa phải hoá đơn thật).
 - **Trạng thái:** Có dữ liệu (hợp đồng Active).
@@ -249,23 +262,15 @@
 - **Dữ liệu hiển thị:** Suy ra từ `contract_version` hiện hành, không truy vấn `tb_invoice` thật.
 - **Edge cases:** Hợp đồng Ended → không hiển thị màn này (ẩn nút ở T-05).
 
-### T-10 — End Contract (Settlement)
-- **Mục đích:** Xử lý trả phòng: tổng kết công nợ, đối soát tiền cọc.
-- **Thành phần chính:** **Kiểm tra & bắt buộc ghi chỉ số trả phòng (MOVE_OUT) cho từng phòng chưa có** (trừ phòng `NOT_BILLED`), danh sách hoá đơn chưa `Collected` (tính `unpaidInvoicesTotal`), số tiền cọc đã nhận (`depositAmount`, theo cả hợp đồng), ô nhập khoản trừ hư hỏng (`damageDeduction`, kèm ghi chú lý do), tổng kết cuối cùng (`refundAmount` = cọc − công nợ − khoản trừ), nút "Xác nhận trả phòng".
-- **Trạng thái:** Thiếu chỉ số trả phòng (chặn) / Đang tổng kết / Đã xác nhận.
-- **Hành động & điều hướng:** Xác nhận → ghi settlement vào `tb_contract` (kèm `settlementConfirmedAt`) → `status=Ended` → tạo hoá đơn cuối với số tiền đã tính (`refundAmount` âm hoặc dương) → mọi phòng trong hợp đồng chuyển "Empty" → quay lại H-04 (phòng đầu tiên) hoặc T-03.
-- **Dữ liệu hiển thị:** Công nợ & tiền cọc của hợp đồng đang kết thúc.
-- **Edge cases:** Thiếu chỉ số trả phòng cho bất kỳ phòng nào (không `NOT_BILLED`) → chặn nút "Xác nhận trả phòng", điều hướng ghi chỉ số ngay tại chỗ.
-
 ---
 
 ## 2.4 Bills (B-01 → B-05) — Core
 
 ### B-01 — Invoice List
 - **Mục đích:** Xem toàn bộ hoá đơn — đây là màn hình trung tâm của chức năng cốt lõi Phase 1.
-- **Thành phần chính:** Filter nhà (dropdown), hợp đồng (dropdown, phụ thuộc nhà đã chọn), trạng thái (Tất cả/Draft/Sent/Collected/Overdue), bộ lọc theo kỳ, tuỳ chọn sắp xếp, **danh sách nhóm theo Nhà → theo Hợp đồng**, mỗi nhóm hiện dải chip các kỳ (kỳ đã phát hành = số tiền + trạng thái; kỳ tương lai = chip "Scheduled" xám, tap vào mở T-09 của hợp đồng đó), nút nổi "+" → mở lựa chọn B-02 (hàng loạt) hoặc B-03 (đơn lẻ).
+- **Thành phần chính:** Filter nhà (dropdown), hợp đồng (dropdown, phụ thuộc nhà đã chọn), trạng thái (Tất cả/Draft/Sent/Collected/Overdue), bộ lọc theo kỳ, tuỳ chọn sắp xếp, **danh sách nhóm theo Nhà → theo Hợp đồng**, mỗi nhóm hiện dải chip các kỳ (kỳ đã phát hành = số tiền + trạng thái; kỳ tương lai = chip "Scheduled" xám, tap vào mở T-10 của hợp đồng đó), nút nổi "+" → mở lựa chọn B-02 (hàng loạt) hoặc B-03 (đơn lẻ).
 - **Trạng thái:** Theo filter đang chọn.
-- **Hành động & điều hướng:** Tap card hoá đơn đã phát hành → B-05. Tap chip "Scheduled" → T-09.
+- **Hành động & điều hướng:** Tap card hoá đơn đã phát hành → B-05. Tap chip "Scheduled" → T-10.
 - **Dữ liệu hiển thị:** Hoá đơn thuộc phạm vi các nhà đang có quyền. Xem nhanh tổng/đã thu/chưa thu/quá hạn qua filter theo trạng thái (thay cho màn Revenue Report riêng — ngoài phạm vi Phase 1).
 - **Edge cases:** Rỗng theo filter → empty state phù hợp ngữ cảnh.
 

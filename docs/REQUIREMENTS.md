@@ -72,7 +72,7 @@
 | FR-CTR-08 | Kết thúc hợp đồng / trả phòng — bắt buộc đã có chỉ số **trả phòng (`MOVE_OUT`)** cho từng phòng, tổng kết công nợ, đối soát tiền cọc (trừ hư hỏng nếu có), xác nhận số tiền hoàn/thu thêm | Must | Xem FR-READ-03 |
 | FR-CTR-09 | Nhiều Tenant trên cùng 1 hợp đồng/phòng (ở ghép, nhiều người đại diện) | Won't (Phase 1) | Phase 1 chỉ 1 người đại diện (`tenantId`) mỗi hợp đồng, dù hợp đồng có nhiều phòng |
 | FR-CTR-10 | Ký hợp đồng điện tử (e-signature) trong app | Won't (MVP) | Phase 2 |
-| FR-CTR-11 | Khi tạo hợp đồng, ràng buộc Tenant chọn phải cùng Nhà/Dãy trọ với phòng đang chọn — hỗ trợ chọn theo 2 chiều: Nhà/phòng trước (Tenant Pool tự lọc theo nhà) hoặc Tenant trước (danh sách Nhà/phòng tự lọc theo Tenant) | Must | Mới, 09/09/2026 — xem `BR-CTR-13`, [SCREEN-SPEC.md](SCREEN-SPEC.md) T-04 |
+| FR-CTR-11 | Khi tạo hợp đồng, ràng buộc Tenant chọn phải cùng Nhà/Dãy trọ với phòng đang chọn — hỗ trợ chọn theo 2 chiều: Nhà/phòng trước (Tenant Pool tự lọc theo nhà) hoặc Tenant trước (danh sách Nhà/phòng tự lọc theo Tenant) | Must | Mới, 09/09/2026 — xem `BR-CTR-13`, [SCREEN-SPEC.md](SCREEN-SPEC.md) T-06 |
 
 ### 2.6 Hoá đơn & Thu tiền (Bill Management — Core)
 | ID | Requirement | Priority | Ghi chú |
