@@ -56,11 +56,14 @@
 - [ ] Tài khoản Apple Developer (cần khi publish lên App Store)
 - [ ] Rotate lại Secret key + Access Token (cả 2 đã bị dán vào chat, coi như lộ)
 
+## Đã xong (tiếp)
+
+- [x] **Migration DB Version 3 viết lại từ đầu** — `supabase/migrations/20260909133320_v3_schema_rebuild.sql`: xoá sạch 11 bảng Version 1 cũ, dựng lại 12 bảng tiền tố `tb_` đúng [DATABASE.md](DATABASE.md) (gồm `tb_electricity_reading`/`tb_water_reading`, `tb_contract_room` với trigger giữ ràng buộc 1 phòng/1 hợp đồng Active, `tb_contract_version`, RLS đầy đủ theo mô hình `tb_user_house_access` theo từng nhà). Đã áp lên Supabase dev thật (`supabase db push`) và verify qua Management API: 12 bảng đúng, RLS bật cả 12, 20 policy, 3 trigger, 6 function, bảng V1 xác nhận đã xoá sạch.
+  - ⚠️ **2 điểm lệch nhỏ so với văn bản `DATABASE.md`, cần Dream xác nhận sau:** (1) **Bỏ `passwordHash` khỏi `tb_user`** — vì kiến trúc đã chốt dùng Supabase Auth quản lý mật khẩu, không tự lưu hash (khớp `ARCHITECTURE.md`, nhưng `DATABASE.md` mục "Các thực thể" vẫn còn liệt kê field này — có thể là sót lại từ bản Version 2). (2) **Thêm bảng `tb_device_token`** (lưu FCM/APNs token cho Push) — `ARCHITECTURE.md` có nhắc tới nhưng `DATABASE.md` chưa liệt kê chính thức trong mục "Các thực thể" dù phần đầu file ghi "12 bảng" (chỉ đếm được 11 bảng trong danh sách) — khả năng đây chính là bảng thứ 12 còn thiếu.
+
 ## Đang làm / Tiếp theo
 
-- [ ] **Viết migration DB mới từ đầu** theo schema Version 3 ([DATABASE.md](DATABASE.md)) — 12 bảng tiền tố `tb_`, gồm `tb_electricity_reading`/`tb_water_reading` (mới), `tb_contract_room` (mới), gộp `tb_user` (bỏ 2 bảng account cũ), gộp field owner vào `tb_house`, gộp settlement vào `tb_contract`, `tb_tenant` có thêm `houseId` bắt buộc (mới 09/09/2026)
-- [ ] Viết lại Edge Function `generate-invoice` (đọc lại chỉ số, hỗ trợ tạo hàng loạt, chu kỳ tiền nhà, phí dịch vụ/m², prorate) + `generate-payment-qr` (mới) + rà soát `send-notification` (thêm nhánh nhắc ghi chỉ số định kỳ) — xem [API.md](API.md)
-- [ ] Xoá Edge Function `create-manager-user` (nếu đã có khung) — không còn dùng Supabase Admin API cho việc mời quản lý
+- [ ] Viết Edge Function `generate-invoice` (đọc lại chỉ số, hỗ trợ tạo hàng loạt, chu kỳ tiền nhà, phí dịch vụ/m², prorate) + `generate-payment-qr` (mới) + rà soát `send-notification` (thêm nhánh nhắc ghi chỉ số định kỳ) — xem [API.md](API.md). Khung 3 function cũ (Version 1) trong `supabase/functions/` cần viết lại hoàn toàn theo schema mới.
 - [ ] Chọn nhà cung cấp SMS Việt Nam (eSMS/Speedsms) + đăng ký Zalo ZNS/OA
 - [ ] Chọn thư viện/API sinh mã QR chuẩn VietQR/NAPAS-247
 - [ ] Tạo project Firebase (miễn phí, chỉ dùng cho FCM push) khi tới lúc code `send-notification` thật
