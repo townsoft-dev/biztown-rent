@@ -51,8 +51,8 @@
 
 ## Còn thiếu để dev thật được (máy local)
 
-- [ ] Android Studio (Android SDK) — cần khi build/test trên Android
-- [ ] Xcode đầy đủ + CocoaPods — cần khi build/test trên iOS
+- [x] **Android Studio + Android SDK (35, 36) + emulator** — cài xong 09/09/2026, `flutter doctor` Android toolchain xanh. Emulator `rentmanager_pixel` (Pixel 6, API 35) tạo sẵn, đã build & chạy app thật thành công (xem "Đã xong" bên dưới)
+- [ ] Xcode đầy đủ + CocoaPods — cần khi build/test trên iOS. **Không tự cài được** (cần Apple ID + Mac App Store, thao tác GUI) — dungtv tự cài
 - [ ] Tài khoản Apple Developer (cần khi publish lên App Store)
 - [ ] Rotate lại Secret key + Access Token (cả 2 đã bị dán vào chat, coi như lộ)
 
@@ -61,13 +61,17 @@
 - [x] **Migration DB Version 3 viết lại từ đầu** — `supabase/migrations/20260909133320_v3_schema_rebuild.sql`: xoá sạch 11 bảng Version 1 cũ, dựng lại 12 bảng tiền tố `tb_` đúng [DATABASE.md](DATABASE.md) (gồm `tb_electricity_reading`/`tb_water_reading`, `tb_contract_room` với trigger giữ ràng buộc 1 phòng/1 hợp đồng Active, `tb_contract_version`, RLS đầy đủ theo mô hình `tb_user_house_access` theo từng nhà). Đã áp lên Supabase dev thật (`supabase db push`) và verify qua Management API: 12 bảng đúng, RLS bật cả 12, 20 policy, 3 trigger, 6 function, bảng V1 xác nhận đã xoá sạch.
   - ⚠️ **2 điểm lệch nhỏ so với văn bản `DATABASE.md`, cần Dream xác nhận sau:** (1) **Bỏ `passwordHash` khỏi `tb_user`** — vì kiến trúc đã chốt dùng Supabase Auth quản lý mật khẩu, không tự lưu hash (khớp `ARCHITECTURE.md`, nhưng `DATABASE.md` mục "Các thực thể" vẫn còn liệt kê field này — có thể là sót lại từ bản Version 2). (2) **Thêm bảng `tb_device_token`** (lưu FCM/APNs token cho Push) — `ARCHITECTURE.md` có nhắc tới nhưng `DATABASE.md` chưa liệt kê chính thức trong mục "Các thực thể" dù phần đầu file ghi "12 bảng" (chỉ đếm được 11 bảng trong danh sách) — khả năng đây chính là bảng thứ 12 còn thiếu.
 
-## Đang làm / Tiếp theo
+## Đã xong (tiếp 2)
 
 - [x] **Viết lại 3 Edge Function theo schema Version 3** — `generate-invoice` (đơn lẻ + hàng loạt, đọc lại chỉ số, chu kỳ tiền nhà, phí dịch vụ/m², BR-BILL-01..13), `generate-payment-qr` (mới, module dùng chung `_shared/vietqr.ts`, thuật toán CRC16 đã verify đúng test vector chuẩn), `send-notification` (đọc `tb_user_house_access`/`tb_device_token`). Cả 3 đã deploy thành công lên Supabase dev — xem [API.md](API.md).
+- [x] **Khung app + luồng Auth (S-00→S-02) code xong, chạy thật trên emulator** — theme (`core/theme.dart`, đúng token màu/typography/spacing DESIGN-SYSTEMS.md), router (`core/router.dart`, go_router + tự redirect theo session), `AuthRepository` (Supabase Auth Phone+OTP+Password), màn Splash/Login/Signup(OTP). Build thành công lên emulator Android thật (`flutter run`), chụp màn hình xác nhận UI đúng thiết kế (navy/orange, tiếng Việt). Phát hiện & sửa 1 lỗi theme (text màu trắng trên nền sáng, không đọc được) ngay trong lúc test — bài học: **luôn set màu tường minh cho mọi TextStyle, không dựa vào kế thừa ngầm**.
+  - Chưa test được: luồng gửi/xác thực OTP thật (cần chọn nhà cung cấp SMS trước — `send-otp-sms` Edge Function vẫn là TODO), rate-limit sau 5 lần sai, "Quên mật khẩu" (chưa nối).
+
+## Đang làm / Tiếp theo
+
 - [ ] **Còn thiếu trong `generate-invoice`**: prorate tiền nhà theo ngày khi `MOVE_IN`/`MOVE_OUT` giữa kỳ (BR-BILL-08) — hiện tạm tính trọn tháng, cần bổ sung khi có ca thật để xác nhận cách làm tròn ngày
 - [ ] Test mã VietQR (`generate-payment-qr`) với máy quét ngân hàng thật — hiện mới verify cấu trúc payload + CRC16 đúng chuẩn EMVCo, chưa quét thử
 - [ ] Chọn nhà cung cấp SMS Việt Nam (eSMS/Speedsms) + đăng ký Zalo ZNS/OA
-- [ ] Chọn thư viện/API sinh mã QR chuẩn VietQR/NAPAS-247
 - [ ] Tạo project Firebase (miễn phí, chỉ dùng cho FCM push) khi tới lúc code `send-notification` thật
 - [ ] Setup Scheduled Trigger (pg_cron) cho job nhắc thanh toán quá hạn + nhắc ghi chỉ số định kỳ
-- [ ] Bắt đầu code UI theo thứ tự 4 tab chính trong [USER-FLOWS.md](USER-FLOWS.md), dựa theo Figma Version 3 (đã build xong wireframe + prototype)
+- [ ] Nối S-03 (Trung tâm thông báo) + màn Home tab thật (H-01→H-06) theo Figma, tiếp nối sau khung Auth vừa xong

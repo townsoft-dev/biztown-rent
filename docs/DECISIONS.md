@@ -256,3 +256,17 @@ Tiếp nối Đợt 8 (migration DB). Viết lại `generate-invoice`, thêm m�
 - Cả 3 function deploy thử thành công lên Supabase dev (`supabase functions deploy`), không lỗi.
 
 **Tác động cần dev lưu ý:** Chưa test end-to-end với dữ liệu thật (cần app Flutter hoặc script tạo house/room/contract/reading mẫu trước). Prorate tiền nhà là điểm cần hoàn thiện sớm nhất vì ảnh hưởng trực tiếp số tiền thu — đừng dùng thật cho ca có đổi khách giữa kỳ tới khi xong.
+
+## 2026-09-09 (Đợt 10) — Bắt đầu code UI: cài Android Studio + code khung app/Auth, chạy thật trên emulator
+
+dungtv xác nhận sẵn sàng bắt đầu code UI (design Figma "ready to build" + docs nghiệp vụ đầy đủ). Thứ tự đã chọn: **khung app + Auth trước** (mọi tính năng khác đều cần đăng nhập được trước), và **cài Android Studio ngay để xem app chạy thật** trong lúc code thay vì chỉ dựa vào `flutter analyze`.
+
+- **Cài môi trường Android**: tải trực tiếp Android Studio (.dmg từ Google, không cần tài khoản) + Android SDK qua `sdkmanager` (command-line, dùng JDK bundled sẵn trong Android Studio thay vì cài Java riêng) — không mở GUI Android Studio, tất cả qua CLI. Cài platform 35 + 36, build-tools, emulator, system-image; tạo AVD `rentmanager_pixel` (Pixel 6, API 35) qua `avdmanager`. `flutter doctor` Android toolchain lên xanh. **Xcode không tự cài được** — bắt buộc qua Mac App Store với Apple ID của dungtv, để dungtv tự làm khi cần.
+- **Code khung app**: thêm `go_router`, `google_fonts`, `pin_code_fields` vào `pubspec.yaml`. Viết `core/theme.dart` (design tokens đầy đủ từ `DESIGN-SYSTEMS.md`: màu, bo góc, spacing, badge trạng thái), `core/router.dart` (go_router, tự redirect theo session qua `GoRouterRefreshStream`), `data/auth_repository.dart` (bọc Supabase Auth: `signInWithPassword`, `signInWithOtp`, `verifyOTP`, `updateUser` để đặt mật khẩu).
+- **Code 3 màn Auth theo `SCREEN-SPEC.md` mục 2.1**: S-00 Splash (tự kiểm tra session), S-01 Đăng nhập (SĐT+mật khẩu), S-02 Đăng ký (3 bước: nhập SĐT → OTP 6 số có đếm ngược → tạo mật khẩu, dùng `pin_code_fields`). S-03 (Trung tâm thông báo) và H-01 (Home thật) chưa code — router tạm trỏ `/home` sang 1 màn placeholder.
+- **Build & chạy thật lên emulator** (`flutter run -d emulator-...`, kèm `--dart-define` cho Supabase URL/key) — build lần đầu ~200s (Gradle tự tải thêm NDK + build-tools 36 + CMake). App chạy được, Supabase init thành công (log xác nhận). Chụp màn hình qua `adb screencap` để tự kiểm tra bằng mắt (không chỉ dựa vào build thành công) — **phát hiện 1 lỗi UI ngay lần đầu**: dòng "Welcome to BizTown" gần như vô hình (chữ trắng trên nền sáng) do `titleMedium`/`bodyMedium`/`labelLarge` trong `theme.dart` thiếu `color` tường minh, bị `.copyWith` ghi đè mất màu đã set qua `.apply()` trước đó. Sửa bằng cách set `color: AppColors.textPrimary` tường minh cho từng style. Build lại, chụp màn hình xác nhận đúng.
+- Test thêm 1 bước điều hướng thật (bấm link "Chưa có tài khoản? Đăng ký" qua `adb shell input tap`) — xác nhận màn Signup (bước nhập SĐT) render đúng.
+
+**Bài học quy trình (áp dụng cho các màn tiếp theo):** viết code UI xong không tính là hoàn thành — phải build thật + chụp màn hình tự xem lại bằng mắt trước khi báo xong, vì lỗi màu/hiển thị kiểu này `flutter analyze` không bắt được (chỉ bắt lỗi cú pháp/type, không bắt lỗi styling khiến chữ vô hình).
+
+**Chưa làm/chưa test**: luồng gửi + xác thực OTP thật (cần chọn nhà cung cấp SMS trước, `send-otp-sms` vẫn TODO), rate-limit đăng nhập sai 5 lần, "Quên mật khẩu" (chưa nối), S-03 và H-01 thật.
