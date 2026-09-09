@@ -113,15 +113,21 @@ flowchart TD
     F --> C
     B -- Contract --> G[Contract List]
     G --> H[Bấm 'Tạo hợp đồng']
-    H --> I[Chọn 1 hoặc NHIỀU phòng đang Empty - PHẢI cùng 1 Nhà/Dãy trọ]
+    H --> H2{Chọn theo chiều nào - mới 09/09/2026, xem BR-CTR-13}
+    H2 -- Nhà/phòng trước, mặc định --> I[Chọn 1 hoặc NHIỀU phòng đang Empty - PHẢI cùng 1 Nhà/Dãy trọ]
+    H2 -- Tenant trước --> L2[Chọn Tenant từ TOÀN BỘ Tenant Pool đang có quyền truy cập]
+    L2 --> I2[Danh sách Nhà/phòng tự lọc chỉ còn đúng Nhà của Tenant đã chọn]
+    I2 --> I
     I --> J{Đã có đủ chỉ số MOVE_IN cho từng phòng chưa?}
     J -- Chưa --> K[Bắt buộc ghi chỉ số nhận phòng cho từng phòng - trừ phòng NOT_BILLED]
     K --> J
-    J -- Đủ --> L{Chọn người thuê đại diện}
-    L -- Từ Tenant Pool --> M[Chọn Tenant]
-    L -- Thêm mới ngay --> N[Nhập nhanh hồ sơ Tenant]
+    J -- Đủ --> L{Đã chọn Tenant ở bước trước chưa?}
+    L -- Chưa, chọn ở đây --> M[Chọn Tenant - Tenant Pool tự lọc chỉ hiện Tenant đúng Nhà đã chọn]
+    L -- Pool rỗng/thêm mới --> N[Nhập nhanh hồ sơ Tenant - Nhà tự điền sẵn, ẩn field]
+    L -- Rồi, đã chọn ở H2 --> O2[Dùng Tenant đã chọn]
     M --> O[Nhập điều khoản: ngày bắt đầu, kỳ hạn, tiền cọc theo cả hợp đồng, tiền thuê/tháng, phương thức + đơn giá điện/nước, chu kỳ thu tiền nhà, ngày cố định hạn thanh toán, phí dịch vụ tự tính theo tổng m2, phí định kỳ, phạt trễ hạn - optional, môi giới - optional]
     N --> O
+    O2 --> O
     O --> P[Lưu -> tb_contract + tb_contract_room 1 dòng/phòng + tb_contract_version #1 changeReason=New]
     P --> Q[Mọi phòng trong hợp đồng chuyển 'Occupied']
     Q --> R[Contract Detail]

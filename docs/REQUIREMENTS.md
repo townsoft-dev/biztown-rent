@@ -23,7 +23,7 @@
 | FR-AUTH-02 | Đăng nhập lại bằng SĐT/OTP hoặc mật khẩu | Must | Dùng chung 1 màn cho mọi tài khoản |
 | FR-AUTH-03 | Chủ nhà (`role=owner` của 1 Nhà/Dãy trọ) mời quản lý bằng **số điện thoại** — hệ thống chỉ ghi 1 dòng quyền truy cập (`role=manager`) cho từng nhà được chọn, **không tạo tài khoản, không đặt mật khẩu hộ**; ghi được cả khi số đó chưa có tài khoản, dòng quyền tự có hiệu lực khi người đó đăng ký/đăng nhập lần đầu | Must | **Thay thế hoàn toàn** FR-AUTH-03 cũ ("Landlord tạo tài khoản Manager") — xem [BUSINESS-RULES](BUSINESS-RULES.md) BR-ROLE-04 |
 | FR-AUTH-04 | Chủ nhà thu hồi quyền truy cập đã cấp cho 1 tài khoản trên 1 Nhà/Dãy trọ cụ thể — chỉ xoá được dòng quyền do chính mình cấp | Must | Không dùng cờ khoá tài khoản — xem BR-ROLE-05 |
-| FR-AUTH-05 | Quên mật khẩu / khôi phục tài khoản | Should | Bắt buộc xác nhận OTP để tạo mật khẩu mới |
+| FR-AUTH-05 | Quên mật khẩu / khôi phục tài khoản | Should | Bắt buộc xác nhận OTP gửi tới SĐT đã đăng ký để tạo mật khẩu mới. **Mất đồng thời cả SIM lẫn mật khẩu → Phase 1 không giải quyết** (coi là sơ suất người dùng, không có quy trình hỗ trợ thủ công — xem `BR-ROLE-09`). **Phase 2:** thêm kênh gửi OTP qua email đã đăng ký, khi đó `email` (`tb_user`) chuyển bắt buộc |
 | FR-AUTH-06 | Đăng xuất (Logout) — xoá session/token, quay về màn hình Đăng nhập, có dialog xác nhận trước khi đăng xuất | Must | Xem [USER-FLOWS.md](USER-FLOWS.md) Flow Z |
 | FR-AUTH-07 | Khi mời quản lý bằng số điện thoại đã có tài khoản, hiển thị tên ở dạng che một phần để xác nhận đúng người, không lộ hồ sơ đầy đủ | Must | Xem BR-ROLE-06 |
 | ~~FR-AUTH-03 (V2)~~ | ~~Landlord tạo tài khoản Manager (SĐT, mật khẩu ban đầu, họ tên) qua Supabase Admin API~~ | Removed | Xoá Edge Function `create-manager-user` — xem [ARCHITECTURE](ARCHITECTURE.md) |
@@ -72,6 +72,7 @@
 | FR-CTR-08 | Kết thúc hợp đồng / trả phòng — bắt buộc đã có chỉ số **trả phòng (`MOVE_OUT`)** cho từng phòng, tổng kết công nợ, đối soát tiền cọc (trừ hư hỏng nếu có), xác nhận số tiền hoàn/thu thêm | Must | Xem FR-READ-03 |
 | FR-CTR-09 | Nhiều Tenant trên cùng 1 hợp đồng/phòng (ở ghép, nhiều người đại diện) | Won't (Phase 1) | Phase 1 chỉ 1 người đại diện (`tenantId`) mỗi hợp đồng, dù hợp đồng có nhiều phòng |
 | FR-CTR-10 | Ký hợp đồng điện tử (e-signature) trong app | Won't (MVP) | Phase 2 |
+| FR-CTR-11 | Khi tạo hợp đồng, ràng buộc Tenant chọn phải cùng Nhà/Dãy trọ với phòng đang chọn — hỗ trợ chọn theo 2 chiều: Nhà/phòng trước (Tenant Pool tự lọc theo nhà) hoặc Tenant trước (danh sách Nhà/phòng tự lọc theo Tenant) | Must | Mới, 09/09/2026 — xem `BR-CTR-13`, [SCREEN-SPEC.md](SCREEN-SPEC.md) T-04 |
 
 ### 2.6 Hoá đơn & Thu tiền (Bill Management — Core)
 | ID | Requirement | Priority | Ghi chú |
@@ -100,7 +101,7 @@
 | ID | Requirement | Priority | Ghi chú |
 |---|---|---|---|
 | FR-NOTI-01 | Push notification cho người có quyền trên Nhà/Dãy trọ liên quan (hoá đơn mới tạo, đến hạn ghi chỉ số định kỳ, hợp đồng sắp hết hạn) | Must | "Đến hạn ghi chỉ số" điều hướng đúng tới màn Ghi chỉ số (không phải màn Tạo hoá đơn) — xem BR-NOTI-05 |
-| FR-NOTI-02 | Gửi SMS/Zalo cho Tenant khi có hoá đơn mới (kèm QR) và khi nhắc thanh toán | Must | Kênh duy nhất tiếp cận Tenant |
+| FR-NOTI-02 | Gửi SMS/Zalo cho Tenant khi có hoá đơn mới (kèm QR) và khi nhắc thanh toán | Must | Kênh duy nhất tiếp cận Tenant. **Nội dung cố định tiếng Anh và tiếng Việt ở Phase 1, tiếng việt bên trên tiếng anh bên dưới ở Phase 1** — không theo ngôn ngữ hiển thị của người tạo hoá đơn (mới, 09/09/2026, xem `BR-NOTI-07`) |
 | FR-NOTI-03 | Trung tâm thông báo (notification inbox) trong app | Must | |
 | FR-NOTI-04 | Thông báo khi được mời làm quản lý 1 Nhà/Dãy trọ | Should | Xem BR-NOTI-06 |
 
