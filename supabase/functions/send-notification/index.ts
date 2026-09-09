@@ -1,55 +1,65 @@
 // send-notification
 //
-// Gửi thông báo qua Push (FCM/APNs) + SMS/Zalo song song, theo docs/BUSINESS-RULES.md mục 5
-// (BR-NOTI-01..08) — áp dụng cho cả Landlord và Tenant.
+// Gửi Push (cho người có quyền trên 1 Nhà/Dãy trọ) + SMS/Zalo (một chiều tới Tenant,
+// không có tài khoản) — theo docs/BUSINESS-RULES.md mục 5 (BR-NOTI-01..07).
 //
-// CHƯA IMPLEMENT — đang chờ quyết định/tài khoản trước khi code thật:
+// CHƯA IMPLEMENT phần gửi thật — đang chờ quyết định/tài khoản trước khi code:
 // - Firebase project cho FCM (push Android) chưa tạo.
-// - Nhà cung cấp SMS Việt Nam (eSMS hay Speedsms) chưa chọn.
-// - Zalo ZNS/OA chưa đăng ký + duyệt mẫu tin nhắn.
+// - Nhà cung cấp SMS Việt Nam (eSMS/Speedsms) + Zalo ZNS/OA chưa chọn/duyệt.
 //
-// Khi có đủ, hàm này sẽ: ghi 1 row vào bảng `notifications` (cho Trung tâm thông báo S-03),
-// rồi gọi song song FCM/APNs + SMS/Zalo API tuỳ theo `channel` được truyền vào.
+// Đã cập nhật theo schema Version 3: đọc người nhận push qua `tb_user_house_access`
+// (theo house_id, không phân biệt owner/manager — BR-NOTI-01/02/05 gửi cho "người có
+// quyền trên nhà đó" không phân role) + `tb_device_token`. Tenant không có
+// `auth.users`/`tb_user` row nên chỉ nhận qua SMS/Zalo, không có push.
 
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
 
 interface SendNotificationRequest {
-  user_id: string;
-  type: string; // vd: "invoice_created", "payment_reminder", "request_created"...
+  houseId: string;
+  event: string; // "invoice_created" | "payment_reminder" | "request_created" | ...
   title: string;
   body: string;
-  channel: ("push" | "sms" | "zalo")[];
-  related_entity_type?: string;
-  related_entity_id?: string;
+  // Push đi kèm cho mọi người có quyền trên houseId (owner + manager, BR-NOTI-01/02/05).
+  push?: boolean;
+  // SMS/Zalo một chiều tới Tenant — nội dung PHẢI tiếng Việt (BR-NOTI-07), độc lập
+  // với ngôn ngữ UI của Landlord/Manager.
+  tenant?: {
+    phone: string;
+    message: string; // tiếng Việt, có thể kèm link mã QR
+  };
 }
 
 export default {
   fetch: withSupabase({ auth: ["secret"] }, async (req, ctx) => {
     const payload: SendNotificationRequest = await req.json();
 
-    const { data: notification, error } = await ctx.supabaseAdmin
-      .from("notifications")
-      .insert({
-        user_id: payload.user_id,
-        type: payload.type,
-        title: payload.title,
-        body: payload.body,
-        channel: payload.channel,
-        related_entity_type: payload.related_entity_type,
-        related_entity_id: payload.related_entity_id,
-      })
-      .select()
-      .single();
+    const results: Record<string, unknown> = {};
 
-    if (error) {
-      return Response.json({ error: error.message }, { status: 500 });
+    if (payload.push !== false) {
+      const { data: accessRows } = await ctx.supabaseAdmin
+        .from("tb_user_house_access")
+        .select("phone")
+        .eq("house_id", payload.houseId);
+      const phones = [...new Set((accessRows ?? []).map((r: any) => r.phone))];
+
+      const { data: users } = await ctx.supabaseAdmin.from("tb_user").select("id").in("phone", phones);
+      const userIds = (users ?? []).map((u: any) => u.id);
+
+      const { data: tokens } = await ctx.supabaseAdmin
+        .from("tb_device_token")
+        .select("token, platform")
+        .in("user_id", userIds);
+
+      // TODO: gọi FCM (Android) / APNs (iOS) thật với payload.title/payload.body cho từng token.
+      results.push = { warning: "FCM/APNs chưa implement", recipientCount: (tokens ?? []).length };
     }
 
-    // TODO: gọi FCM/APNs nếu channel bao gồm "push".
-    // TODO: gọi SMS provider (eSMS/Speedsms) nếu channel bao gồm "sms".
-    // TODO: gọi Zalo ZNS/OA nếu channel bao gồm "zalo".
+    if (payload.tenant) {
+      // TODO: gọi SMS provider (eSMS/Speedsms) và/hoặc Zalo ZNS/OA với payload.tenant.message.
+      results.tenantMessage = { warning: "SMS/Zalo chưa implement", phone: payload.tenant.phone };
+    }
 
-    return Response.json({ notification, warning: "push/sms/zalo delivery not implemented yet" });
+    return Response.json({ event: payload.event, ...results });
   }),
 };

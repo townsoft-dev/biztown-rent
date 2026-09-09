@@ -63,7 +63,9 @@
 
 ## Đang làm / Tiếp theo
 
-- [ ] Viết Edge Function `generate-invoice` (đọc lại chỉ số, hỗ trợ tạo hàng loạt, chu kỳ tiền nhà, phí dịch vụ/m², prorate) + `generate-payment-qr` (mới) + rà soát `send-notification` (thêm nhánh nhắc ghi chỉ số định kỳ) — xem [API.md](API.md). Khung 3 function cũ (Version 1) trong `supabase/functions/` cần viết lại hoàn toàn theo schema mới.
+- [x] **Viết lại 3 Edge Function theo schema Version 3** — `generate-invoice` (đơn lẻ + hàng loạt, đọc lại chỉ số, chu kỳ tiền nhà, phí dịch vụ/m², BR-BILL-01..13), `generate-payment-qr` (mới, module dùng chung `_shared/vietqr.ts`, thuật toán CRC16 đã verify đúng test vector chuẩn), `send-notification` (đọc `tb_user_house_access`/`tb_device_token`). Cả 3 đã deploy thành công lên Supabase dev — xem [API.md](API.md).
+- [ ] **Còn thiếu trong `generate-invoice`**: prorate tiền nhà theo ngày khi `MOVE_IN`/`MOVE_OUT` giữa kỳ (BR-BILL-08) — hiện tạm tính trọn tháng, cần bổ sung khi có ca thật để xác nhận cách làm tròn ngày
+- [ ] Test mã VietQR (`generate-payment-qr`) với máy quét ngân hàng thật — hiện mới verify cấu trúc payload + CRC16 đúng chuẩn EMVCo, chưa quét thử
 - [ ] Chọn nhà cung cấp SMS Việt Nam (eSMS/Speedsms) + đăng ký Zalo ZNS/OA
 - [ ] Chọn thư viện/API sinh mã QR chuẩn VietQR/NAPAS-247
 - [ ] Tạo project Firebase (miễn phí, chỉ dùng cho FCM push) khi tới lúc code `send-notification` thật
