@@ -67,8 +67,9 @@ Version 3 đổi cấu trúc từ "5 menu" (Version 2) sang **4 tab**, giảm s�
 - **Đăng ký/quản lý công tơ dạng thiết bị, đọc số tự động qua IoT** — Phase 1 chỉ nhập tay, 1 phòng = 1 công tơ ảo gắn trực tiếp vào phòng.
 - Nhiều Tenant đại diện trên 1 hợp đồng (ở ghép nhiều người cùng đứng tên).
 - Chat trong app giữa các bên.
-- Đa ngôn ngữ, e-signature.
+- e-signature.
 - Marketplace tìm phòng công khai/SEO/quảng cáo trả phí.
+- ~~Đa ngôn ngữ~~ — **đổi hướng 09/09/2026: không còn ngoài phạm vi**, app hỗ trợ 3 ngôn ngữ (English / Tiếng Việt / 한국어) ngay từ Phase 1, chọn ngay tại màn Profile (P-01, inline picker) — ngôn ngữ khác để Phase 2. Xem `NFR-02`/`FR-MGR-05` trong [REQUIREMENTS](REQUIREMENTS.md). Bản thiết kế Figma vẫn dựng bằng tiếng Anh làm chuẩn.
 
 ## 6. Business model
 - Phase 1 hoàn toàn miễn phí
@@ -90,7 +91,7 @@ Tham khảo nhanh các sản phẩm cùng phân khúc tại Việt Nam (quản l
 - Flow đơn giản, tối thiểu số bước.
 
 ## 8. Success Metrics (KPIs)
-- Xây dựng được MVP Phase 1 (4 tab, 32 màn) hoàn chỉnh trong thời gian hợp lý.
+- Xây dựng được MVP Phase 1 (4 tab, 32 màn — chọn ngôn ngữ inline tại P-01, không thêm màn riêng, cập nhật 09/09/2026) hoàn chỉnh trong thời gian hợp lý.
 - Chủ nhà có thể tự vận hành trọn vẹn 1 chu kỳ: đăng ký nhà/phòng → ghi chỉ số định kỳ → tạo hợp đồng (kể cả nhiều phòng) → tạo & gửi hoá đơn hàng loạt kèm QR → đánh dấu đã thu tiền, không cần hỗ trợ thủ công.
 - Đổi khách giữa tháng không phát sinh lỗi tính tiền điện/nước gấp đôi (kiểm chứng bằng kịch bản Mr. Han — xem [`시뮬레이션 케이스 (Mr.Han).md`](시뮬레이션%20케이스%20(Mr.Han).md)).
 

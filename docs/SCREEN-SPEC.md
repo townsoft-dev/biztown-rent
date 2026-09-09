@@ -2,6 +2,7 @@
 > **Trạng thái tài liệu:** Version 3 — **viết lại toàn bộ theo cấu trúc 4 tab** (2026-09-08)
 > **Thay đổi lớn:** Đổi cấu trúc từ **5 menu → 4 tab** (bottom nav): Home, Tenant & Contract, Bills, Profile. Tổng số màn hình tăng từ **22 → 32** (+10): thêm nghiệp vụ ghi chỉ số điện/nước (1 màn gộp), tách View/Create-Edit của Phòng, tách Renew/Amend hợp đồng, thêm Invoice Schedule Preview, thêm tạo hoá đơn hàng loạt + Send Invoice sheet, thêm màn gốc tab Profile + Payout bank account + Change password. Xem [DECISIONS.md](DECISIONS.md) 2026-09-08 và [PRODUCT-OVERVIEW](PRODUCT-OVERVIEW.md) mục 5.
 > **Cập nhật 09/08 (sửa trực tiếp trong FigJam):** gộp 3 màn ghi/xem/sửa chỉ số (H-06 Reading Entry, H-07 Reading History, H-08 Reading Correction) thành **1 màn duy nhất H-06 — Record Monthly Reading (PERIODIC)**: liệt kê theo phòng (entry), tap vào 1 phòng ra detail view (lịch sử theo `previousReadingId`), sửa được ngay tại đó khi `isLocked=false`. Tổng màn hình Home giảm từ 8 → 6, tổng toàn app từ 34 → 32.
+> **Cập nhật 09/09/2026:** app hỗ trợ chọn ngôn ngữ hiển thị — **English / Tiếng Việt / 한국어 (Hàn)**, các ngôn ngữ khác để Phase 2 (xem `FR-MGR-05`). Chọn ngay tại **P-01** (1 dòng "Ngôn ngữ / Language" dạng inline picker, không mở màn riêng) — **không thêm màn mới**, tổng vẫn 32 màn. (Quyết định ban đầu cùng ngày có thêm màn P-08 riêng cho việc này rồi bỏ lại, xem [DECISIONS.md](DECISIONS.md) 2026-09-09.)
 
 ---
 
@@ -65,7 +66,7 @@
 
 | # | Màn hình | Ghi chú |
 |---|---|---|
-| P-01 | Profile (màn gốc tab) | Danh mục điều hướng tới P-02 → P-07 — mới |
+| P-01 | Profile (màn gốc tab) | Danh mục điều hướng tới P-02 → P-07, kèm dòng chọn ngôn ngữ inline (09/09/2026) — mới |
 | P-02 | Personal Profile (Detail/Edit) | Họ tên, SĐT, CCCD... dùng chung mọi tài khoản |
 | P-03 | Payout Bank Account | Theo TỪNG Nhà/Dãy trọ, không phải theo cá nhân — mới |
 | P-04 | Change Password | Tách riêng khỏi luồng quên mật khẩu — mới |
@@ -178,19 +179,19 @@
 
 ### T-01 — Tenant Pool List
 - **Mục đích:** Quản lý "kho" hồ sơ Tenant dùng chung theo Nhà/Dãy trọ.
-- **Thành phần chính:** Ô tìm kiếm (tên/SĐT), chip filter (Tất cả/Chưa gắn phòng/Đang thuê), list mỗi Tenant (avatar, họ tên, SĐT, trạng thái gắn phòng), nút nổi "+".
+- **Thành phần chính:** Dropdown lọc theo **Nhà/Dãy trọ** (nếu có quyền truy cập nhiều hơn 1 nhà — mỗi Tenant thuộc đúng 1 nhà từ 09/09/2026, xem `BR-DATA-05`), ô tìm kiếm (tên/SĐT), chip filter (Tất cả/Chưa gắn phòng/Đang thuê), list mỗi Tenant (avatar, họ tên, SĐT, trạng thái gắn phòng), nút nổi "+".
 - **Trạng thái:** Có dữ liệu / Rỗng.
-- **Hành động & điều hướng:** Tap "+" → T-02. Tap 1 Tenant → T-02 (xem/sửa).
-- **Dữ liệu hiển thị:** Tenant thuộc phạm vi các nhà đang có quyền truy cập.
-- **Edge cases:** `role=manager` chỉ thấy Tenant gắn với phòng thuộc nhà được cấp quyền, cộng Tenant chưa gắn phòng (dùng chung theo nhà).
+- **Hành động & điều hướng:** Tap "+" → T-02 (tạo mới theo nhà đang lọc, hoặc bắt chọn nhà nếu đang xem "Tất cả nhà"). Tap 1 Tenant → T-02 (xem/sửa).
+- **Dữ liệu hiển thị:** Union Tenant của mọi nhà đang có quyền truy cập, mỗi bản ghi vẫn thuộc đúng 1 `houseId`.
+- **Edge cases:** `role=manager` chỉ thấy Tenant thuộc nhà được cấp quyền (không thấy Tenant Pool của nhà khác dù cùng 1 chủ sở hữu thật).
 
 ### T-02 — Tenant Profile (Create/Edit)
 - **Mục đích:** Tạo/sửa 1 hồ sơ Tenant, độc lập với hợp đồng.
-- **Thành phần chính:** Ảnh đại diện (optional), Họ tên (bắt buộc), SĐT (bắt buộc), Giới tính, Ngày sinh, Email (optional), Số CCCD/CMND (bắt buộc), Ảnh CCCD 2 mặt (bắt buộc), Ghi chú (optional), nút Lưu/Huỷ.
+- **Thành phần chính:** **Nhà/Dãy trọ** (bắt buộc — quy định phạm vi Tenant Pool của hồ sơ này, mới 09/09/2026 xem `BR-DATA-05`; auto-chọn & ẩn field nếu mở shortcut từ T-04 theo hợp đồng đang tạo), Ảnh đại diện (optional), Họ tên (bắt buộc), SĐT (bắt buộc), Giới tính, Ngày sinh, Email (optional), Số CCCD/CMND (bắt buộc), Ảnh CCCD 2 mặt (bắt buộc), Ghi chú (optional), nút Lưu/Huỷ.
 - **Trạng thái:** Tạo mới / Chỉnh sửa / Lỗi validate.
 - **Hành động & điều hướng:** Lưu → T-01, hoặc nếu mở shortcut từ T-04 → quay lại T-04 với Tenant vừa tạo đã chọn sẵn.
 - **Dữ liệu hiển thị:** Hồ sơ Tenant (nếu sửa).
-- **Edge cases:** SĐT trùng hồ sơ có sẵn → cảnh báo, gợi ý mở hồ sơ cũ.
+- **Edge cases:** SĐT trùng hồ sơ có sẵn **trong cùng 1 nhà** → cảnh báo, gợi ý mở hồ sơ cũ (SĐT trùng ở nhà khác không cảnh báo — Tenant Pool độc lập theo từng nhà).
 
 ### T-03 — Contract List
 - **Mục đích:** Xem toàn bộ hợp đồng.
@@ -270,7 +271,7 @@
 
 ### B-02 — Create Invoice — Batch
 - **Mục đích:** Tạo hoá đơn **hàng loạt** cho mọi hợp đồng Active của 1 Nhà/Dãy trọ trong 1 kỳ.
-- **Thành phần chính:** Chọn Nhà/Dãy trọ, chọn kỳ (tháng/năm), danh sách kết quả sau khi hệ thống đọc lại chỉ số: nhóm "Sẵn sàng tạo" (đủ chỉ số) và nhóm "Thiếu dữ liệu" (liệt kê rõ hợp đồng/phòng còn thiếu chỉ số kỳ này, không cho tạo), bảng preview tổng hợp cho nhóm "Sẵn sàng tạo" (từng hợp đồng: điện/nước theo phòng, tiền nhà nếu đúng chu kỳ, phí dịch vụ, phí định kỳ, prorate nếu có MOVE_IN/MOVE_OUT trong kỳ, **Tổng cộng**), nút "Tạo & xem trước gửi" → B-04, nút "Lưu nháp tất cả" (Draft).
+- **Thành phần chính:** Chọn Nhà/Dãy trọ, chọn kỳ (tháng/năm), danh sách kết quả sau khi hệ thống đọc lại chỉ số: nhóm "Sẵn sàng tạo" (đủ chỉ số) và nhóm "Thiếu dữ liệu" (liệt kê rõ hợp đồng/phòng còn thiếu chỉ số kỳ này, không cho tạo), bảng preview tổng hợp cho nhóm "Sẵn sàng tạo" (từng hợp đồng: điện/nước theo phòng, tiền nhà nếu đúng chu kỳ — **chia theo ngày ở nếu có MOVE_IN/MOVE_OUT trong kỳ**, phí dịch vụ + phí định kỳ — **tính trọn 100% cho hợp đồng đang Active tại thời điểm tạo hoá đơn, KHÔNG chia theo ngày** (`BR-BILL-08`, cập nhật 09/09/2026), **Tổng cộng**), nút "Tạo & xem trước gửi" → B-04, nút "Lưu nháp tất cả" (Draft).
 - **Trạng thái:** Đang tính → Preview → Đã tạo (Draft) hoặc chuyển sang gửi.
 - **Hành động & điều hướng:** "Tạo & xem trước gửi" → B-04 (Send Invoice Sheet) cho toàn bộ lô vừa tạo.
 - **Dữ liệu hiển thị:** Dữ liệu tính từ chỉ số đã ghi sẵn (H-06) + điều khoản từ `contract_version` hiện hành của từng hợp đồng.
@@ -306,19 +307,19 @@
 
 ### P-01 — Profile (màn gốc tab)
 - **Mục đích:** Danh mục điều hướng của tab 4 — **mới** so với Version 2 (nơi tab User Setting đi thẳng vào Owner/Manager Profile).
-- **Thành phần chính:** Avatar + tên tài khoản đang đăng nhập, danh sách mục: "Hồ sơ cá nhân" → P-02, "Tài khoản ngân hàng nhận tiền" → P-03, "Đổi mật khẩu" → P-04, "Người quản lý nhà" → P-05, nút "Đăng xuất" → P-07.
-- **Trạng thái:** Mặc định.
-- **Hành động & điều hướng:** Như trên.
-- **Dữ liệu hiển thị:** Thông tin tài khoản đang đăng nhập.
+- **Thành phần chính:** Avatar + tên tài khoản đang đăng nhập, danh sách mục: "Hồ sơ cá nhân" → P-02, "Tài khoản ngân hàng nhận tiền" → P-03, "Đổi mật khẩu" → P-04, "Người quản lý nhà" → P-05, **dòng "Ngôn ngữ / Language"** — inline picker ngay tại đây (không mở màn riêng), 3 lựa chọn "English / Tiếng Việt / 한국어" (sửa 09/09/2026 — xem `FR-MGR-05`; ngôn ngữ khác để Phase 2), nút "Đăng xuất" → P-07.
+- **Trạng thái:** Mặc định / Đang mở picker ngôn ngữ.
+- **Hành động & điều hướng:** Như trên. Chọn ngôn ngữ → áp dụng ngay, toàn bộ UI re-render theo ngôn ngữ mới, ở lại P-01 (không điều hướng đi đâu).
+- **Dữ liệu hiển thị:** Thông tin tài khoản đang đăng nhập; ngôn ngữ đang chọn (mặc định theo ngôn ngữ máy lúc cài app lần đầu, fallback English nếu máy dùng ngôn ngữ ngoài 3 lựa chọn trên).
 - **Edge cases:** Không có.
 
 ### P-02 — Personal Profile (Detail/Edit)
 - **Mục đích:** Xem/sửa hồ sơ cá nhân — dùng chung cho mọi tài khoản, không phân biệt owner/manager.
-- **Thành phần chính:** Avatar (optional), Họ tên, SĐT (đổi cần OTP lại), Giới tính, Ngày sinh, Email (optional), Số CCCD/CMND, nút Lưu.
+- **Thành phần chính:** Avatar (optional), Họ tên, **SĐT (chỉ hiển thị, không cho sửa** — đổi hướng 09/09/2026, xem `BR-ROLE-09`), Giới tính, Ngày sinh, Email (optional), Số CCCD/CMND, nút Lưu.
 - **Trạng thái:** Xem / Đang sửa.
 - **Hành động & điều hướng:** Lưu → toast xác nhận, ở lại màn hình.
 - **Dữ liệu hiển thị:** Thông tin tài khoản hiện tại.
-- **Edge cases:** Đổi SĐT cần xác thực OTP lại.
+- **Edge cases:** Không có (đổi mật khẩu thực hiện riêng ở P-04, không còn luồng đổi SĐT ở màn này).
 
 ### P-03 — Payout Bank Account
 - **Mục đích:** Xem/sửa tài khoản ngân hàng nhận tiền — **theo TỪNG Nhà/Dãy trọ**, không phải theo cá nhân (khác Version 2, nơi số tài khoản gắn với Owner Profile).
@@ -364,7 +365,7 @@
 
 ## 3. Liên kết với Figma / FigJam
 
-- Wireframe MVP: **BizTown Rent-Manager — MVP Wireframes** → https://www.figma.com/design/AElzfTBuL8YyA8OJ85f7aX/BizTown-Rent-Manager-%E2%80%94-MVP-Wireframes?node-id=133-57 — page **MVP Wireframes (EN) - Version3** (cần build lại theo 32 màn ở mục 1; page cũ "MVP Wireframes (EN) - OLD" 35 màn đã gắn nhãn SUPERSEDED). Dùng chung style/token với các bản trước (nền `#F5F6F9`, header navy `#23305E`, accent cam `#EF9F27`, bo góc 12–16px) và bottom nav **4 tab** dùng chung mọi tài khoản theo [DESIGN-SYSTEMS.md](DESIGN-SYSTEMS.md).
+- Wireframe MVP: **BizTown Rent-Manager — MVP Wireframes** → https://www.figma.com/design/AElzfTBuL8YyA8OJ85f7aX/BizTown-Rent-Manager-%E2%80%94-MVP-Wireframes?node-id=133-57 — page **MVP Wireframes (EN) - Version3**, ✅ **đã build lại theo 32 màn/4 tab** (08/09/2026, xem [DESIGN.md](DESIGN.md)); page cũ "MVP Wireframes (EN) - OLD" 35 màn đã gắn nhãn SUPERSEDED. Dùng chung style/token với các bản trước (nền `#F5F6F9`, header navy `#23305E`, accent cam `#EF9F27`, bo góc 12–16px) và bottom nav **4 tab** dùng chung mọi tài khoản theo [DESIGN-SYSTEMS.md](DESIGN-SYSTEMS.md).
 - Diagram tóm tắt entity + luồng theo cấu trúc mới (nguồn cho đợt viết lại tài liệu 2026-09-08): FigJam board `PAuYWdSon7WcPKdRQStoPR`, khu vực "Version 3 — CURRENT".
 
-**Trạng thái:** Ver3 (tài liệu) đã hoàn tất 2026-09-08. Figma MVP Wireframes cần build lại 32 màn theo cấu trúc 4 tab — chưa thực hiện tại thời điểm viết tài liệu này.
+**Trạng thái:** Ver3 (tài liệu) đã hoàn tất 2026-09-08, Figma 32 màn đã build + nối prototype cùng ngày (đợt 3 — xem [DECISIONS.md](DECISIONS.md), ghi chú này trong SCREEN-SPEC.md trước đó chưa được cập nhật theo, đã sửa lại 09/09/2026 cho khớp). **Việc cần làm tại 09/09/2026:** bổ sung 1 dòng "Ngôn ngữ / Language" (inline picker, 3 lựa chọn) vào màn P-01 hiện có trên Figma — không cần màn mới, số màn Figma vẫn giữ nguyên 32.

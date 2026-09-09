@@ -2,6 +2,8 @@
 
 ## Giai đoạn
 
+✅ **Cập nhật 2026-09-09:** Xử lý 7 điểm phát hiện từ đợt rà soát gap analysis Version 3 (xem `Claude outputs/PHASE1-GAP-ANALYSIS-VERIFICATION.md` + [DECISIONS.md](DECISIONS.md)): (1) `tb_tenant` thêm `houseId` bắt buộc; (2) thêm `BR-METER-14` xử lý sửa chỉ số MOVE_OUT sau khi đã thanh lý; (3) phí dịch vụ/phí định kỳ không chia theo ngày khi đổi khách giữa tháng, tính trọn cho hợp đồng đang Active lúc tạo hoá đơn; (4) làm rõ phòng `FLAT` vẫn ghi chỉ số đầy đủ (chỉ không dùng tính tiền) — có chủ đích; (5) **bỏ hẳn tính năng đổi số điện thoại** (SĐT chỉ xem, không sửa — `BR-ROLE-09`); (6) giữ nguyên nhóm nhà theo `ownerFullName` (chấp nhận rủi ro gõ sai); (7) **hỗ trợ 3 ngôn ngữ ngay từ Phase 1 — English/Tiếng Việt/한국어** (ngôn ngữ khác để Phase 2), chọn ngay tại **P-01** dạng inline picker — **không thêm màn riêng** (sửa lại cùng ngày, đợt 3: ban đầu định thêm màn P-08 rồi bỏ, xem [DECISIONS.md](DECISIONS.md)), tổng vẫn 32 màn. Đã cập nhật `DATABASE.md`, `BUSINESS-RULES.md`, `REQUIREMENTS.md`, `PRODUCT-OVERVIEW.md`, `SCREEN-SPEC.md`, `USER-FLOWS.md`, `DESIGN-SYSTEMS.md`.
+
 ✅ **Cập nhật 2026-09-08:** Chốt xong **Version 3** — thay đổi 3 thứ cốt lõi so với Version 2: cấu trúc app 5 menu → 4 tab, thêm nghiệp vụ ghi chỉ số điện/nước (3 loại, bắt buộc tại flow Hợp đồng), hợp đồng nhiều phòng + tự động hoá hoá đơn sâu hơn (chu kỳ tiền nhà, phí dịch vụ/m², mã QR VietQR). Vai trò Chủ nhà/Quản lý đổi sang gắn theo **từng Nhà/Dãy trọ** thay vì gắn vào tài khoản, và tên bảng đổi lại dùng tiền tố `tb_`. **FigJam board `PAuYWdSon7WcPKdRQStoPR` đã cập nhật đầy đủ theo Version 3** (khu vực "Version 3 — CURRENT"). **Toàn bộ `docs/*.md` đã được viết lại theo Version 3** cùng đợt này — xem [DECISIONS.md](DECISIONS.md).
 
 ⚠️ Nguồn của đợt cập nhật này: bản chốt "Chốt thay đổi version 3" (Dream, 07/09), chỉ đạo của Mr. Han về nghiệp vụ ghi chỉ số (08/09), kịch bản thật `시뮬레이션 케이스 (Mr.Han).md` dùng kiểm chứng thiết kế, và FigJam board Phase 1 Scope Map.
@@ -38,7 +40,8 @@
 
 ## Đang làm / Tiếp theo
 
-- [ ] **Viết migration DB mới từ đầu** theo schema Version 3 ([DATABASE.md](DATABASE.md)) — 12 bảng tiền tố `tb_`, gồm `tb_electricity_reading`/`tb_water_reading` (mới), `tb_contract_room` (mới), gộp `tb_user` (bỏ 2 bảng account cũ), gộp field owner vào `tb_house`, gộp settlement vào `tb_contract`
+- [ ] **Bổ sung 1 dòng "Ngôn ngữ / Language" vào màn Figma P-01** (inline picker, 3 lựa chọn English/Tiếng Việt/한국어 — mới 09/09/2026, xem [SCREEN-SPEC.md](SCREEN-SPEC.md)) — không cần màn riêng, số màn Figma giữ nguyên 32
+- [ ] **Viết migration DB mới từ đầu** theo schema Version 3 ([DATABASE.md](DATABASE.md)) — 12 bảng tiền tố `tb_`, gồm `tb_electricity_reading`/`tb_water_reading` (mới), `tb_contract_room` (mới), gộp `tb_user` (bỏ 2 bảng account cũ), gộp field owner vào `tb_house`, gộp settlement vào `tb_contract`, `tb_tenant` có thêm `houseId` bắt buộc (mới 09/09/2026)
 - [ ] Viết lại Edge Function `generate-invoice` (đọc lại chỉ số, hỗ trợ tạo hàng loạt, chu kỳ tiền nhà, phí dịch vụ/m², prorate) + `generate-payment-qr` (mới) + rà soát `send-notification` (thêm nhánh nhắc ghi chỉ số định kỳ) — xem [API.md](API.md)
 - [ ] Xoá Edge Function `create-manager-user` (nếu đã có khung) — không còn dùng Supabase Admin API cho việc mời quản lý
 - [ ] Chọn nhà cung cấp SMS Việt Nam (eSMS/Speedsms) + đăng ký Zalo ZNS/OA

@@ -108,8 +108,8 @@ flowchart TD
     A[Tab Tenant & Contract] --> B{Segmented control}
     B -- Tenant --> C[Tenant Pool List]
     C --> D[Bấm 'Thêm người thuê']
-    D --> E[Tenant Profile: họ tên, SĐT, giới tính, ngày sinh, email, CCCD/CMND + ảnh 2 mặt, ghi chú]
-    E --> F[Lưu -> tb_tenant, CHƯA gắn phòng/hợp đồng]
+    D --> E[Tenant Profile: chọn Nhà Dãy trọ bắt buộc, họ tên, SĐT, giới tính, ngày sinh, email, CCCD CMND + ảnh 2 mặt, ghi chú]
+    E --> F[Lưu -> tb_tenant kèm houseId, CHƯA gắn phòng/hợp đồng]
     F --> C
     B -- Contract --> G[Contract List]
     G --> H[Bấm 'Tạo hợp đồng']
@@ -154,7 +154,7 @@ flowchart TD
     C --> D[Hệ thống đọc lại chỉ số đã ghi cho mọi hợp đồng Active thuộc nhà đó]
     D --> E{Hợp đồng/phòng nào thiếu chỉ số kỳ này?}
     E -- Có --> F[Bỏ qua hợp đồng đó, liệt kê rõ phòng còn thiếu - KHÔNG ước lượng]
-    E -- Đủ --> G[Tự tính: điện/nước theo từng phòng, tiền nhà nếu đúng chu kỳ, phí dịch vụ theo m2, phí định kỳ, prorate ngày ở nếu có MOVE_IN/MOVE_OUT trong kỳ]
+    E -- Đủ --> G[Tự tính: điện nước theo từng phòng; tiền nhà nếu đúng chu kỳ - chia theo ngày ở nếu có MOVE IN hoặc MOVE OUT trong kỳ; phí dịch vụ theo m2 và phí định kỳ - tính trọn cho hợp đồng đang Active lúc tạo hoá đơn, không chia theo ngày]
     B -- Tạo đơn lẻ --> C
     F --> H[Preview hàng loạt - Draft]
     G --> H
@@ -169,7 +169,7 @@ flowchart TD
     O -- Có --> P[Đánh dấu 'Collected' trong Invoice Detail]
     O -- Chưa, quá hạn --> Q[Hệ thống tự hiển thị 'Overdue' theo dueDate - không lưu DB, kích hoạt Flow C]
 ```
-Không còn bước Tenant tự đánh dấu "đã chuyển khoản". Điện/nước luôn tính theo tháng; tiền nhà chỉ xuất hiện đúng chu kỳ cấu hình trên hợp đồng (VD 2 tháng/lần) — kỳ không thu tiền nhà thì hoá đơn chỉ có điện/nước + phí dịch vụ + phí khác.
+Không còn bước Tenant tự đánh dấu "đã chuyển khoản". Điện/nước luôn tính theo tháng; tiền nhà chỉ xuất hiện đúng chu kỳ cấu hình trên hợp đồng (VD 2 tháng/lần) — kỳ không thu tiền nhà thì hoá đơn chỉ có điện/nước + phí dịch vụ + phí khác. **Cập nhật 09/09/2026 (`BR-BILL-08`):** khi đổi khách giữa tháng, chỉ **tiền nhà** chia theo số ngày ở; **phí dịch vụ và phí định kỳ không chia** — tính trọn cho hợp đồng đang có người ở tại thời điểm tạo hoá đơn của kỳ đó, phòng còn trống lúc đó thì không tính khoản này cho ai (chủ nhà tự chịu).
 
 ---
 
@@ -178,11 +178,12 @@ Không còn bước Tenant tự đánh dấu "đã chuyển khoản". Điện/n�
 ```mermaid
 flowchart TD
     A[Tab Profile] --> B[Hồ sơ cá nhân - Detail/Edit]
-    B --> C[Sửa: họ tên, SĐT, giới tính, ngày sinh, email, CCCD/CMND, avatar]
+    B --> C[Sửa: họ tên, giới tính, ngày sinh, email, CCCD/CMND, avatar - SĐT chỉ xem không sửa]
     A --> D[Người quản lý nhà - theo từng Nhà/Dãy trọ đang có role=owner]
     D --> E[Xem A2 - Mời/Thu hồi quyền theo Nhà/Dãy trọ]
     A --> F[Tài khoản ngân hàng nhận tiền - theo từng nhà]
     A --> G[Đổi mật khẩu]
+    A -. dòng inline, cùng màn .-> J[Ngôn ngữ - chọn 1/3: English / Tiếng Việt / 한국어, ngôn ngữ khác để Phase 2 - sửa 09/09/2026, không phải màn riêng]
     A --> H[Login/Logout]
     H --> I[Xem Flow Z]
 ```

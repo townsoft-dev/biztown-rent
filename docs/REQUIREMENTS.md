@@ -49,12 +49,12 @@
 | FR-READ-04 | Hệ thống validate chỉ số mới ≥ chỉ số cũ ngay lúc ghi | Must | |
 | FR-READ-05 | Xem lịch sử chỉ số theo phòng (toàn bộ 3 loại, theo trình tự thời gian) — **cùng 1 màn với FR-READ-01** (H-06 Record Monthly Reading, gộp 09/08 trong FigJam), tap 1 phòng để mở detail view, không phải màn riêng | Should | Xem [SCREEN-SPEC.md](SCREEN-SPEC.md) H-06 |
 | FR-READ-06 | Chặn sửa trực tiếp chỉ số đã gắn vào 1 hoá đơn (`isLocked=true`, derived — xem BR-READ-04); sửa khi chưa khoá thực hiện **ngay tại detail view của FR-READ-05**, không có màn "sửa" riêng. Muốn điều chỉnh chỉ số đã khoá → thêm dòng vào `otherFees` của hoá đơn kế tiếp (BR-METER-13) | Must | |
-| FR-READ-07 | Không yêu cầu ghi chỉ số cho phòng/hợp đồng cấu hình "không thu theo chỉ số" (`NOT_BILLED`) | Must | VD căn hộ cho thuê nguyên căn — khách tự trả điện/nước cho toà nhà |
+| FR-READ-07 | Không yêu cầu ghi chỉ số cho phòng/hợp đồng cấu hình "không thu theo chỉ số" (`NOT_BILLED`) | Must | VD căn hộ cho thuê nguyên căn — khách tự trả điện/nước cho toà nhà. **Chỉ miễn cho `NOT_BILLED`** — phòng `FLAT` (khoán) vẫn ghi chỉ số đầy đủ như bình thường, chỉ không dùng chỉ số đó để tính tiền; có chủ đích để theo dõi mức tiêu thụ thực tế, xem `BR-READ-05` |
 
 ### 2.4 Quản lý Người thuê (Tenant Management)
 | ID | Requirement | Priority | Ghi chú |
 |---|---|---|---|
-| FR-TEN-01 | Tạo hồ sơ Tenant (họ tên, SĐT, giới tính, ngày sinh, email tuỳ chọn, CCCD/CMND, ảnh CCCD 2 mặt, ghi chú) — lưu vào "Tenant Pool" dùng chung theo Nhà/Dãy trọ | Must | |
+| FR-TEN-01 | Tạo hồ sơ Tenant (họ tên, SĐT, giới tính, ngày sinh, email tuỳ chọn, CCCD/CMND, ảnh CCCD 2 mặt, ghi chú) — lưu vào "Tenant Pool" dùng chung theo Nhà/Dãy trọ | Must | Bắt buộc chọn 1 Nhà/Dãy trọ (`houseId`) ngay lúc tạo — mỗi hồ sơ Tenant thuộc đúng 1 nhà, không dùng chung giữa nhiều nhà dù cùng 1 chủ sở hữu (mới, 09/09/2026 — xem `BR-DATA-05`) |
 | FR-TEN-02 | Tạo hồ sơ Tenant **ngay trong lúc** tạo hợp đồng (shortcut), không bắt buộc tạo trước | Must | |
 | FR-TEN-03 | Tìm kiếm/lọc Tenant Pool theo tên/SĐT, theo trạng thái gắn phòng | Should | |
 | ~~FR-DISC-xx~~ | ~~Tìm kiếm & xem nhà/phòng cho thuê phía Tenant~~ | **Ngoài phạm vi Phase 1** | Yêu cầu Tenant có tài khoản/app — dời Phase 2 |
@@ -107,10 +107,11 @@
 ### 2.10 Quản lý quyền truy cập theo Nhà/Dãy trọ (Profile)
 | ID | Requirement | Priority | Ghi chú |
 |---|---|---|---|
-| FR-MGR-01 | Xem/sửa Hồ sơ cá nhân (họ tên, SĐT, giới tính, ngày sinh, email, CCCD/CMND, avatar) | Must | Dùng chung cho mọi tài khoản, không phân biệt owner/manager |
+| FR-MGR-01 | Xem/sửa Hồ sơ cá nhân (họ tên, giới tính, ngày sinh, email, CCCD/CMND, avatar) | Must | Dùng chung cho mọi tài khoản, không phân biệt owner/manager. **SĐT chỉ xem, không cho sửa** (đổi hướng 09/09/2026 — xem `BR-ROLE-09`) |
 | FR-MGR-02 | Xem/sửa thông tin tài khoản ngân hàng nhận tiền theo **từng Nhà/Dãy trọ** (không phải theo tài khoản cá nhân) | Must | Chỉ `role=owner` của nhà đó sửa được — dùng làm mặc định khi tạo hoá đơn/sinh QR |
 | FR-MGR-03 | Xem danh sách người đang có quyền truy cập (owner/manager) trên từng Nhà/Dãy trọ mình quản lý; mời thêm bằng SĐT; thu hồi quyền đã cấp | Must | Thay thế hoàn toàn màn "Quản lý tài khoản Manager" kiểu Version 2 — xem FR-AUTH-03/04 |
 | FR-MGR-04 | Đổi mật khẩu | Must | Mới — tách riêng khỏi luồng quên mật khẩu |
+| FR-MGR-05 | Chọn ngôn ngữ hiển thị ứng dụng — **1 trong 3: English / Tiếng Việt / 한국어**, chọn ngay tại màn Profile P-01 (dòng "Ngôn ngữ / Language", inline picker, không mở màn riêng) | Must | Mới, 09/09/2026 — sửa lại cùng ngày (đợt 2): ban đầu định thêm màn riêng P-08, đổi thành chọn ngay tại P-01 và mở rộng 2→3 ngôn ngữ; ngôn ngữ khác để Phase 2. Xem `NFR-02`, [SCREEN-SPEC.md](SCREEN-SPEC.md) P-01 |
 
 ---
 
@@ -118,7 +119,7 @@
 | ID | Yêu cầu | Ghi chú |
 |---|---|---|
 | NFR-01 | Hỗ trợ iOS và Android, cross-platform framework | Flutter |
-| NFR-02 | Giao diện tiếng Anh là ngôn ngữ chính | Đa ngôn ngữ cân nhắc Phase 2 |
+| NFR-02 | Giao diện hỗ trợ **3 ngôn ngữ ngay từ Phase 1: English / Tiếng Việt / 한국어** — chọn ngay tại P-01 (`FR-MGR-05`); ngôn ngữ khác ngoài 3 ngôn ngữ này để Phase 2 | Đổi hướng 09/09/2026 (trước đó dời "đa ngôn ngữ" sang Phase 2), sửa lại cùng ngày (đợt 2): mở rộng từ song ngữ Anh–Việt lên 3 ngôn ngữ, bỏ màn P-08 riêng — chọn ngay tại P-01. Bản thiết kế Figma vẫn dựng bằng tiếng Anh làm chuẩn, nhưng code UI cần chuẩn bị i18n 3 bộ string (EN/VI/KO) ngay từ đầu — xem [DECISIONS.md](DECISIONS.md) 2026-09-09 |
 | NFR-03 | Dữ liệu cá nhân (CCCD, SĐT) cần mã hoá khi lưu trữ & tuân thủ quy định bảo vệ dữ liệu cá nhân | |
 | NFR-04 | Hoạt động ổn định với kết nối mạng yếu | |
 | NFR-05 | Thời gian phản hồi tạo hoá đơn hàng loạt < 2s / hợp đồng | Cập nhật từ "1 phòng" (V2) sang "1 hợp đồng" vì hợp đồng có thể nhiều phòng |
@@ -147,4 +148,4 @@ Các thực thể chính (12 bảng, tiền tố `tb_` — **đảo ngược quy
 ---
 
 ## 6. Ngoài phạm vi (Out of Scope cho Phase 1)
-Xem chi tiết tại [PRODUCT-OVERVIEW](PRODUCT-OVERVIEW.md) mục 5.2. Tóm tắt: toàn bộ app/tài khoản Tenant (đăng nhập, tìm phòng/marketplace, xem & tự thanh toán hoá đơn trong app, gửi yêu cầu sửa chữa), Service Request Management, Revenue Report riêng biệt (biểu đồ/xuất file), thanh toán online trong app (chỉ dừng ở sinh mã QR tĩnh), đăng ký công tơ/IoT tự động đọc số, nhiều Tenant đại diện trên 1 hợp đồng, chat trong app, e-signature, đa ngôn ngữ.
+Xem chi tiết tại [PRODUCT-OVERVIEW](PRODUCT-OVERVIEW.md) mục 5.2. Tóm tắt: toàn bộ app/tài khoản Tenant (đăng nhập, tìm phòng/marketplace, xem & tự thanh toán hoá đơn trong app, gửi yêu cầu sửa chữa), Service Request Management, Revenue Report riêng biệt (biểu đồ/xuất file), thanh toán online trong app (chỉ dừng ở sinh mã QR tĩnh), đăng ký công tơ/IoT tự động đọc số, nhiều Tenant đại diện trên 1 hợp đồng, chat trong app, e-signature. ~~Đa ngôn ngữ~~ — **không còn ngoài phạm vi** từ 09/09/2026 cho 3 ngôn ngữ English/Tiếng Việt/한국어 (ngôn ngữ khác vẫn để Phase 2), xem `NFR-02`/`FR-MGR-05`.

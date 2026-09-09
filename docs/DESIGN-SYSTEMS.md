@@ -4,7 +4,9 @@
 ---
 
 ## 0. Ngôn ngữ UI
-**tiếng Anh là ngôn ngữ hiển thị chính thức của sản phẩm**— đa ngôn ngữ (thêm tiếng Việt) được cân nhắc cho Phase 2
+**Cập nhật 09/09/2026 — đổi hướng, sửa lại cùng ngày (đợt 2):** App khi build thật hỗ trợ **3 ngôn ngữ ngay từ Phase 1 — English / Tiếng Việt / 한국어** (ngôn ngữ khác để Phase 2), người dùng chọn ngay tại màn Profile **P-01** (1 dòng "Ngôn ngữ / Language", inline picker — **không phải màn riêng**, xem `FR-MGR-05`/`NFR-02`). Mặc định theo ngôn ngữ máy lúc cài lần đầu (fallback English nếu máy dùng ngôn ngữ ngoài 3 lựa chọn trên). Copy/microcopy cần chuẩn bị sẵn 3 bộ string (EN/VI/KO) ngay khi code UI, không chờ Phase 2 như dự kiến trước đó.
+
+**Bản thiết kế (Figma/FigJam) vẫn dựng bằng tiếng Anh** làm ngôn ngữ chuẩn cho wireframe/hi-fi — không cần dựng lại 2 bản ngôn ngữ trên Figma, việc song ngữ xử lý ở tầng code (i18n).
 
 ---
 
