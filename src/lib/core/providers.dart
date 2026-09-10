@@ -17,6 +17,13 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
   return ref.watch(authRepositoryProvider).authStateChanges;
 });
 
+/// Tên tài khoản đang đăng nhập (Header H-01 "Hello, {tên}") — watch
+/// `authStateProvider` để tự làm mới đúng người khi đổi phiên đăng nhập.
+final currentUserNameProvider = FutureProvider<String?>((ref) {
+  ref.watch(authStateProvider);
+  return ref.watch(authRepositoryProvider).currentFullName();
+});
+
 final houseRepositoryProvider =
     Provider<HouseRepository>((ref) => houseRepository);
 final roomRepositoryProvider =

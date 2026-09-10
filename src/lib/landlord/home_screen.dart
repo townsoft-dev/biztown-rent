@@ -22,6 +22,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final housesAsync = ref.watch(housesProvider);
     final statusesAsync = ref.watch(roomStatusesByHouseProvider);
+    final nameAsync = ref.watch(currentUserNameProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bgSubtle,
@@ -31,7 +32,7 @@ class HomeScreen extends ConsumerWidget {
         children: [
           TopBar.home(
             greeting: 'Hello,',
-            name: 'Nguyễn Thúy Hường',
+            name: nameAsync.valueOrNull ?? '',
             overview: housesAsync.hasValue && statusesAsync.hasValue
                 ? _overviewLine(
                     housesAsync.requireValue.length, statusesAsync.requireValue)

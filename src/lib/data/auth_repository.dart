@@ -69,6 +69,21 @@ class AuthRepository {
     });
   }
 
+  /// Tên hiển thị của tài khoản đang đăng nhập — dùng cho Header H-01
+  /// ("Hello, {tên}") và sau này P-02 (Personal profile). `null` nếu chưa có
+  /// session hoặc chưa có dòng `tb_user` tương ứng (chưa từng gọi
+  /// `ensureUserProfile`).
+  Future<String?> currentFullName() async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return null;
+    final row = await _client
+        .from('tb_user')
+        .select('full_name')
+        .eq('id', userId)
+        .maybeSingle();
+    return row?['full_name'] as String?;
+  }
+
   Future<void> signOut() async {
     await _client.auth.signOut();
   }
