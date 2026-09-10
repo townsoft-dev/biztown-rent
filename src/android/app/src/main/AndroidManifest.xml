@@ -1,4 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Bắt buộc cho mọi lời gọi Supabase (Auth/DB/Storage) — chỉ có sẵn ở
+         src/debug và src/profile theo mặc định của Flutter template, KHÔNG có
+         ở đây (src/main, áp dụng cho cả bản release) — thiếu dòng này khiến
+         bản release không truy cập mạng được, phát hiện 10/09/2026 lúc test
+         CRUD thật (xem changelog/2026-09-10.md). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Chụp ảnh Nhà/Phòng (H-02/H-05) qua image_picker -->
+    <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:label="BizTown Rent Manager"
         android:name="${applicationName}"

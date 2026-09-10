@@ -26,6 +26,10 @@
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<key>NSCameraUsageDescription</key>
+		<string>Cần quyền camera để chụp ảnh Nhà/Phòng.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Cần quyền thư viện ảnh để chọn ảnh Nhà/Phòng.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>

@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/providers.dart';
 import '../core/theme.dart';
+import '../data/models/room.dart';
 import '../shared/app_button.dart';
 import '../shared/confirm_dialog.dart';
 import '../shared/detail_row.dart';
-import '../shared/list_card.dart';
-import '../shared/mini_profile_card.dart';
 import '../shared/section_label.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
 
-/// H-04 — Room Detail (View) (node 220:2714, lấy qua Figma MCP 10/09/2026).
-/// Dữ liệu mẫu khớp Figma (phòng P.101 của "Nha tro Binh An"), chưa nối
-/// `tb_room` thật.
-class RoomDetailScreen extends StatelessWidget {
+/// H-04 — Room Detail (View) (node 220:2714, lấy qua Figma MCP 10/09/2026),
+/// nối CRUD thật vào `tb_room` (10/09/2026, xem changelog/2026-09-10.md).
+/// Lịch sử chỉ số/Hợp đồng hiện tại chưa nối (chờ seri H-06 thật/T-0x).
+class RoomDetailScreen extends ConsumerWidget {
   final String houseId;
   final String roomId;
 
@@ -23,97 +25,33 @@ class RoomDetailScreen extends StatelessWidget {
       {super.key, required this.houseId, required this.roomId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final roomAsync = ref.watch(roomProvider(roomId));
     return Scaffold(
       backgroundColor: AppColors.bgSubtle,
       body: Column(
         children: [
-          TopBar(
-              title: roomId,
-              subtitle: 'Nha tro Binh An',
+          roomAsync.when(
+            data: (room) => TopBar(
+              title: room.roomNo,
+              subtitle: ref.watch(houseProvider(houseId)).valueOrNull?.name,
               onBack: () => context.pop(),
               trailing: TopBarActionMenuButton(
                 onEdit: () =>
                     context.push('/home/houses/$houseId/rooms/$roomId/edit'),
-                onDelete: () => _confirmDeleteRoom(context),
-              )),
+                onDelete: () => _confirmDeleteRoom(context, ref),
+              ),
+            ),
+            loading: () => TopBar(title: '', onBack: () => context.pop()),
+            error: (e, st) =>
+                TopBar(title: 'Error', onBack: () => context.pop()),
+          ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-              children: [
-                Container(
-                  height: 160,
-                  width: double.infinity,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.bgMuted,
-                    border: Border.all(color: AppColors.neutral200),
-                    borderRadius: BorderRadius.circular(AppRadii.card),
-                  ),
-                  child: const Icon(Icons.image_rounded,
-                      color: AppColors.neutral200, size: 36),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                        child: Text(roomId,
-                            style: GoogleFonts.inter(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary))),
-                    const StatusPill(
-                        text: 'Occupied', style: StatusBadgeStyle.occupied),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                const DetailBlock(children: [
-                  DetailRow(label: 'Area (optional)', value: '22 m²'),
-                  DetailRow(
-                      label: 'Reference rent', value: '3,200,000 / month'),
-                  DetailRow(
-                      label: 'Amenities', value: 'A/C, water heater, balcony'),
-                  DetailRow(
-                      label: 'Recurring fees',
-                      value: 'Internet 100,000\nWaste 30,000'),
-                  DetailRow(
-                      label: 'Note',
-                      value: 'Corner room, quiet side',
-                      showDivider: false),
-                ]),
-                const SizedBox(height: 10),
-                AppButton(
-                  label: 'View reading history',
-                  style: AppButtonStyle.ghost,
-                  onPressed: () => context
-                      .push('/home/houses/$houseId/readings/P.101-electricity'),
-                ),
-                const SectionLabel('Reading history  ·  this room'),
-                ListCard(
-                  thumbColor: AppColors.accentOrange,
-                  icon: Icons.bolt_rounded,
-                  title: '01/09/2026  ·  Electricity',
-                  body: '1,120 → 1,216  ·  96 kWh  ·  Periodic',
-                  onTap: () => context
-                      .push('/home/houses/$houseId/readings/P.101-electricity'),
-                ),
-                const SizedBox(height: 8),
-                const ListCard(
-                  thumbColor: AppColors.info,
-                  icon: Icons.water_drop_rounded,
-                  title: '01/09/2026  ·  Water',
-                  body: '54 → 59  ·  5 m³  ·  Periodic',
-                ),
-                const SectionLabel('Current contract'),
-                // TODO: → T-03/T-05 khi seri màn Tenant & Contract có (chưa build).
-                const MiniProfileCard(
-                  initials: 'NA',
-                  name: 'Nguyen Thi Anh',
-                  subtitle: '0909 123 456 · 15/03/2026 → 15/03/2027',
-                ),
-                const SizedBox(height: 10),
-                AppButton(label: 'View contract', onPressed: () {}),
-              ],
+            child: roomAsync.when(
+              data: (room) => _buildBody(context, ref, room),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, st) =>
+                  Center(child: Text('Could not load this room.\n$e')),
             ),
           ),
         ],
@@ -121,7 +59,74 @@ class RoomDetailScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDeleteRoom(BuildContext context) async {
+  Widget _buildBody(BuildContext context, WidgetRef ref, Room room) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      children: [
+        _RoomPhoto(room: room),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: Text(room.roomNo,
+                  style: GoogleFonts.inter(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
+            ),
+            StatusPill(
+              text: room.status.label,
+              style: switch (room.status) {
+                RoomStatus.occupied => StatusBadgeStyle.occupied,
+                RoomStatus.empty => StatusBadgeStyle.empty,
+                RoomStatus.underRepair => StatusBadgeStyle.underRepair,
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        DetailBlock(children: [
+          DetailRow(label: 'Area (optional)', value: '${room.areaSqm} m²'),
+          DetailRow(
+              label: 'Reference rent',
+              value: room.baseRent != null ? '${room.baseRent} / month' : '—'),
+          DetailRow(
+              label: 'Amenities',
+              value: room.amenities.isEmpty ? '—' : room.amenities.join(', ')),
+          DetailRow(
+            label: 'Recurring fees',
+            value: room.recurringFees.isEmpty
+                ? '—'
+                : room.recurringFees
+                    .map((f) => '${f.name} ${f.amount}')
+                    .join('\n'),
+          ),
+          DetailRow(label: 'Note', value: room.note ?? '—', showDivider: false),
+        ]),
+        const SizedBox(height: 10),
+        // TODO: → H-06 thật khi có điểm vào rõ ràng (xem docs/CURRENT_STATUS.md).
+        const AppButton(
+            label: 'View reading history',
+            style: AppButtonStyle.ghost,
+            onPressed: null),
+        const SectionLabel('Reading history  ·  this room'),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: Text('No reading recorded yet.',
+              style: TextStyle(color: AppColors.textSecondary)),
+        ),
+        const SectionLabel('Current contract'),
+        // TODO: → T-03/T-05 khi seri màn Tenant & Contract có (chưa build).
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: Text('No active contract.',
+              style: TextStyle(color: AppColors.textSecondary)),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmDeleteRoom(BuildContext context, WidgetRef ref) async {
     final confirmed = await ConfirmDialog.show(
       context,
       title: 'Delete room?',
@@ -130,8 +135,57 @@ class RoomDetailScreen extends StatelessWidget {
       confirmLabel: 'Delete',
     );
     if (!confirmed || !context.mounted) return;
-    // TODO: nối xoá tb_room thật (chặn nếu phòng đang Occupied/có hợp đồng) khi
-    // có backend House/Room. Hiện chỉ quay lại H-03.
-    context.pop();
+    try {
+      await ref.read(roomRepositoryProvider).delete(roomId);
+      ref.invalidate(roomsProvider(houseId));
+      if (context.mounted) context.pop();
+    } on PostgrestException catch (e) {
+      if (!context.mounted) return;
+      final blocked = e.code == '23503'; // foreign_key_violation
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(blocked
+            ? "Can't delete: this room still has contract history."
+            : 'Could not delete this room. Please try again.'),
+      ));
+    }
+  }
+}
+
+class _RoomPhoto extends ConsumerWidget {
+  final Room room;
+  const _RoomPhoto({required this.room});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final decoration = BoxDecoration(
+      color: AppColors.bgMuted,
+      border: Border.all(color: AppColors.neutral200),
+      borderRadius: BorderRadius.circular(AppRadii.card),
+    );
+    if (room.photos.isEmpty) {
+      return Container(
+        height: 160,
+        width: double.infinity,
+        alignment: Alignment.center,
+        decoration: decoration,
+        child: const Icon(Icons.image_rounded,
+            color: AppColors.neutral200, size: 36),
+      );
+    }
+    return FutureBuilder<String>(
+      future:
+          ref.read(roomRepositoryProvider).signedPhotoUrl(room.photos.first),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Container(
+              height: 160, width: double.infinity, decoration: decoration);
+        }
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          child: Image.network(snapshot.data!,
+              height: 160, width: double.infinity, fit: BoxFit.cover),
+        );
+      },
+    );
   }
 }
