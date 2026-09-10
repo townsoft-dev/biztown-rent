@@ -39,6 +39,13 @@ final houseManagersProvider =
   return ref.watch(houseRepositoryProvider).listManagerDisplayNames(houseId);
 });
 
+/// Tên Owner — dùng làm fallback hiển thị field "Manager" khi nhà chưa gán
+/// ai. Xem `HouseRepository.getOwnerDisplayName`.
+final houseOwnerNameProvider =
+    FutureProvider.family<String?, String>((ref, houseId) {
+  return ref.watch(houseRepositoryProvider).getOwnerDisplayName(houseId);
+});
+
 /// Danh sách phòng theo nhà (H-03 tab Rooms) — invalidate sau khi tạo/sửa/xoá phòng.
 final roomsProvider = FutureProvider.family<List<Room>, String>((ref, houseId) {
   return ref.watch(roomRepositoryProvider).listByHouse(houseId);

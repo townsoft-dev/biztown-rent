@@ -162,7 +162,15 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
       DetailRow(
         label: 'Manager',
         value: ref.watch(houseManagersProvider(house.id)).when(
-              data: (names) => names.isEmpty ? '—' : names.join(', '),
+              data: (names) {
+                if (names.isNotEmpty) return names.join(', ');
+                // Chưa gán Manager nào → chính Owner là người quản lý mặc
+                // định (không tạo thêm dòng DB, xem HouseRepository.getOwnerDisplayName).
+                return ref.watch(houseOwnerNameProvider(house.id)).maybeWhen(
+                      data: (name) => name ?? '—',
+                      orElse: () => '…',
+                    );
+              },
               loading: () => '…',
               error: (e, st) => '—',
             ),

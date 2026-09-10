@@ -55,29 +55,48 @@ class HouseRepository {
     return House.fromMap(row);
   }
 
-  /// Tên hiển thị của những người có role `manager` cho nhà này (join
-  /// `tb_user_house_access` với `tb_user` — `phone` chỉ là FK logic, không
-  /// phải FK thật trong DB nên phải query 2 bước, không dùng embed của
-  /// PostgREST được). Người được mời nhưng chưa có tài khoản (`phone` chưa
-  /// có dòng `tb_user`) thì hiện thẳng SĐT thay vì tên. Đọc được nhờ policy
-  /// mới `20260910150000_tb_user_visible_to_housemates.sql`.
+  /// Tên hiển thị của các Manager **đang active** cho nhà này — đọc thẳng
+  /// `tb_user_house_access.full_name` (tên do chính chủ nhà tự nhập lúc mời
+  /// qua P-06, độc lập với hồ sơ `tb_user` thật của người đó nếu có tài
+  /// khoản — giống mô hình `tb_tenant`, xem migration
+  /// `20260910160000_manager_invite_profile_and_active_toggle.sql`). Không
+  /// cần join `tb_user` nữa (đơn giản hơn cách làm trước — join qua `tb_user`
+  /// chỉ cần thiết nếu muốn hiện hồ sơ THẬT của người đó, nhưng thiết kế đã
+  /// chốt là chủ nhà tự quản lý tên riêng cho từng lời mời).
   Future<List<String>> listManagerDisplayNames(String houseId) async {
-    final accessRows = await _client
+    final rows = await _client
+        .from('tb_user_house_access')
+        .select('phone, full_name')
+        .eq('house_id', houseId)
+        .eq('role', 'manager')
+        .eq('is_active', true);
+    return rows
+        .map((r) => (r['full_name'] as String?) ?? r['phone'] as String)
+        .toList();
+  }
+
+  /// Tên hiển thị của Owner (người tạo nhà) — dùng làm Manager MẶC ĐỊNH khi
+  /// nhà chưa gán ai làm Manager (quyết định chốt 2026-09-10: 1 nhà chưa mời
+  /// Manager thì chính Owner là người quản lý, không tạo thêm dòng DB nào vì
+  /// 1 SĐT chỉ có đúng 1 vai trò/1 nhà — `unique(phone, house_id)`). Đọc
+  /// được tên thật của Owner (kể cả khi người xem không phải chính họ) nhờ
+  /// policy `20260910150000_tb_user_visible_to_housemates.sql`.
+  Future<String?> getOwnerDisplayName(String houseId) async {
+    final accessRow = await _client
         .from('tb_user_house_access')
         .select('phone')
         .eq('house_id', houseId)
-        .eq('role', 'manager');
-    final phones = accessRows.map((r) => r['phone'] as String).toList();
-    if (phones.isEmpty) return [];
-    final userRows =
-        await _client.from('tb_user').select('phone, full_name').inFilter(
-              'phone',
-              phones,
-            );
-    final nameByPhone = {
-      for (final r in userRows) r['phone'] as String: r['full_name'] as String
-    };
-    return phones.map((p) => nameByPhone[p] ?? p).toList();
+        .eq('role', 'owner')
+        .limit(1)
+        .maybeSingle();
+    if (accessRow == null) return null;
+    final phone = accessRow['phone'] as String;
+    final userRow = await _client
+        .from('tb_user')
+        .select('full_name')
+        .eq('phone', phone)
+        .maybeSingle();
+    return (userRow?['full_name'] as String?) ?? phone;
   }
 
   /// Xoá nhà — DB tự chặn (lỗi FK) nếu còn phòng có lịch sử hợp đồng

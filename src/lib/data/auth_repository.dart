@@ -54,10 +54,18 @@ class AuthRepository {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;
     final normalizedPhone = normalizeVnPhone(phone);
+    // `tb_user.phone` phải lưu KHÔNG có dấu "+" — khớp định dạng
+    // `current_user_phone()` (đọc từ `auth.jwt() ->> 'phone'`, JWT của
+    // Supabase Auth không có "+") và `tb_user_house_access.phone`. Trước đó
+    // lưu nguyên `normalizedPhone` (có "+", đúng chuẩn E.164 Supabase Auth
+    // API cần) khiến mọi query join theo SĐT giữa 2 bảng này lệch định dạng,
+    // luôn không khớp được dòng nào — phát hiện lúc làm field "Manager"
+    // (H-03 hiện thẳng SĐT thay vì tên vì join tb_user thất bại âm thầm).
+    final dbPhone = normalizedPhone.replaceFirst('+', '');
     await _client.from('tb_user').upsert({
       'id': userId,
-      'phone': normalizedPhone,
-      'full_name': fullName ?? normalizedPhone,
+      'phone': dbPhone,
+      'full_name': fullName ?? dbPhone,
     });
   }
 
