@@ -14,7 +14,8 @@ Future<void> main() async {
   try {
     await initSupabase().timeout(const Duration(seconds: 10));
   } on Exception catch (e) {
-    debugPrint('initSupabase() timeout/lỗi, vào Splash với session chưa xác định: $e');
+    debugPrint(
+        'initSupabase() timeout/lỗi, vào Splash với session chưa xác định: $e');
   }
   runApp(const ProviderScope(child: App()));
 }

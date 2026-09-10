@@ -24,8 +24,10 @@ class AuthRepository {
   }
 
   /// S-01: đăng nhập bằng SĐT + mật khẩu.
-  Future<void> signInWithPassword({required String phone, required String password}) async {
-    await _client.auth.signInWithPassword(phone: normalizeVnPhone(phone), password: password);
+  Future<void> signInWithPassword(
+      {required String phone, required String password}) async {
+    await _client.auth
+        .signInWithPassword(phone: normalizeVnPhone(phone), password: password);
   }
 
   /// S-02 bước 1 / "Quên mật khẩu": gửi OTP qua Send SMS Hook (nhà cung cấp SMS VN).
@@ -35,7 +37,8 @@ class AuthRepository {
 
   /// S-02 bước 2: xác thực OTP — tạo session nếu đúng.
   Future<void> verifyOtp({required String phone, required String token}) async {
-    await _client.auth.verifyOTP(phone: normalizeVnPhone(phone), token: token, type: OtpType.sms);
+    await _client.auth.verifyOTP(
+        phone: normalizeVnPhone(phone), token: token, type: OtpType.sms);
   }
 
   /// S-02 bước 3 (tài khoản mới) / khôi phục sau OTP quên mật khẩu: đặt mật khẩu.
@@ -46,7 +49,8 @@ class AuthRepository {
   /// Tạo/đảm bảo có dòng tb_user tương ứng với session hiện tại — gọi sau khi
   /// hoàn tất đăng ký (OTP verified + password set). fullName/idNumber điền sau
   /// ở P-02 nếu để trống lúc đăng ký nhanh.
-  Future<void> ensureUserProfile({required String phone, String? fullName}) async {
+  Future<void> ensureUserProfile(
+      {required String phone, String? fullName}) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;
     final normalizedPhone = normalizeVnPhone(phone);

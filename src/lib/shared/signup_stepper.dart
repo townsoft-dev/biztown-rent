@@ -41,11 +41,13 @@ class _StepperPainter extends CustomPainter {
     final linePaint = Paint();
     for (final x in [14.0, 62.0]) {
       final doneIndex = x == 14.0 ? 1 : 2;
-      linePaint.color = doneIndex < current ? AppColors.success : AppColors.neutral200;
+      linePaint.color =
+          doneIndex < current ? AppColors.success : AppColors.neutral200;
       canvas.drawRect(Rect.fromLTWH(x, 3, 28, 2), linePaint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _StepperPainter oldDelegate) => oldDelegate.current != current;
+  bool shouldRepaint(covariant _StepperPainter oldDelegate) =>
+      oldDelegate.current != current;
 }

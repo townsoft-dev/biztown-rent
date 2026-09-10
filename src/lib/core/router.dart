@@ -1,13 +1,16 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/auth_repository.dart';
+import '../landlord/home_screen.dart';
+import '../shared/app_shell.dart';
+import '../shared/coming_soon_screen.dart';
 import '../shared/login_screen.dart';
 import '../shared/notification_center_screen.dart';
 import '../shared/signup_screen.dart';
 import '../shared/splash_screen.dart';
-import '../landlord/home_placeholder_screen.dart';
 import 'supabase_client.dart';
 
 /// Chuyển Stream thành Listenable để go_router tự redirect lại mỗi khi auth
@@ -36,7 +39,9 @@ final appRouter = GoRouter(
     final atLogin = state.matchedLocation == '/login';
     final atSignup = state.matchedLocation == '/signup';
 
-    if (atSplash) return null; // S-00 tự quyết định điều hướng, xem splash_screen.dart
+    if (atSplash) {
+      return null; // S-00 tự quyết định điều hướng, xem splash_screen.dart
+    }
     if (!loggedIn && !atLogin && !atSignup) return '/login';
     // KHÔNG tự redirect sang /home khi loggedIn (kể cả lúc đang ở /login) — chỉ dùng
     // redirect này để CHẶN truy cập khi chưa đăng nhập. Lý do: SignupScreen dùng
@@ -54,8 +59,49 @@ final appRouter = GoRouter(
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
-    // TODO: thay bằng H-01 thật (bottom nav 4 tab) khi code tới Home tab.
-    GoRoute(path: '/home', builder: (context, state) => const HomePlaceholderScreen()),
-    GoRoute(path: '/notifications', builder: (context, state) => const NotificationCenterScreen()),
+    GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationCenterScreen()),
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          AppShell(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(routes: [
+          GoRoute(
+              path: '/home', builder: (context, state) => const HomeScreen())
+        ]),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/tenant',
+              builder: (context, state) => const ComingSoonScreen(
+                  title: 'Tenant & Contract', icon: Icons.group_rounded),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+                path: '/bills',
+                builder: (context, state) => const ComingSoonScreen(
+                    title: 'Bills', icon: Icons.receipt_long_rounded))
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/profile',
+              builder: (context, state) => ComingSoonScreen(
+                title: 'Profile',
+                icon: Icons.person_rounded,
+                footer: OutlinedButton(
+                    onPressed: () => authRepository.signOut(),
+                    child: const Text('Đăng xuất')),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
   ],
 );

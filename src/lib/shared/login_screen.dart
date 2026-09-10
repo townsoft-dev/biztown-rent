@@ -46,12 +46,15 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorText = null;
     });
     try {
-      await authRepository.signInWithPassword(phone: phone, password: _passwordController.text);
+      await authRepository.signInWithPassword(
+          phone: phone, password: _passwordController.text);
       await loginRateLimiter.recordSuccess(phone);
       if (mounted) context.go('/home');
     } catch (e) {
       final justLockedUntil = await loginRateLimiter.recordFailure(phone);
-      setState(() => _errorText = justLockedUntil != null ? _lockedMessage(justLockedUntil) : 'Sai số điện thoại hoặc mật khẩu');
+      setState(() => _errorText = justLockedUntil != null
+          ? _lockedMessage(justLockedUntil)
+          : 'Sai số điện thoại hoặc mật khẩu');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -74,33 +77,49 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SvgPicture.asset('assets/logo/biztown-rent-manager-lockup.svg', width: 200),
+                SvgPicture.asset('assets/logo/biztown-rent-manager-lockup.svg',
+                    width: 200),
                 const SizedBox(height: 40),
-                Text('Log in', style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w700, height: 34 / 28, color: AppColors.textPrimary)),
+                Text('Log in',
+                    style: GoogleFonts.inter(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        height: 34 / 28,
+                        color: AppColors.textPrimary)),
                 const SizedBox(height: 12),
                 Text(
                   'Welcome! Please sign in to continue.',
-                  style: GoogleFonts.inter(fontSize: 13, height: 18 / 13, color: AppColors.textSecondary),
+                  style: GoogleFonts.inter(
+                      fontSize: 13,
+                      height: 18 / 13,
+                      color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 32),
                 const FieldLabel('Phone number'),
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Nhập số điện thoại' : null,
+                  style: GoogleFonts.inter(
+                      fontSize: 14, color: AppColors.textPrimary),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Nhập số điện thoại'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 const FieldLabel('Password'),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
-                  validator: (v) => (v == null || v.isEmpty) ? 'Nhập mật khẩu' : null,
+                  style: GoogleFonts.inter(
+                      fontSize: 14, color: AppColors.textPrimary),
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Nhập mật khẩu' : null,
                 ),
                 if (_errorText != null) ...[
                   const SizedBox(height: 8),
-                  Text(_errorText!, style: const TextStyle(color: AppColors.error, fontSize: 12)),
+                  Text(_errorText!,
+                      style: const TextStyle(
+                          color: AppColors.error, fontSize: 12)),
                 ],
                 const SizedBox(height: 12),
                 Align(
@@ -111,8 +130,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     // đúng mật khẩu của tài khoản đó. Không có màn Forgot Password riêng
                     // trong Figma — đây là cách tái dùng đã ghi trong TODO trước đó.
                     onPressed: () => context.push('/signup'),
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-                    child: Text('Forgot password?', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.info)),
+                    style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero, minimumSize: Size.zero),
+                    child: Text('Forgot password?',
+                        style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.info)),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -121,7 +145,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _submit,
                     child: _isLoading
-                        ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
                         : const Text('Log in'),
                   ),
                 ),
@@ -131,7 +159,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     onTap: () => context.push('/signup'),
                     child: Text(
                       "Don't have an account?  Sign up",
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                      style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary),
                     ),
                   ),
                 ),

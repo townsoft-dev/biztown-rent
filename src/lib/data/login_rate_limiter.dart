@@ -30,7 +30,8 @@ class LoginRateLimiter {
     final attempts = (prefs.getInt(_attemptsKey(phone)) ?? 0) + 1;
     if (attempts >= _maxAttempts) {
       final lockedUntil = DateTime.now().add(_lockDuration);
-      await prefs.setInt(_lockedUntilKey(phone), lockedUntil.millisecondsSinceEpoch);
+      await prefs.setInt(
+          _lockedUntilKey(phone), lockedUntil.millisecondsSinceEpoch);
       await prefs.setInt(_attemptsKey(phone), 0);
       return lockedUntil;
     }

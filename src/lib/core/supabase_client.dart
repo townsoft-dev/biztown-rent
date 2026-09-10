@@ -4,7 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Ví dụ chạy: flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_PUBLISHABLE_KEY=...
 class SupabaseConfig {
   static const url = String.fromEnvironment('SUPABASE_URL');
-  static const publishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+  static const publishableKey =
+      String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
 }
 
 Future<void> initSupabase() async {
