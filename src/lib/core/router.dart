@@ -5,6 +5,12 @@ import 'package:go_router/go_router.dart';
 
 import '../data/auth_repository.dart';
 import '../landlord/home_screen.dart';
+import '../landlord/house_form_screen.dart';
+import '../landlord/reading_detail_screen.dart';
+import '../landlord/reading_entry_screen.dart';
+import '../landlord/room_detail_screen.dart';
+import '../landlord/room_form_screen.dart';
+import '../landlord/room_list_screen.dart';
 import '../shared/app_shell.dart';
 import '../shared/coming_soon_screen.dart';
 import '../shared/login_screen.dart';
@@ -68,7 +74,60 @@ final appRouter = GoRouter(
       branches: [
         StatefulShellBranch(routes: [
           GoRoute(
-              path: '/home', builder: (context, state) => const HomeScreen())
+            path: '/home',
+            builder: (context, state) => const HomeScreen(),
+            routes: [
+              GoRoute(
+                  path: 'houses/new',
+                  builder: (context, state) => const HouseFormScreen()),
+              GoRoute(
+                path: 'houses/:houseId',
+                builder: (context, state) =>
+                    RoomListScreen(houseId: state.pathParameters['houseId']!),
+                routes: [
+                  GoRoute(
+                      path: 'edit',
+                      builder: (context, state) => HouseFormScreen(
+                          houseId: state.pathParameters['houseId'])),
+                  GoRoute(
+                    path: 'rooms/new',
+                    builder: (context, state) => RoomFormScreen(
+                        houseId: state.pathParameters['houseId']!),
+                  ),
+                  GoRoute(
+                    path: 'rooms/:roomId',
+                    builder: (context, state) => RoomDetailScreen(
+                      houseId: state.pathParameters['houseId']!,
+                      roomId: state.pathParameters['roomId']!,
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'edit',
+                        builder: (context, state) => RoomFormScreen(
+                          houseId: state.pathParameters['houseId']!,
+                          roomId: state.pathParameters['roomId'],
+                        ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'readings',
+                    builder: (context, state) => ReadingEntryScreen(
+                        houseId: state.pathParameters['houseId']!),
+                    routes: [
+                      GoRoute(
+                        path: ':readingId',
+                        builder: (context, state) => ReadingDetailScreen(
+                          houseId: state.pathParameters['houseId']!,
+                          readingId: state.pathParameters['readingId']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          )
         ]),
         StatefulShellBranch(
           routes: [

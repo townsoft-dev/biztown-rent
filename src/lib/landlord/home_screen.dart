@@ -15,8 +15,13 @@ import '../shared/top_bar.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  // houseId chỉ set cho "Nha tro Binh An" — đây là nhà DUY NHẤT Figma có đủ
+  // dữ liệu mẫu chi tiết cho H-02→H-06; 2 nhà còn lại chưa có data mẫu tương
+  // ứng nên chưa nối điều hướng (tránh hiện nhầm data của nhà này sang nhà
+  // khác), sẽ nối khi có `tb_house`/`tb_room` thật.
   static const _houses = [
     _HouseData(
+      houseId: 'binh-an',
       name: 'Nha tro Binh An',
       address: '12 Le Van Sy, District 3, HCMC',
       roomsSummary: '8 rooms  ·  6/8 occupied',
@@ -25,6 +30,7 @@ class HomeScreen extends StatelessWidget {
       thumbColor: AppColors.primary,
     ),
     _HouseData(
+      houseId: null,
       name: 'Chung cu mini Phu Nhuan',
       address: '45 Nguyen Trong Tuyen, Phu Nhuan',
       roomsSummary: '3 rooms  ·  3/3 occupied',
@@ -33,6 +39,7 @@ class HomeScreen extends StatelessWidget {
       thumbColor: AppColors.secondary,
     ),
     _HouseData(
+      houseId: null,
       name: 'Day tro Tan Binh',
       address: '88 Cong Hoa, Tan Binh',
       roomsSummary: '6 rooms  ·  4/6 occupied',
@@ -47,7 +54,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgSubtle,
       floatingActionButton:
-          AppFab(onPressed: () {}), // TODO: → H-02 khi có màn tạo Nhà.
+          AppFab(onPressed: () => context.push('/home/houses/new')),
       body: Column(
         children: [
           TopBar.home(
@@ -79,7 +86,9 @@ class HomeScreen extends StatelessWidget {
                         text: house.badgeText, style: house.badgeStyle),
                     body: house.address,
                     meta: house.roomsSummary,
-                    // TODO: → H-03 (Room List) khi màn đó có.
+                    onTap: house.houseId == null
+                        ? null
+                        : () => context.push('/home/houses/${house.houseId}'),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -93,6 +102,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _HouseData {
+  final String? houseId;
   final String name;
   final String address;
   final String roomsSummary;
@@ -101,6 +111,7 @@ class _HouseData {
   final Color thumbColor;
 
   const _HouseData({
+    required this.houseId,
     required this.name,
     required this.address,
     required this.roomsSummary,

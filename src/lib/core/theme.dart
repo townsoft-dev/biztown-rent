@@ -24,6 +24,7 @@ class AppColors {
 
   static const bgDefault = Color(0xFFFFFFFF);
   static const bgSubtle = Color(0xFFF5F6F9);
+  static const bgMuted = Color(0xFFF3F4F8); // ảnh placeholder, field readonly
   static const bgTrack = Color(0xFFE7E9F1); // nền track của Segmented control
   static const textTertiary =
       Color(0xFF868DA7); // = secondaryLight, dùng cho meta/caption phụ
