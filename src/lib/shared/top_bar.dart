@@ -42,53 +42,60 @@ class TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Opacity(
       opacity: opacity,
-      child: Container(
-        width: double.infinity,
-        color: AppColors.primary,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (greeting != null)
-              Text(greeting!,
-                  style: GoogleFonts.inter(
-                      fontSize: 12,
-                      height: 17 / 12,
-                      color: const Color(0xFFC9CEE0))),
-            Row(
-              children: [
-                if (onBack != null) ...[
-                  _TopBarCircleButton(
-                      icon: Icons.arrow_back_rounded,
-                      size: 26,
-                      iconSize: 16,
-                      bgOpacity: 0.14,
-                      onTap: onBack!),
-                  const SizedBox(width: 8)
-                ],
-                Expanded(
-                  child: Text(
-                    title,
+      // SafeArea(bottom: false) — dành chỗ cho status bar hệ thống phía trên
+      // (giống lý do AppBottomNav dùng SafeArea(top: false) cho thanh điều
+      // hướng dưới) — thiếu cái này khiến nút back/action bị status bar đè
+      // lên, có lúc chặn luôn tap (phát hiện qua phản hồi thật trên máy).
+      child: SafeArea(
+        bottom: false,
+        child: Container(
+          width: double.infinity,
+          color: AppColors.primary,
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (greeting != null)
+                Text(greeting!,
                     style: GoogleFonts.inter(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        height: 26 / 20,
-                        color: Colors.white),
+                        fontSize: 12,
+                        height: 17 / 12,
+                        color: const Color(0xFFC9CEE0))),
+              Row(
+                children: [
+                  if (onBack != null) ...[
+                    _TopBarCircleButton(
+                        icon: Icons.arrow_back_rounded,
+                        size: 26,
+                        iconSize: 16,
+                        bgOpacity: 0.14,
+                        onTap: onBack!),
+                    const SizedBox(width: 8)
+                  ],
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: GoogleFonts.inter(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          height: 26 / 20,
+                          color: Colors.white),
+                    ),
                   ),
-                ),
-                if (trailing != null) trailing!,
+                  if (trailing != null) trailing!,
+                ],
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(subtitle!,
+                    style: GoogleFonts.inter(
+                        fontSize: 12,
+                        height: 17 / 12,
+                        color: const Color(0xFFC9CEE0))),
               ],
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
-              Text(subtitle!,
-                  style: GoogleFonts.inter(
-                      fontSize: 12,
-                      height: 17 / 12,
-                      color: const Color(0xFFC9CEE0))),
             ],
-          ],
+          ),
         ),
       ),
     );
