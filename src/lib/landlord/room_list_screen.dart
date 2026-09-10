@@ -111,6 +111,10 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
     try {
       await ref.read(houseRepositoryProvider).delete(widget.houseId);
       ref.invalidate(housesProvider);
+      // Xoá Nhà cũng xoá cascade mọi Phòng của nó — nếu không làm mới
+      // provider này, thẻ "Total rooms"/"Empty rooms" ở H-01 vẫn cộng dồn số
+      // phòng đã mất cho tới khi mở lại app (bug tự phát hiện lúc test tay).
+      ref.invalidate(roomStatusesByHouseProvider);
       if (context.mounted) context.go('/home');
     } on PostgrestException catch (e) {
       if (!context.mounted) return;

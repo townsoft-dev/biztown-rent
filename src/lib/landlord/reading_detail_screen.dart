@@ -83,6 +83,12 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
                 : _noteController.text.trim(),
           );
       ref.invalidate(readingHistoryProvider(_key));
+      // Sửa chỉ số ở đây cũng phải làm mới H-06 Entry (màn ghi hàng loạt cho
+      // cả nhà) — nếu không, quay lại đó vẫn thấy giá trị cũ trong ô Current
+      // dù DB đã đúng (bug tự phát hiện lúc test tay: sửa 150→200 ở đây,
+      // quay lại Entry vẫn thấy 150).
+      ref.invalidate(houseMeterEntriesProvider(
+          (houseId: widget.houseId, periodYm: latest.periodYm)));
       if (mounted) setState(() => _editing = false);
     } catch (e) {
       setState(() => _error = 'Could not save — try again.');

@@ -178,6 +178,10 @@ class RoomDetailScreen extends ConsumerWidget {
     try {
       await ref.read(roomRepositoryProvider).delete(roomId);
       ref.invalidate(roomsProvider(houseId));
+      // Xoá phòng cũng phải làm mới H-06 Entry (đọc danh sách phòng riêng,
+      // không qua `roomsProvider`) và thẻ "Total/Empty rooms" ở H-01.
+      ref.invalidate(houseMeterEntriesProvider);
+      ref.invalidate(roomStatusesByHouseProvider);
       if (context.mounted) context.pop();
     } on PostgrestException catch (e) {
       if (!context.mounted) return;

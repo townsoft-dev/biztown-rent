@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../core/providers.dart';
 import '../core/theme.dart';
+import '../data/models/house.dart';
 import '../data/models/room.dart';
 import '../data/photo_picker_controller.dart';
 import '../data/recurring_fees_controller.dart';
@@ -47,6 +48,7 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
   final List<String> _customAmenities = [];
 
   bool _initialized = false;
+  bool _houseFeesPrefilled = false;
   bool _isSaving = false;
   String? _errorText;
 
@@ -77,6 +79,22 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
       _fees.rows
         ..clear()
         ..addAll(room.recurringFees.map(
+            (f) => RecurringFeeRow(name: f.name, amount: f.amount.toString())));
+    }
+  }
+
+  /// Tạo phòng mới (không phải Edit) — điền sẵn "Default recurring fees" của
+  /// Nhà, đúng câu chú thích ngay dưới field ("Pre-filled from this house's
+  /// Default recurring fees when the room is created") — trước đó câu chú
+  /// thích có nhưng code chưa thật sự làm, phát hiện lúc test tay tạo phòng
+  /// mới thấy field trống dù Nhà đã có sẵn phí "Internet".
+  void _prefillFeesFromHouse(House house) {
+    if (widget.isEdit || _houseFeesPrefilled) return;
+    _houseFeesPrefilled = true;
+    if (house.recurringFees.isNotEmpty) {
+      _fees.rows
+        ..clear()
+        ..addAll(house.recurringFees.map(
             (f) => RecurringFeeRow(name: f.name, amount: f.amount.toString())));
     }
   }
@@ -181,6 +199,16 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
 
       ref.invalidate(roomsProvider(widget.houseId));
       if (widget.isEdit) ref.invalidate(roomProvider(roomId));
+      // Cả family (mọi kỳ đã cache) — H-06 Entry tự lấy danh sách phòng
+      // riêng qua `roomRepository.listByHouse`, không đi qua `roomsProvider`
+      // ở trên, nên tạo/sửa phòng (đổi tên, thêm phòng mới...) không tự làm
+      // mới màn đó nếu thiếu dòng này (bug tự phát hiện lúc test tay: thêm
+      // phòng thứ 2 xong quay lại H-06 Entry vẫn chỉ thấy 1 phòng).
+      ref.invalidate(houseMeterEntriesProvider);
+      // Thẻ "Total/Empty rooms" ở H-01 — tạo phòng mới (hoặc chỉnh trạng
+      // thái) phải cập nhật số liệu tổng hợp này, không chỉ danh sách phòng
+      // trong 1 nhà.
+      ref.invalidate(roomStatusesByHouseProvider);
       if (mounted) context.pop();
     } catch (e) {
       setState(
@@ -210,6 +238,7 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
 
   Widget _buildScaffold(BuildContext context, Room? room) {
     final houseAsync = ref.watch(houseProvider(widget.houseId));
+    houseAsync.whenData(_prefillFeesFromHouse);
     return Scaffold(
       backgroundColor: AppColors.bgDefault,
       body: Column(
