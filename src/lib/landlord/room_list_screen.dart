@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/theme.dart';
 import '../shared/app_chip.dart';
 import '../shared/app_fab.dart';
+import '../shared/confirm_dialog.dart';
 import '../shared/detail_row.dart';
 import '../shared/list_card.dart';
 import '../shared/section_label.dart';
@@ -75,7 +76,10 @@ class _RoomListScreenState extends State<RoomListScreen> {
             title: 'Nha tro Binh An',
             subtitle: '12 Le Van Sy, D.3 · 18/24 rooms occupied',
             onBack: () => context.pop(),
-            trailing: TopBarMoreButton(onTap: () {}),
+            trailing: TopBarActionMenuButton(
+              onEdit: () => context.push('/home/houses/${widget.houseId}/edit'),
+              onDelete: () => _confirmDeleteHouse(context),
+            ),
           ),
           Expanded(
             child: ListView(
@@ -93,6 +97,20 @@ class _RoomListScreenState extends State<RoomListScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDeleteHouse(BuildContext context) async {
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: 'Delete house?',
+      description:
+          'Are you sure you want to delete this house? This action cannot be undone.',
+      confirmLabel: 'Delete',
+    );
+    if (!confirmed || !context.mounted) return;
+    // TODO: nối xoá tb_house thật (kèm rà buộc nghiệp vụ — chặn nếu còn phòng/
+    // hợp đồng đang hoạt động) khi có backend House/Room. Hiện chỉ quay lại H-01.
+    context.go('/home');
   }
 
   List<Widget> _buildHouseDetail() {

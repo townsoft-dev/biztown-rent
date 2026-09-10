@@ -132,6 +132,49 @@ class TopBarBellButton extends StatelessWidget {
   }
 }
 
+/// Nút tròn "⋮" mở menu Edit/Delete (166:23 Type=Title+Action trên Figma).
+/// Dùng `PopupMenuButton` bọc quanh đúng visual tròn có sẵn (không tự vẽ menu
+/// riêng) — "Delete" luôn phải qua `ConfirmDialog.show(...)` trước khi thực
+/// hiện, không xoá thẳng khi bấm.
+class TopBarActionMenuButton extends StatelessWidget {
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const TopBarActionMenuButton(
+      {super.key, required this.onEdit, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<_TopBarMenuAction>(
+      tooltip: '',
+      offset: const Offset(0, 36),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.statCard)),
+      onSelected: (action) => switch (action) {
+        _TopBarMenuAction.edit => onEdit(),
+        _TopBarMenuAction.delete => onDelete(),
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: _TopBarMenuAction.edit,
+          child: Text('Edit'),
+        ),
+        const PopupMenuItem(
+          value: _TopBarMenuAction.delete,
+          child: Text('Delete', style: TextStyle(color: AppColors.error)),
+        ),
+      ],
+      child: const _TopBarCircleIcon(
+          icon: Icons.more_vert_rounded,
+          size: 30,
+          iconSize: 18,
+          bgOpacity: 0.12),
+    );
+  }
+}
+
+enum _TopBarMenuAction { edit, delete }
+
 class _TopBarCircleButton extends StatelessWidget {
   final IconData icon;
   final double size;
@@ -151,15 +194,34 @@ class _TopBarCircleButton extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       customBorder: const CircleBorder(),
-      child: Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: bgOpacity),
-            shape: BoxShape.circle),
-        child: Icon(icon, color: Colors.white, size: iconSize),
-      ),
+      child: _TopBarCircleIcon(
+          icon: icon, size: size, iconSize: iconSize, bgOpacity: bgOpacity),
+    );
+  }
+}
+
+class _TopBarCircleIcon extends StatelessWidget {
+  final IconData icon;
+  final double size;
+  final double iconSize;
+  final double bgOpacity;
+
+  const _TopBarCircleIcon(
+      {required this.icon,
+      required this.size,
+      required this.iconSize,
+      required this.bgOpacity});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: bgOpacity),
+          shape: BoxShape.circle),
+      child: Icon(icon, color: Colors.white, size: iconSize),
     );
   }
 }

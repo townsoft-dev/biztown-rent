@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme.dart';
 import '../shared/app_button.dart';
+import '../shared/confirm_dialog.dart';
 import '../shared/detail_row.dart';
 import '../shared/list_card.dart';
 import '../shared/mini_profile_card.dart';
@@ -31,7 +32,11 @@ class RoomDetailScreen extends StatelessWidget {
               title: roomId,
               subtitle: 'Nha tro Binh An',
               onBack: () => context.pop(),
-              trailing: TopBarMoreButton(onTap: () {})),
+              trailing: TopBarActionMenuButton(
+                onEdit: () =>
+                    context.push('/home/houses/$houseId/rooms/$roomId/edit'),
+                onDelete: () => _confirmDeleteRoom(context),
+              )),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
@@ -114,5 +119,19 @@ class RoomDetailScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDeleteRoom(BuildContext context) async {
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: 'Delete room?',
+      description:
+          'Are you sure you want to delete this room? This action cannot be undone.',
+      confirmLabel: 'Delete',
+    );
+    if (!confirmed || !context.mounted) return;
+    // TODO: nối xoá tb_room thật (chặn nếu phòng đang Occupied/có hợp đồng) khi
+    // có backend House/Room. Hiện chỉ quay lại H-03.
+    context.pop();
   }
 }
