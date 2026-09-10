@@ -21,9 +21,10 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkSessionAndNavigate() async {
-    // TODO: timeout 10s cho mạng chậm (edge case trong SCREEN-SPEC.md) — chưa
-    // implement, hiện supabase_flutter tự xử lý refresh session khi khởi tạo.
-    await Future<void>.delayed(const Duration(milliseconds: 400));
+    // Timeout 10s cho mạng chậm (SCREEN-SPEC.md edge case) đã xử lý ở main.dart
+    // (bọc initSupabase()). Giữ màn này hiện đủ lâu (2s) để thấy rõ logo/tagline —
+    // dungtv phản hồi 400ms trước đó chớp quá nhanh trên máy thật.
+    await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     final hasSession = supabase.auth.currentSession != null;
     context.go(hasSession ? '/home' : '/login');
