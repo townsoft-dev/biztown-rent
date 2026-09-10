@@ -214,65 +214,113 @@ class _RoomPhotoState extends ConsumerState<_RoomPhoto> {
   @override
   Widget build(BuildContext context) {
     final photos = widget.room.photos;
-    return Container(
-      height: 160,
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: AppColors.bgMuted,
-        border: Border.all(color: AppColors.neutral200),
-        borderRadius: BorderRadius.circular(AppRadii.card),
-      ),
-      child: Row(
-        children: [
-          _SliderArrow(
-              icon: Icons.chevron_left_rounded,
-              onTap: photos.length > 1 ? () => _step(-1) : null),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadii.card),
-              child: photos.isEmpty
-                  ? const Center(
-                      child: Icon(Icons.image_rounded,
-                          color: AppColors.neutral200, size: 36),
-                    )
-                  : FutureBuilder<String>(
-                      key: ValueKey(photos[_index]),
-                      future: ref
-                          .read(roomRepositoryProvider)
-                          .signedPhotoUrl(photos[_index]),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return const SizedBox.shrink();
-                        }
-                        return Image.network(snapshot.data!,
-                            height: 160, fit: BoxFit.cover);
-                      },
-                    ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadii.card),
+      child: Container(
+        height: 160,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.bgMuted,
+          border: Border.all(color: AppColors.neutral200),
+          borderRadius: BorderRadius.circular(AppRadii.card),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            photos.isEmpty
+                ? const Center(
+                    child: Icon(Icons.image_rounded,
+                        color: AppColors.neutral200, size: 36),
+                  )
+                : FutureBuilder<String>(
+                    key: ValueKey(photos[_index]),
+                    future: ref
+                        .read(roomRepositoryProvider)
+                        .signedPhotoUrl(photos[_index]),
+                    builder: (context, snapshot) {
+                      // Hiện lỗi thật (thay vì im lặng bỏ trống) nếu không
+                      // lấy được signed URL hoặc ảnh tải lỗi — dễ chẩn đoán
+                      // hơn khi có sự cố mạng thật ngoài đời.
+                      if (snapshot.hasError) {
+                        return Center(
+                            child: Text('${snapshot.error}',
+                                style: const TextStyle(
+                                    fontSize: 10, color: AppColors.error)));
+                      }
+                      if (!snapshot.hasData) {
+                        return const Center(
+                            child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2)));
+                      }
+                      return Image.network(snapshot.data!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Center(
+                              child: Text('$error',
+                                  style: const TextStyle(
+                                      fontSize: 10, color: AppColors.error))));
+                    },
+                  ),
+            Positioned(
+              left: 4,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _SliderArrow(
+                    icon: Icons.chevron_left_rounded,
+                    overPhoto: photos.isNotEmpty,
+                    onTap: photos.length > 1 ? () => _step(-1) : null),
+              ),
             ),
-          ),
-          _SliderArrow(
-              icon: Icons.chevron_right_rounded,
-              onTap: photos.length > 1 ? () => _step(1) : null),
-        ],
+            Positioned(
+              right: 4,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _SliderArrow(
+                    icon: Icons.chevron_right_rounded,
+                    overPhoto: photos.isNotEmpty,
+                    onTap: photos.length > 1 ? () => _step(1) : null),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
+/// Nút mũi tên đè lên ảnh — luôn hiện (kể cả chưa có ảnh, đúng Figma mock
+/// placeholder gốc: icon xám `text-tertiary`, không nền). Khi đã có ảnh thật
+/// thì thêm nền tròn mờ đen để chữ/icon luôn đọc được dù ảnh sáng màu (Figma
+/// không mock sẵn trạng thái này vì chỉ là wireframe không có ảnh thật — suy
+/// ra hợp lý theo pattern overlay đã dùng ở `photo_picker_row.dart`).
+/// `onTap` null (≤1 ảnh) thì chỉ mang tính trang trí, không bắt sự kiện.
 class _SliderArrow extends StatelessWidget {
   final IconData icon;
+  final bool overPhoto;
   final VoidCallback? onTap;
-  const _SliderArrow({required this.icon, required this.onTap});
+  const _SliderArrow(
+      {required this.icon, required this.overPhoto, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: Icon(icon, color: AppColors.textTertiary, size: 24),
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: overPhoto ? Colors.black.withValues(alpha: 0.24) : null,
+      ),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Icon(icon,
+              color: overPhoto ? Colors.white : AppColors.textTertiary,
+              size: 24),
+        ),
       ),
     );
   }

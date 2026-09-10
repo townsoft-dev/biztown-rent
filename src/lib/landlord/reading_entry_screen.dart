@@ -9,6 +9,7 @@ import '../data/models/reading.dart';
 import '../data/reading_repository.dart';
 import '../shared/app_banner.dart';
 import '../shared/app_button.dart';
+import '../shared/app_text_field.dart';
 import '../shared/meter_card.dart';
 import '../shared/progress_card.dart';
 import '../shared/top_bar.dart';
@@ -60,9 +61,18 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
   HouseReadingPeriodKey get _periodKey =>
       (houseId: widget.houseId, periodYm: _period);
 
-  void _changePeriod(int monthDelta) {
+  Future<void> _pickPeriod() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _period,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+      initialDatePickerMode: DatePickerMode.year,
+      helpText: 'Select reading period',
+    );
+    if (picked == null) return;
     setState(() {
-      _period = DateTime(_period.year, _period.month + monthDelta);
+      _period = DateTime(picked.year, picked.month);
       _saveError = null;
     });
   }
@@ -158,37 +168,18 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 11),
-                      decoration: BoxDecoration(
-                        color: AppColors.bgDefault,
-                        border: Border.all(color: AppColors.neutral200),
-                        borderRadius:
-                            BorderRadius.circular(AppRadii.inputField),
-                      ),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () => _changePeriod(-1),
-                            icon: const Icon(Icons.chevron_left_rounded),
-                          ),
-                          Expanded(
-                            child: Text('Reading period  ·  $periodLabel',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary)),
-                          ),
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () => _changePeriod(1),
-                            icon: const Icon(Icons.chevron_right_rounded),
-                          ),
-                        ],
-                      ),
+                    AppTextField(
+                      // `initialValue` của TextFormField chỉ đọc 1 lần lúc
+                      // tạo — đổi `key` theo kỳ để ép remount mỗi khi đổi kỳ
+                      // (bấm mũi tên hoặc chọn ngày), nếu không chữ hiển thị
+                      // sẽ đứng yên dù `_period` đã đổi.
+                      key: ValueKey(_period),
+                      label: 'Reading period *',
+                      initialValue:
+                          '$periodLabel  ·  ${DateFormat('dd/MM/yyyy').format(_period)}',
+                      readOnly: true,
+                      trailing: AppTextFieldTrailingIcon.date,
+                      onTap: _pickPeriod,
                     ),
                     const SizedBox(height: 10),
                     ProgressCard(done: done, total: entries.length),
