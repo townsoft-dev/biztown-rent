@@ -13,13 +13,15 @@ import '../data/models/room.dart';
 import '../shared/app_button.dart';
 import '../shared/confirm_dialog.dart';
 import '../shared/detail_row.dart';
+import '../shared/list_card.dart';
 import '../shared/section_label.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
 
-/// H-04 — Room Detail (View) (node 220:2714, lấy qua Figma MCP 10/09/2026),
-/// nối CRUD thật vào `tb_room` (10/09/2026, xem changelog/2026-09-10.md) + nối
-/// thật lịch sử chỉ số (H-06) — "View reading history" mở bottom sheet chọn
+/// H-04 — Room Detail (View) (node 220:2714, lấy lại qua Figma MCP 10/09/2026
+/// sau khi Dream cập nhật: ảnh dạng slider nhiều ảnh, lịch sử chỉ số hiện 2
+/// `ListCard` thật thay vì text tóm tắt), nối CRUD thật vào `tb_room` +
+/// lịch sử chỉ số (H-06) — "View reading history" mở bottom sheet chọn
 /// Electricity/Water (1 phòng có 2 chuỗi chỉ số độc lập, xem BR-READ-01/02).
 /// Hợp đồng hiện tại chưa nối (chờ seri T-0x, chưa build).
 class RoomDetailScreen extends ConsumerWidget {
@@ -114,12 +116,13 @@ class RoomDetailScreen extends ConsumerWidget {
             style: AppButtonStyle.ghost,
             onPressed: () => _chooseUtilityAndOpenHistory(context, room.id)),
         const SectionLabel('Reading history  ·  this room'),
-        _ReadingSummaryRow(
+        _ReadingSummaryCard(
             roomId: room.id,
             utilityType: UtilityType.electricity,
             onTap: () => context.push(
                 '/home/houses/$houseId/readings/${room.id}/${UtilityType.electricity.pathSegment}')),
-        _ReadingSummaryRow(
+        const SizedBox(height: 10),
+        _ReadingSummaryCard(
             roomId: room.id,
             utilityType: UtilityType.water,
             onTap: () => context.push(
@@ -188,102 +191,147 @@ class RoomDetailScreen extends ConsumerWidget {
   }
 }
 
-class _RoomPhoto extends ConsumerWidget {
+/// Ảnh phòng dạng slider (node `410:2908`, cập nhật Figma sau khi thấy 1
+/// phòng có thể có nhiều ảnh) — 2 mũi tên trái/phải luôn hiện (kể cả lúc
+/// chưa có ảnh nào, đúng Figma), chỉ thật sự chuyển ảnh khi có ≥2 ảnh.
+class _RoomPhoto extends ConsumerStatefulWidget {
   final Room room;
   const _RoomPhoto({required this.room});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final decoration = BoxDecoration(
-      color: AppColors.bgMuted,
-      border: Border.all(color: AppColors.neutral200),
-      borderRadius: BorderRadius.circular(AppRadii.card),
-    );
-    if (room.photos.isEmpty) {
-      return Container(
-        height: 160,
-        width: double.infinity,
-        alignment: Alignment.center,
-        decoration: decoration,
-        child: const Icon(Icons.image_rounded,
-            color: AppColors.neutral200, size: 36),
-      );
-    }
-    return FutureBuilder<String>(
-      future:
-          ref.read(roomRepositoryProvider).signedPhotoUrl(room.photos.first),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Container(
-              height: 160, width: double.infinity, decoration: decoration);
-        }
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadii.card),
-          child: Image.network(snapshot.data!,
-              height: 160, width: double.infinity, fit: BoxFit.cover),
-        );
-      },
+  ConsumerState<_RoomPhoto> createState() => _RoomPhotoState();
+}
+
+class _RoomPhotoState extends ConsumerState<_RoomPhoto> {
+  int _index = 0;
+
+  void _step(int delta) {
+    final count = widget.room.photos.length;
+    if (count < 2) return;
+    setState(() => _index = (_index + delta) % count);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final photos = widget.room.photos;
+    return Container(
+      height: 160,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: AppColors.bgMuted,
+        border: Border.all(color: AppColors.neutral200),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+      ),
+      child: Row(
+        children: [
+          _SliderArrow(
+              icon: Icons.chevron_left_rounded,
+              onTap: photos.length > 1 ? () => _step(-1) : null),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadii.card),
+              child: photos.isEmpty
+                  ? const Center(
+                      child: Icon(Icons.image_rounded,
+                          color: AppColors.neutral200, size: 36),
+                    )
+                  : FutureBuilder<String>(
+                      key: ValueKey(photos[_index]),
+                      future: ref
+                          .read(roomRepositoryProvider)
+                          .signedPhotoUrl(photos[_index]),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const SizedBox.shrink();
+                        }
+                        return Image.network(snapshot.data!,
+                            height: 160, fit: BoxFit.cover);
+                      },
+                    ),
+            ),
+          ),
+          _SliderArrow(
+              icon: Icons.chevron_right_rounded,
+              onTap: photos.length > 1 ? () => _step(1) : null),
+        ],
+      ),
     );
   }
 }
 
-/// 1 dòng tóm tắt chỉ số gần nhất của 1 tiện ích (điện/nước) — tap mở lịch sử
-/// đầy đủ (H-06 Detail). Thay cho text tĩnh "No reading recorded yet." trước
-/// đây, giờ đọc thật từ `readingHistoryProvider`.
-class _ReadingSummaryRow extends ConsumerWidget {
+class _SliderArrow extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  const _SliderArrow({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(icon, color: AppColors.textTertiary, size: 24),
+      ),
+    );
+  }
+}
+
+/// 1 thẻ tóm tắt chỉ số gần nhất của 1 tiện ích (điện/nước) — đúng "List
+/// card" trên Figma (node `220:2730`/`220:2731`, cập nhật thay cho dòng text
+/// tóm tắt trước đây), tap mở lịch sử đầy đủ (H-06 Detail).
+class _ReadingSummaryCard extends ConsumerWidget {
   final String roomId;
   final UtilityType utilityType;
   final VoidCallback onTap;
 
-  const _ReadingSummaryRow(
+  const _ReadingSummaryCard(
       {required this.roomId, required this.utilityType, required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(
         readingHistoryProvider((roomId: roomId, utilityType: utilityType)));
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadii.card),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            Icon(
-                utilityType == UtilityType.electricity
-                    ? Icons.bolt_rounded
-                    : Icons.water_drop_rounded,
-                size: 18,
-                color: utilityType == UtilityType.electricity
-                    ? AppColors.accentOrange
-                    : AppColors.info),
-            const SizedBox(width: 8),
-            Expanded(
-              child: historyAsync.when(
-                loading: () => const Text('Loading…',
-                    style: TextStyle(color: AppColors.textSecondary)),
-                error: (e, st) => const Text('—',
-                    style: TextStyle(color: AppColors.textSecondary)),
-                data: (history) {
-                  if (history.isEmpty) {
-                    return Text(
-                        '${utilityType.label}: no reading recorded yet.',
-                        style: const TextStyle(color: AppColors.textSecondary));
-                  }
-                  final latest = history.first;
-                  return Text(
-                      '${utilityType.label}: ${latest.currentReading} ${utilityType.unit}  ·  ${DateFormat('dd/MM/yyyy').format(latest.readingDate)}',
-                      style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600));
-                },
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded,
-                color: AppColors.neutral200, size: 20),
-          ],
-        ),
-      ),
+    final thumbColor = utilityType == UtilityType.electricity
+        ? AppColors.accentOrange
+        : AppColors.info;
+    final icon = utilityType == UtilityType.electricity
+        ? Icons.bolt_rounded
+        : Icons.water_drop_rounded;
+
+    return historyAsync.when(
+      loading: () => ListCard(
+          thumbColor: thumbColor,
+          icon: icon,
+          title: utilityType.label,
+          body: 'Loading…'),
+      error: (e, st) => ListCard(
+          thumbColor: thumbColor,
+          icon: icon,
+          title: utilityType.label,
+          body: 'Could not load.'),
+      data: (history) {
+        if (history.isEmpty) {
+          return ListCard(
+            thumbColor: thumbColor,
+            icon: icon,
+            title: '${utilityType.label}  ·  no reading yet',
+            body: 'Tap to record the first reading.',
+            onTap: onTap,
+          );
+        }
+        final latest = history.first;
+        return ListCard(
+          thumbColor: thumbColor,
+          icon: icon,
+          title:
+              '${DateFormat('dd/MM/yyyy').format(latest.readingDate)}  ·  ${utilityType.label}',
+          body:
+              '${latest.previousReading ?? '—'} → ${latest.currentReading}  ·  ${latest.usageAmount ?? '—'} ${utilityType.unit}  ·  ${latest.readingType.label}',
+          onTap: onTap,
+        );
+      },
     );
   }
 }

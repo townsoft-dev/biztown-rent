@@ -132,20 +132,26 @@ class TopBarBellButton extends StatelessWidget {
   }
 }
 
-/// Nút tròn "⋮" mở menu Edit/Delete — đúng component "action pop-up" trên
-/// Figma (node `400:2669`/`400:2759`, xuất hiện ở frame trạng thái "H-02 —
-/// House delete"/"H-03 — Room delete"): khung trắng bo góc 9px viền hairline,
-/// 2 dòng "Edit"/"Delete" **cùng màu navy đậm** (không tô đỏ — khác giả định
-/// ban đầu), có 1 gạch chia mảnh giữa 2 dòng. Dùng `PopupMenuButton` bọc
-/// quanh đúng visual tròn có sẵn (không tự vẽ menu riêng) — "Delete" luôn
-/// phải qua `ConfirmDialog.show(...)` trước khi thực hiện, không xoá thẳng
-/// khi bấm.
+/// Nút tròn "⋮" mở menu Edit/(Record monthly readings)/Delete — đúng
+/// component "action pop-up" trên Figma. Bản 2 mục (node `400:2669`/`400:2759`,
+/// dùng ở H-04 Room Detail) và bản 3 mục (node `400:2576`, dùng ở H-03 House
+/// Detail — có thêm "Record monthly readings" ở giữa, đúng chỗ trả lời câu
+/// hỏi "H-06 chưa có điểm vào thật" ghi ở đợt trước) đều chung 1 style: khung
+/// trắng bo góc 9px viền hairline, mọi dòng **cùng màu navy đậm** (không tô
+/// đỏ cho Delete), gạch chia mảnh dưới mỗi dòng trừ dòng cuối. Dùng
+/// `PopupMenuButton` bọc quanh đúng visual tròn có sẵn (không tự vẽ menu
+/// riêng) — "Delete" luôn phải qua `ConfirmDialog.show(...)` trước khi thực
+/// hiện, không xoá thẳng khi bấm.
 class TopBarActionMenuButton extends StatelessWidget {
   final VoidCallback onEdit;
+  final VoidCallback? onRecordReadings;
   final VoidCallback onDelete;
 
   const TopBarActionMenuButton(
-      {super.key, required this.onEdit, required this.onDelete});
+      {super.key,
+      required this.onEdit,
+      this.onRecordReadings,
+      required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -161,16 +167,25 @@ class TopBarActionMenuButton extends StatelessWidget {
       ),
       onSelected: (action) => switch (action) {
         _TopBarMenuAction.edit => onEdit(),
+        _TopBarMenuAction.recordReadings => onRecordReadings?.call(),
         _TopBarMenuAction.delete => onDelete(),
       },
-      itemBuilder: (context) => const [
-        PopupMenuItem(
+      itemBuilder: (context) => [
+        const PopupMenuItem(
           value: _TopBarMenuAction.edit,
           padding: EdgeInsets.zero,
           height: 0,
           child: _ActionPopupRow(label: 'Edit', showDivider: true),
         ),
-        PopupMenuItem(
+        if (onRecordReadings != null)
+          const PopupMenuItem(
+            value: _TopBarMenuAction.recordReadings,
+            padding: EdgeInsets.zero,
+            height: 0,
+            child: _ActionPopupRow(
+                label: 'Record monthly readings', showDivider: true),
+          ),
+        const PopupMenuItem(
           value: _TopBarMenuAction.delete,
           padding: EdgeInsets.zero,
           height: 0,
@@ -186,7 +201,7 @@ class TopBarActionMenuButton extends StatelessWidget {
   }
 }
 
-enum _TopBarMenuAction { edit, delete }
+enum _TopBarMenuAction { edit, recordReadings, delete }
 
 class _ActionPopupRow extends StatelessWidget {
   final String label;

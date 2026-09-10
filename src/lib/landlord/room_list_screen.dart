@@ -62,6 +62,8 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
                 trailing: TopBarActionMenuButton(
                   onEdit: () =>
                       context.push('/home/houses/${widget.houseId}/edit'),
+                  onRecordReadings: () =>
+                      context.push('/home/houses/${widget.houseId}/readings'),
                   onDelete: () => _confirmDeleteHouse(context),
                 ),
               );
