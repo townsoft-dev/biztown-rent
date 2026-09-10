@@ -142,7 +142,6 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
           style: GoogleFonts.inter(
               fontSize: 13, height: 18 / 13, color: Colors.black)),
       const SectionLabel('House info'),
-      DetailRow(label: 'Type', value: house.houseType),
       if (house.description != null)
         DetailRow(label: 'Description', value: house.description!),
       DetailRow(
@@ -159,10 +158,16 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
         DetailRow(label: 'Owner tax code', value: house.ownerTaxCode!),
       if (bankAccount.isNotEmpty)
         DetailRow(label: 'Payout bank account', value: bankAccount),
+      DetailRow(label: 'Owner email', value: house.ownerEmail ?? '—'),
       DetailRow(
-          label: 'Owner email',
-          value: house.ownerEmail ?? '—',
-          showDivider: false),
+        label: 'Manager',
+        value: ref.watch(houseManagersProvider(house.id)).when(
+              data: (names) => names.isEmpty ? '—' : names.join(', '),
+              loading: () => '…',
+              error: (e, st) => '—',
+            ),
+        showDivider: false,
+      ),
       const SectionLabel('Pricing & fees defaults'),
       DetailRow(
           label: 'Electricity /kWh',

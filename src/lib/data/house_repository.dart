@@ -55,6 +55,31 @@ class HouseRepository {
     return House.fromMap(row);
   }
 
+  /// Tên hiển thị của những người có role `manager` cho nhà này (join
+  /// `tb_user_house_access` với `tb_user` — `phone` chỉ là FK logic, không
+  /// phải FK thật trong DB nên phải query 2 bước, không dùng embed của
+  /// PostgREST được). Người được mời nhưng chưa có tài khoản (`phone` chưa
+  /// có dòng `tb_user`) thì hiện thẳng SĐT thay vì tên. Đọc được nhờ policy
+  /// mới `20260910150000_tb_user_visible_to_housemates.sql`.
+  Future<List<String>> listManagerDisplayNames(String houseId) async {
+    final accessRows = await _client
+        .from('tb_user_house_access')
+        .select('phone')
+        .eq('house_id', houseId)
+        .eq('role', 'manager');
+    final phones = accessRows.map((r) => r['phone'] as String).toList();
+    if (phones.isEmpty) return [];
+    final userRows =
+        await _client.from('tb_user').select('phone, full_name').inFilter(
+              'phone',
+              phones,
+            );
+    final nameByPhone = {
+      for (final r in userRows) r['phone'] as String: r['full_name'] as String
+    };
+    return phones.map((p) => nameByPhone[p] ?? p).toList();
+  }
+
   /// Xoá nhà — DB tự chặn (lỗi FK) nếu còn phòng có lịch sử hợp đồng
   /// (`tb_contract_room.room_id references tb_room on delete restrict`), gọi
   /// nơi dùng hàm này phải bắt `PostgrestException` để hiện thông báo phù hợp.

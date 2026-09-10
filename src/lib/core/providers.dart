@@ -32,6 +32,13 @@ final houseProvider = FutureProvider.family<House, String>((ref, houseId) {
   return ref.watch(houseRepositoryProvider).getById(houseId);
 });
 
+/// Tên các Manager của 1 nhà (H-03 "Owner" section, field "Manager") — xem
+/// `HouseRepository.listManagerDisplayNames`.
+final houseManagersProvider =
+    FutureProvider.family<List<String>, String>((ref, houseId) {
+  return ref.watch(houseRepositoryProvider).listManagerDisplayNames(houseId);
+});
+
 /// Danh sách phòng theo nhà (H-03 tab Rooms) — invalidate sau khi tạo/sửa/xoá phòng.
 final roomsProvider = FutureProvider.family<List<Room>, String>((ref, houseId) {
   return ref.watch(roomRepositoryProvider).listByHouse(houseId);
