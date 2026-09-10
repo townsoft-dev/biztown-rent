@@ -77,7 +77,8 @@
 
 - [ ] **Còn thiếu trong `generate-invoice`**: prorate tiền nhà theo ngày khi `MOVE_IN`/`MOVE_OUT` giữa kỳ (BR-BILL-08) — hiện tạm tính trọn tháng, cần bổ sung khi có ca thật để xác nhận cách làm tròn ngày
 - [ ] Test mã VietQR (`generate-payment-qr`) với máy quét ngân hàng thật — hiện mới verify cấu trúc payload + CRC16 đúng chuẩn EMVCo, chưa quét thử
-- [ ] eSMS đang dùng Brandname demo "Baotrixemay" (chỉ để test) — cần đăng ký Brandname CSKH thật (tên "BizTown" hoặc tương đương) trước production; đăng ký Zalo ZNS/OA riêng (dùng cho kênh gửi hoá đơn Tenant, không phải OTP)
+- [ ] eSMS đang dùng Brandname demo "Baotrixemay" (chỉ để test) — cần đăng ký Brandname CSKH thật (tên "BizTown" hoặc tương đương) trước production; đăng ký Zalo ZNS/OA riêng (dùng cho kênh gửi hoá đơn Tenant, không phải OTP). **Quyết định 10/09/2026**: dungtv sẽ tạo tài khoản eSMS thật + cung cấp `ESMS_API_KEY`/`ESMS_SECRET_KEY`/Brandname thật **sau khi xong hết quá trình dev** — trong lúc dev vẫn dùng Brandname demo. Đổi sang thật chỉ cần set lại 2 secret + đổi `ESMS_BRANDNAME` trong `send-otp-sms/index.ts`, không cần sửa kiến trúc.
+- [ ] **Màn "Quên mật khẩu" (Forgot Password) chưa có thiết kế riêng trong Figma** — hiện tạm tái dùng nguyên UI Sign Up (Verify phone + Set password), đúng chức năng nhưng câu chữ chưa hợp ngữ cảnh (vẫn hiện "Create account", stepper Sign up). dungtv sẽ nhờ Dream thiết kế riêng màn này trên Figma — khi có, code lại đúng pixel-for-pixel như các màn khác, không tái dùng UI Sign Up nữa.
 - [ ] Tạo project Firebase (miễn phí, chỉ dùng cho FCM push) khi tới lúc code `send-notification` thật
 - [ ] Setup Scheduled Trigger (pg_cron) cho job nhắc thanh toán quá hạn + nhắc ghi chỉ số định kỳ
 - [ ] Code màn Home tab thật (H-01→H-06) theo Figma — S-00→S-03 (Auth + Notification Center) đã xong ở trên, và luồng Auth đã chạy thật end-to-end
