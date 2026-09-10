@@ -132,10 +132,14 @@ class TopBarBellButton extends StatelessWidget {
   }
 }
 
-/// Nút tròn "⋮" mở menu Edit/Delete (166:23 Type=Title+Action trên Figma).
-/// Dùng `PopupMenuButton` bọc quanh đúng visual tròn có sẵn (không tự vẽ menu
-/// riêng) — "Delete" luôn phải qua `ConfirmDialog.show(...)` trước khi thực
-/// hiện, không xoá thẳng khi bấm.
+/// Nút tròn "⋮" mở menu Edit/Delete — đúng component "action pop-up" trên
+/// Figma (node `400:2669`/`400:2759`, xuất hiện ở frame trạng thái "H-02 —
+/// House delete"/"H-03 — Room delete"): khung trắng bo góc 9px viền hairline,
+/// 2 dòng "Edit"/"Delete" **cùng màu navy đậm** (không tô đỏ — khác giả định
+/// ban đầu), có 1 gạch chia mảnh giữa 2 dòng. Dùng `PopupMenuButton` bọc
+/// quanh đúng visual tròn có sẵn (không tự vẽ menu riêng) — "Delete" luôn
+/// phải qua `ConfirmDialog.show(...)` trước khi thực hiện, không xoá thẳng
+/// khi bấm.
 class TopBarActionMenuButton extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -148,20 +152,29 @@ class TopBarActionMenuButton extends StatelessWidget {
     return PopupMenuButton<_TopBarMenuAction>(
       tooltip: '',
       offset: const Offset(0, 36),
+      color: Colors.white,
+      elevation: 2,
+      menuPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.statCard)),
+        borderRadius: BorderRadius.circular(AppRadii.xs),
+        side: const BorderSide(color: AppColors.borderSubtle),
+      ),
       onSelected: (action) => switch (action) {
         _TopBarMenuAction.edit => onEdit(),
         _TopBarMenuAction.delete => onDelete(),
       },
-      itemBuilder: (context) => [
-        const PopupMenuItem(
+      itemBuilder: (context) => const [
+        PopupMenuItem(
           value: _TopBarMenuAction.edit,
-          child: Text('Edit'),
+          padding: EdgeInsets.zero,
+          height: 0,
+          child: _ActionPopupRow(label: 'Edit', showDivider: true),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: _TopBarMenuAction.delete,
-          child: Text('Delete', style: TextStyle(color: AppColors.error)),
+          padding: EdgeInsets.zero,
+          height: 0,
+          child: _ActionPopupRow(label: 'Delete'),
         ),
       ],
       child: const _TopBarCircleIcon(
@@ -174,6 +187,29 @@ class TopBarActionMenuButton extends StatelessWidget {
 }
 
 enum _TopBarMenuAction { edit, delete }
+
+class _ActionPopupRow extends StatelessWidget {
+  final String label;
+  final bool showDivider;
+
+  const _ActionPopupRow({required this.label, this.showDivider = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      decoration: showDivider
+          ? const BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.borderSubtle)))
+          : null,
+      child: Text(label,
+          style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary)),
+    );
+  }
+}
 
 class _TopBarCircleButton extends StatelessWidget {
   final IconData icon;

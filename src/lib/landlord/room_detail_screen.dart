@@ -4,8 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:intl/intl.dart';
+
 import '../core/providers.dart';
 import '../core/theme.dart';
+import '../data/models/reading.dart';
 import '../data/models/room.dart';
 import '../shared/app_button.dart';
 import '../shared/confirm_dialog.dart';
@@ -15,8 +18,10 @@ import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
 
 /// H-04 — Room Detail (View) (node 220:2714, lấy qua Figma MCP 10/09/2026),
-/// nối CRUD thật vào `tb_room` (10/09/2026, xem changelog/2026-09-10.md).
-/// Lịch sử chỉ số/Hợp đồng hiện tại chưa nối (chờ seri H-06 thật/T-0x).
+/// nối CRUD thật vào `tb_room` (10/09/2026, xem changelog/2026-09-10.md) + nối
+/// thật lịch sử chỉ số (H-06) — "View reading history" mở bottom sheet chọn
+/// Electricity/Water (1 phòng có 2 chuỗi chỉ số độc lập, xem BR-READ-01/02).
+/// Hợp đồng hiện tại chưa nối (chờ seri T-0x, chưa build).
 class RoomDetailScreen extends ConsumerWidget {
   final String houseId;
   final String roomId;
@@ -104,17 +109,21 @@ class RoomDetailScreen extends ConsumerWidget {
           DetailRow(label: 'Note', value: room.note ?? '—', showDivider: false),
         ]),
         const SizedBox(height: 10),
-        // TODO: → H-06 thật khi có điểm vào rõ ràng (xem docs/CURRENT_STATUS.md).
-        const AppButton(
+        AppButton(
             label: 'View reading history',
             style: AppButtonStyle.ghost,
-            onPressed: null),
+            onPressed: () => _chooseUtilityAndOpenHistory(context, room.id)),
         const SectionLabel('Reading history  ·  this room'),
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
-          child: Text('No reading recorded yet.',
-              style: TextStyle(color: AppColors.textSecondary)),
-        ),
+        _ReadingSummaryRow(
+            roomId: room.id,
+            utilityType: UtilityType.electricity,
+            onTap: () => context.push(
+                '/home/houses/$houseId/readings/${room.id}/${UtilityType.electricity.pathSegment}')),
+        _ReadingSummaryRow(
+            roomId: room.id,
+            utilityType: UtilityType.water,
+            onTap: () => context.push(
+                '/home/houses/$houseId/readings/${room.id}/${UtilityType.water.pathSegment}')),
         const SectionLabel('Current contract'),
         // TODO: → T-03/T-05 khi seri màn Tenant & Contract có (chưa build).
         const Padding(
@@ -124,6 +133,34 @@ class RoomDetailScreen extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _chooseUtilityAndOpenHistory(
+      BuildContext context, String roomId) async {
+    final type = await showModalBottomSheet<UtilityType>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading:
+                  const Icon(Icons.bolt_rounded, color: AppColors.accentOrange),
+              title: const Text('Electricity'),
+              onTap: () => Navigator.of(context).pop(UtilityType.electricity),
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.water_drop_rounded, color: AppColors.info),
+              title: const Text('Water'),
+              onTap: () => Navigator.of(context).pop(UtilityType.water),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (type == null || !context.mounted) return;
+    context.push('/home/houses/$houseId/readings/$roomId/${type.pathSegment}');
   }
 
   Future<void> _confirmDeleteRoom(BuildContext context, WidgetRef ref) async {
@@ -186,6 +223,67 @@ class _RoomPhoto extends ConsumerWidget {
               height: 160, width: double.infinity, fit: BoxFit.cover),
         );
       },
+    );
+  }
+}
+
+/// 1 dòng tóm tắt chỉ số gần nhất của 1 tiện ích (điện/nước) — tap mở lịch sử
+/// đầy đủ (H-06 Detail). Thay cho text tĩnh "No reading recorded yet." trước
+/// đây, giờ đọc thật từ `readingHistoryProvider`.
+class _ReadingSummaryRow extends ConsumerWidget {
+  final String roomId;
+  final UtilityType utilityType;
+  final VoidCallback onTap;
+
+  const _ReadingSummaryRow(
+      {required this.roomId, required this.utilityType, required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final historyAsync = ref.watch(
+        readingHistoryProvider((roomId: roomId, utilityType: utilityType)));
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadii.card),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Icon(
+                utilityType == UtilityType.electricity
+                    ? Icons.bolt_rounded
+                    : Icons.water_drop_rounded,
+                size: 18,
+                color: utilityType == UtilityType.electricity
+                    ? AppColors.accentOrange
+                    : AppColors.info),
+            const SizedBox(width: 8),
+            Expanded(
+              child: historyAsync.when(
+                loading: () => const Text('Loading…',
+                    style: TextStyle(color: AppColors.textSecondary)),
+                error: (e, st) => const Text('—',
+                    style: TextStyle(color: AppColors.textSecondary)),
+                data: (history) {
+                  if (history.isEmpty) {
+                    return Text(
+                        '${utilityType.label}: no reading recorded yet.',
+                        style: const TextStyle(color: AppColors.textSecondary));
+                  }
+                  final latest = history.first;
+                  return Text(
+                      '${utilityType.label}: ${latest.currentReading} ${utilityType.unit}  ·  ${DateFormat('dd/MM/yyyy').format(latest.readingDate)}',
+                      style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600));
+                },
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded,
+                color: AppColors.neutral200, size: 20),
+          ],
+        ),
+      ),
     );
   }
 }

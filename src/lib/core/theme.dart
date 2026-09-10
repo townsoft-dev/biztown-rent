@@ -50,6 +50,8 @@ class AppRadii {
   static const fab = 16.0;
   static const periodChip = 9.0;
   static const thumbIcon = 11.0;
+  static const xs =
+      9.0; // token "radius-xs" trên Figma — dùng cho action pop-up (⋮ Edit/Delete)
 }
 
 class AppSpacing {

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/auth_repository.dart';
+import '../data/models/reading.dart';
 import '../landlord/home_screen.dart';
 import '../landlord/house_form_screen.dart';
 import '../landlord/reading_detail_screen.dart';
@@ -115,11 +116,16 @@ final appRouter = GoRouter(
                     builder: (context, state) => ReadingEntryScreen(
                         houseId: state.pathParameters['houseId']!),
                     routes: [
+                      // roomId + utility (electricity/water) — 1 phòng có 2
+                      // chuỗi chỉ số độc lập (tb_electricity_reading và
+                      // tb_water_reading), không phải 1 "readingId" đơn lẻ.
                       GoRoute(
-                        path: ':readingId',
+                        path: ':roomId/:utility',
                         builder: (context, state) => ReadingDetailScreen(
                           houseId: state.pathParameters['houseId']!,
-                          readingId: state.pathParameters['readingId']!,
+                          roomId: state.pathParameters['roomId']!,
+                          utilityType: UtilityTypeX.fromPathSegment(
+                              state.pathParameters['utility']!),
                         ),
                       ),
                     ],

@@ -4,7 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/auth_repository.dart';
 import '../data/house_repository.dart';
 import '../data/models/house.dart';
+import '../data/models/reading.dart';
 import '../data/models/room.dart';
+import '../data/reading_repository.dart';
 import '../data/room_repository.dart';
 
 final authRepositoryProvider =
@@ -44,4 +46,72 @@ final roomProvider = FutureProvider.family<Room, String>((ref, roomId) {
 final roomStatusesByHouseProvider =
     FutureProvider<Map<String, List<RoomStatus>>>((ref) {
   return ref.watch(roomRepositoryProvider).listStatusesGroupedByHouse();
+});
+
+final readingRepositoryProvider =
+    Provider<ReadingRepository>((ref) => readingRepository);
+
+/// 1 dòng dữ liệu cho 1 `MeterCard` ở H-06 Entry: chỉ số cũ gần nhất + đã ghi
+/// kỳ này chưa (BR-READ-02/07).
+class RoomMeterEntry {
+  final Room room;
+  final UtilityType utilityType;
+  final Reading? previous;
+  final Reading? thisPeriod;
+
+  const RoomMeterEntry(
+      {required this.room,
+      required this.utilityType,
+      this.previous,
+      this.thisPeriod});
+
+  bool get recorded => thisPeriod != null;
+}
+
+/// Tham số cho `houseMeterEntriesProvider` — record tự implement `==`/`hashCode`
+/// theo từng field nên dùng trực tiếp làm key `FutureProvider.family` được.
+typedef HouseReadingPeriodKey = ({String houseId, DateTime periodYm});
+
+/// Dữ liệu đầy đủ cho màn H-06 Entry: mọi phòng của 1 nhà × 2 tiện ích (điện,
+/// nước) — mỗi phòng luôn ghi cả 2 loại (BR-READ-05: bỏ qua theo hợp đồng
+/// NOT_BILLED để sau, vì Tenant/Contract chưa xây nên chưa có hợp đồng nào để
+/// mà bỏ qua trong thực tế).
+final houseMeterEntriesProvider =
+    FutureProvider.family<List<RoomMeterEntry>, HouseReadingPeriodKey>(
+        (ref, key) async {
+  final rooms =
+      await ref.watch(roomRepositoryProvider).listByHouse(key.houseId);
+  final repo = ref.watch(readingRepositoryProvider);
+  final entries = <RoomMeterEntry>[];
+  for (final room in rooms) {
+    for (final type in UtilityType.values) {
+      final thisPeriod =
+          await repo.periodicForPeriod(room.id, type, key.periodYm);
+      // "Previous" luôn là chỉ số TRƯỚC kỳ đang xem — nếu kỳ này đã ghi rồi,
+      // không được dùng `latestForRoom` (nó sẽ trả về chính bản ghi của kỳ
+      // này, vì đó luôn là bản ghi mới nhất) mà phải lần theo
+      // `previousReadingId` của chính bản ghi kỳ này.
+      final previous = thisPeriod != null
+          ? (thisPeriod.previousReadingId == null
+              ? null
+              : await repo.byId(thisPeriod.previousReadingId!, type))
+          : await repo.latestForRoom(room.id, type);
+      entries.add(RoomMeterEntry(
+          room: room,
+          utilityType: type,
+          previous: previous,
+          thisPeriod: thisPeriod));
+    }
+  }
+  return entries;
+});
+
+/// Lịch sử đầy đủ 1 phòng + 1 tiện ích (H-06 Detail).
+typedef RoomUtilityKey = ({String roomId, UtilityType utilityType});
+
+final readingHistoryProvider =
+    FutureProvider.family<List<Reading>, RoomUtilityKey>((ref, key) {
+  return ref
+      .watch(readingRepositoryProvider)
+      .historyForRoom(key.roomId, key.utilityType);
 });

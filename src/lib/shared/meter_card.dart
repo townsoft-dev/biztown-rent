@@ -17,6 +17,8 @@ class MeterCard extends StatelessWidget {
   final TextEditingController currentController;
   final String? usageLabel;
   final ValueChanged<String>? onCurrentChanged;
+  final String? errorText;
+  final VoidCallback? onViewHistory;
 
   const MeterCard({
     super.key,
@@ -29,6 +31,8 @@ class MeterCard extends StatelessWidget {
     required this.currentController,
     this.usageLabel,
     this.onCurrentChanged,
+    this.errorText,
+    this.onViewHistory,
   });
 
   @override
@@ -46,43 +50,52 @@ class MeterCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                    color: iconColor,
-                    borderRadius: BorderRadius.circular(AppRadii.inputField)),
-                child: Icon(icon, color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(title,
-                        style: GoogleFonts.inter(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            height: 18 / 13.5,
-                            color: AppColors.textPrimary)),
-                    Text(lastReadingLabel,
-                        style: GoogleFonts.inter(
-                            fontSize: 11,
-                            height: 17 / 11,
-                            color: AppColors.textSecondary)),
-                  ],
+          InkWell(
+            onTap: onViewHistory,
+            borderRadius: BorderRadius.circular(AppRadii.card),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                      color: iconColor,
+                      borderRadius: BorderRadius.circular(AppRadii.inputField)),
+                  child: Icon(icon, color: Colors.white, size: 20),
                 ),
-              ),
-              StatusPill(
-                  text: recorded ? 'Recorded' : 'Not recorded',
-                  style: recorded
-                      ? StatusBadgeStyle.occupied
-                      : StatusBadgeStyle.expiringSoon),
-            ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(title,
+                          style: GoogleFonts.inter(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              height: 18 / 13.5,
+                              color: AppColors.textPrimary)),
+                      Text(lastReadingLabel,
+                          style: GoogleFonts.inter(
+                              fontSize: 11,
+                              height: 17 / 11,
+                              color: AppColors.textSecondary)),
+                    ],
+                  ),
+                ),
+                StatusPill(
+                    text: recorded ? 'Recorded' : 'Not recorded',
+                    style: recorded
+                        ? StatusBadgeStyle.occupied
+                        : StatusBadgeStyle.expiringSoon),
+                if (onViewHistory != null) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: AppColors.neutral200, size: 20),
+                ],
+              ],
+            ),
           ),
           const SizedBox(height: 10),
           Row(
@@ -130,6 +143,7 @@ class MeterCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     TextFormField(
                       controller: currentController,
+                      enabled: !recorded,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       onChanged: onCurrentChanged,
@@ -137,6 +151,8 @@ class MeterCard extends StatelessWidget {
                           fontSize: 14, color: AppColors.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Enter…',
+                        errorText: errorText,
+                        errorMaxLines: 3,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 11),
                         border: OutlineInputBorder(
