@@ -183,4 +183,8 @@ class StatusBadgeStyle {
   static const collected =
       StatusBadgeStyle(AppColors.successBg, AppColors.success);
   static const overdue = StatusBadgeStyle(AppColors.errorBg, AppColors.error);
+  // Cùng tone màu với `overdue` (Error) — đặt tên riêng cho đúng ngữ cảnh
+  // dùng ở P-05 "Disabled" (Manager account) / P-03 "Missing" (chưa có tài
+  // khoản nhận tiền), tránh đọc code thấy `overdue` ở nơi không liên quan hoá đơn.
+  static const disabled = StatusBadgeStyle(AppColors.errorBg, AppColors.error);
 }

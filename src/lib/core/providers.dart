@@ -4,10 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/auth_repository.dart';
 import '../data/house_repository.dart';
 import '../data/models/house.dart';
+import '../data/models/manager_account.dart';
 import '../data/models/reading.dart';
 import '../data/models/room.dart';
+import '../data/models/user_profile.dart';
 import '../data/reading_repository.dart';
 import '../data/room_repository.dart';
+import '../data/user_repository.dart';
 
 final authRepositoryProvider =
     Provider<AuthRepository>((ref) => authRepository);
@@ -22,6 +25,39 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
 final currentUserNameProvider = FutureProvider<String?>((ref) {
   ref.watch(authStateProvider);
   return ref.watch(authRepositoryProvider).currentFullName();
+});
+
+final userRepositoryProvider =
+    Provider<UserRepository>((ref) => userRepository);
+
+/// Hồ sơ đầy đủ tài khoản đang đăng nhập (P-01/P-02) — watch
+/// `authStateProvider` để tự làm mới đúng người khi đổi phiên đăng nhập.
+final currentUserProfileProvider = FutureProvider<UserProfile>((ref) {
+  ref.watch(authStateProvider);
+  return ref.watch(userRepositoryProvider).getCurrentProfile();
+});
+
+/// "Main Manager" badge (P-01/P-02) — xem `UserRepository.isMainManager`.
+final isMainManagerProvider = FutureProvider<bool>((ref) {
+  ref.watch(authStateProvider);
+  return ref.watch(userRepositoryProvider).isMainManager();
+});
+
+/// ID các Nhà tài khoản hiện tại SỞ HỮU — dùng ở P-03/P-06.
+final ownedHouseIdsProvider = FutureProvider<Set<String>>((ref) {
+  return ref.watch(userRepositoryProvider).listOwnedHouseIds();
+});
+
+/// Danh sách Manager (gộp theo người) của các Nhà tôi sở hữu — P-05.
+final managerAccountsProvider = FutureProvider<List<ManagerAccount>>((ref) {
+  return ref.watch(userRepositoryProvider).listManagerAccounts();
+});
+
+/// Manager active hiện tại theo từng Nhà — P-06 (disable checkbox khi Nhà đã
+/// có người quản lý khác).
+final activeManagerByHouseProvider =
+    FutureProvider<Map<String, ({String phone, String name})>>((ref) {
+  return ref.watch(userRepositoryProvider).currentActiveManagerByHouse();
 });
 
 final houseRepositoryProvider =

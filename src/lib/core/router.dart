@@ -3,10 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../data/auth_repository.dart';
 import '../data/models/reading.dart';
+import '../landlord/change_password_screen.dart';
 import '../landlord/home_screen.dart';
 import '../landlord/house_form_screen.dart';
+import '../landlord/manager_form_screen.dart';
+import '../landlord/manager_list_screen.dart';
+import '../landlord/payout_bank_account_screen.dart';
+import '../landlord/personal_profile_screen.dart';
+import '../landlord/profile_screen.dart';
 import '../landlord/reading_detail_screen.dart';
 import '../landlord/reading_entry_screen.dart';
 import '../landlord/room_detail_screen.dart';
@@ -156,13 +161,33 @@ final appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/profile',
-              builder: (context, state) => ComingSoonScreen(
-                title: 'Profile',
-                icon: Icons.person_rounded,
-                footer: OutlinedButton(
-                    onPressed: () => authRepository.signOut(),
-                    child: const Text('Đăng xuất')),
-              ),
+              builder: (context, state) => const ProfileScreen(),
+              routes: [
+                GoRoute(
+                    path: 'personal',
+                    builder: (context, state) => const PersonalProfileScreen()),
+                GoRoute(
+                    path: 'bank-account',
+                    builder: (context, state) =>
+                        const PayoutBankAccountScreen()),
+                GoRoute(
+                    path: 'password',
+                    builder: (context, state) => const ChangePasswordScreen()),
+                GoRoute(
+                  path: 'managers',
+                  builder: (context, state) => const ManagerListScreen(),
+                  routes: [
+                    GoRoute(
+                        path: 'new',
+                        builder: (context, state) => const ManagerFormScreen()),
+                    GoRoute(
+                      path: ':phone',
+                      builder: (context, state) => ManagerFormScreen(
+                          phone: state.pathParameters['phone']!),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),

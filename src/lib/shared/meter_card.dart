@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/number_format.dart';
 import '../core/theme.dart';
 import 'status_pill.dart';
 
@@ -146,6 +147,7 @@ class MeterCard extends StatelessWidget {
                       enabled: !recorded,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: const [ThousandsInputFormatter()],
                       onChanged: onCurrentChanged,
                       style: GoogleFonts.inter(
                           fontSize: 14, color: AppColors.textPrimary),

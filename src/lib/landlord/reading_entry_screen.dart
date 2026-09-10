@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/reading.dart';
@@ -118,7 +119,7 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       final key = _keyFor(entry.room.id, entry.utilityType);
       final text = _controllers[key]?.text.trim() ?? '';
       if (text.isEmpty) continue;
-      final value = num.tryParse(text);
+      final value = parseFormattedNumber(text);
       if (value == null) {
         setState(() => _errors[key] = 'Invalid number');
         hadError = true;

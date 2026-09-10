@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/number_format.dart';
 import '../data/recurring_fees_controller.dart';
 import 'app_button.dart';
 import 'app_text_field.dart';
@@ -34,6 +35,7 @@ class RecurringFeesEditor extends StatelessWidget {
                       label: 'Amount',
                       controller: controller.rows[i].amountController,
                       keyboardType: TextInputType.number,
+                      inputFormatters: const [ThousandsInputFormatter()],
                     ),
                   ),
                   if (controller.rows.length > 1) ...[

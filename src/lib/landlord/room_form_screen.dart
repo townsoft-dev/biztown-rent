@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/house.dart';
@@ -63,8 +64,9 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
     if (_initialized) return;
     _initialized = true;
     _roomNoController.text = room.roomNo;
-    _areaController.text = room.areaSqm.toString();
-    _referenceRentController.text = room.baseRent?.toString() ?? '';
+    _areaController.text = formatNumber(room.areaSqm);
+    _referenceRentController.text =
+        room.baseRent == null ? '' : formatNumber(room.baseRent!);
     _noteController.text = room.note ?? '';
     _photos.existingPaths.addAll(room.photos);
     for (final amenity in room.amenities) {
@@ -148,9 +150,8 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
         id: '',
         houseId: widget.houseId,
         roomNo: _roomNoController.text.trim(),
-        areaSqm: num.tryParse(_areaController.text.trim()) ?? 0,
-        baseRent: num.tryParse(
-            _referenceRentController.text.trim().replaceAll(',', '')),
+        areaSqm: parseFormattedNumber(_areaController.text) ?? 0,
+        baseRent: parseFormattedNumber(_referenceRentController.text),
         recurringFees: _fees.fees,
         amenities: _selectedAmenities.toList(),
         photos: _photos.keptExistingPaths,
@@ -273,6 +274,7 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                           label: 'Area (m²)',
                           controller: _areaController,
                           keyboardType: TextInputType.number,
+                          inputFormatters: const [ThousandsInputFormatter()],
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -281,6 +283,7 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                           label: 'Reference rent *',
                           controller: _referenceRentController,
                           keyboardType: TextInputType.number,
+                          inputFormatters: const [ThousandsInputFormatter()],
                         ),
                       ),
                     ],

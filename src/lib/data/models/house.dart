@@ -72,6 +72,38 @@ class House {
     );
   }
 
+  /// Bản sao đổi 1 vài field — dùng ở P-03 "Apply to all houses" (đổi bank
+  /// account cho nhiều Nhà cùng lúc, giữ nguyên mọi field khác của từng Nhà).
+  House copyWith({
+    String? ownerFullName,
+    String? ownerTaxCode,
+    String? bankAccountName,
+    String? bankAccountNumber,
+    String? bankBin,
+  }) {
+    return House(
+      id: id,
+      name: name,
+      address: address,
+      description: description,
+      photos: photos,
+      houseType: houseType,
+      ownerFullName: ownerFullName ?? this.ownerFullName,
+      ownerPhone: ownerPhone,
+      ownerIdNumber: ownerIdNumber,
+      ownerTaxCode: ownerTaxCode ?? this.ownerTaxCode,
+      ownerEmail: ownerEmail,
+      bankAccountName: bankAccountName ?? this.bankAccountName,
+      bankAccountNumber: bankAccountNumber ?? this.bankAccountNumber,
+      bankBin: bankBin ?? this.bankBin,
+      serviceFeeRatePerSqm: serviceFeeRatePerSqm,
+      defaultElectricityPrice: defaultElectricityPrice,
+      defaultWaterPrice: defaultWaterPrice,
+      recurringFees: recurringFees,
+      createdAt: createdAt,
+    );
+  }
+
   /// Dùng cho insert/update — không gồm `id`/`created_at` (server tự sinh).
   Map<String, dynamic> toInsertMap() => {
         'name': name,

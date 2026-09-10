@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:intl/intl.dart';
 
+import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/reading.dart';
@@ -93,10 +94,14 @@ class RoomDetailScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
         DetailBlock(children: [
-          DetailRow(label: 'Area (optional)', value: '${room.areaSqm} m²'),
+          DetailRow(
+              label: 'Area (optional)',
+              value: '${formatNumber(room.areaSqm)} m²'),
           DetailRow(
               label: 'Reference rent',
-              value: room.baseRent != null ? '${room.baseRent} / month' : '—'),
+              value: room.baseRent != null
+                  ? '${formatNumber(room.baseRent!)} / month'
+                  : '—'),
           DetailRow(
               label: 'Amenities',
               value: room.amenities.isEmpty ? '—' : room.amenities.join(', ')),
@@ -105,7 +110,7 @@ class RoomDetailScreen extends ConsumerWidget {
             value: room.recurringFees.isEmpty
                 ? '—'
                 : room.recurringFees
-                    .map((f) => '${f.name} ${f.amount}')
+                    .map((f) => '${f.name} ${formatNumber(f.amount)}')
                     .join('\n'),
           ),
           DetailRow(label: 'Note', value: room.note ?? '—', showDivider: false),

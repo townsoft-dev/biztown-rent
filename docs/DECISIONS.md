@@ -438,3 +438,21 @@ dungtv đề xuất đổi section "Owner info" ở H-02 (Owner full name/phone/
 Hỏi lại dungtv qua 3 phương án (giữ nguyên / tự động điền nhưng vẫn cho sửa / tự động điền và khoá cứng) — **dungtv chọn giữ nguyên như hiện tại: Owner info vẫn nhập tay tự do, không prefill từ hồ sơ tài khoản**. Không có thay đổi code nào ở H-02 (`house_form_screen.dart`) — ghi lại quyết định này để không ai vô tình "sửa lại cho tiện" mà quên mất lý do case Mr. Han đã được cân nhắc kỹ và cố tình giữ nguyên.
 
 Field "Manager" ở H-02 (dropdown chọn Manager) không thuộc phạm vi câu hỏi này — vẫn giữ nguyên là 1 selector độc lập, sẽ nối vào dữ liệu Manager thật từ `tb_user_house_access` khi build P-0x/P-06.
+
+## 2026-09-10/11 (Đợt 22) — Build UI seri P-0x (Profile & Settings), chuẩn hoá format số/tiền toàn app, sửa màu nút Danger sai Figma
+
+dungtv yêu cầu build UI cho toàn bộ seri P-0x, kèm yêu cầu rà soát lại tất cả các chỗ nhập số/tiền trong app phải format chuẩn (dấu phẩy phân cách hàng nghìn).
+
+**Quyết định: audit format số/tiền TRƯỚC khi build P-0x, không build song song.** Rà lại toàn bộ codebase phát hiện: `AppTextField` chưa từng có tham số `inputFormatters` — mọi field tiền (đơn giá điện/nước H-02, diện tích/tiền thuê H-05, phí định kỳ, chỉ số điện nước H-06) đều gõ số thô không dấu phẩy, dù phần LƯU (`_save()`) ở nhiều nơi đã sẵn `.replaceAll(',', '')` chờ dùng — tức code trước đó "biết" sẽ có dấu phẩy nhưng chưa ai nối input formatter vào để dấu phẩy thực sự xuất hiện lúc gõ. Thêm `core/number_format.dart` làm nguồn chuẩn DUY NHẤT: `formatNumber()` (hiển thị), `parseFormattedNumber()` (đọc lại), `ThousandsInputFormatter` (gõ tự thêm dấu phẩy) — `reading.dart`'s `formatReadingValue()` cũ nay chỉ là wrapper gọi hàm này, tránh 2 nguồn định dạng số khác nhau trong cùng 1 app.
+
+**Phát hiện phụ, sửa luôn vì cùng nằm trong phạm vi "chuẩn hoá UI form": `AppButton.danger` sai màu so với Figma.** Nền đặc đỏ đậm + chữ trắng (giống hệt kiểu `primary`, chỉ đổi màu) — trong khi Figma "Button / style=Danger" (xác nhận lại qua `get_design_context` node P-06 Delete + P-07 Logout) là nền đỏ NHẠT (`errorBg`) + viền đỏ đậm + CHỮ đỏ đậm. Bug này có từ trước, đã âm thầm ảnh hưởng 2 dialog xoá House/Room đang chạy thật (`ConfirmDialog` mặc định dùng style Danger) — không ai để ý vì không có bước đối chiếu lại Figma riêng cho biến thể màu nút. Sửa 1 lần ở `app_button.dart`, tự động đúng lại cho MỌI nơi dùng `ConfirmDialog`/`AppButtonStyle.danger`, không cần sửa từng màn.
+
+**Build P-0x (P-01→P-07)**: lấy design context thật qua Figma MCP cho từng node trước khi code (đúng quy trình đã thống nhất từ các Đợt trước). Các quyết định mô hình dữ liệu phát sinh khi build:
+- P-06 có field "Note" nhưng `tb_user_house_access` chưa có cột chứa — thêm migration `20260910170000_manager_note_column.sql` (cùng mẫu với `full_name`/`id_number`/`is_active` đã thêm ở Đợt 20: đồng bộ giống nhau trên mọi dòng của 1 Manager, không riêng theo từng Nhà).
+- Đổi mật khẩu (P-04): Supabase không có API "xác thực mật khẩu hiện tại" độc lập — dùng `signInWithPassword` lại làm bước xác thực trước khi `updateUser`, đây là pattern chuẩn được Supabase khuyến nghị cho trường hợp này, không phải giải pháp tự nghĩ ra.
+- P-03 tái sử dụng nguyên các field tự do sẵn có trên `tb_house` (không tạo bảng riêng) — đúng tinh thần quyết định Đợt 21 (Owner info theo từng Nhà, không khoá theo tài khoản); nút "Apply to all houses" chỉ copy khi người dùng chủ động bấm, không tự động đồng bộ.
+- "Main Manager" ở P-01/P-02 tiếp tục đúng mô hình đã chốt Đợt 20: tính SỐNG (`UserRepository.isMainManager`), không cache.
+
+**Verify trên thiết bị thật** xác nhận đúng toàn bộ luồng nghiệp vụ đã chốt trước đó hoạt động end-to-end lần đầu tiên: tạo Manager → H-03 field "Manager" đổi tên ngay; tạo Manager thứ 2 cho cùng Nhà → checkbox tự disable + hiện đúng "Managed by {tên}" (luật 1-Manager-active/Nhà); xoá Manager → H-03 tự rơi về đúng fallback tên Owner. Phát hiện thêm (không sửa, chỉ ghi nhận): dữ liệu "Payout bank account" cũ của dungtv bị lệch cột do UX gộp field của H-02 trước đây (nhập không có dấu "·" nên toàn bộ rơi vào `bankAccountName`) — đây là dữ liệu thật của dungtv, không tự ý sửa, để dungtv tự chỉnh lại qua P-03 khi cần.
+
+**Chưa làm**: chưa verify P-04 lưu thật (tránh khoá tài khoản thật dungtv trên máy test — chỉ verify checklist sống, không bấm Save).

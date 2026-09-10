@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/house.dart';
@@ -179,16 +180,20 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
       const SectionLabel('Pricing & fees defaults'),
       DetailRow(
           label: 'Electricity /kWh',
-          value: house.defaultElectricityPrice?.toString() ?? '—'),
+          value: house.defaultElectricityPrice == null
+              ? '—'
+              : formatNumber(house.defaultElectricityPrice!)),
       DetailRow(
           label: 'Water /m³',
-          value: house.defaultWaterPrice?.toString() ?? '—'),
+          value: house.defaultWaterPrice == null
+              ? '—'
+              : formatNumber(house.defaultWaterPrice!)),
       DetailRow(
         label: 'Recurring fees',
         value: house.recurringFees.isEmpty
             ? '—'
             : house.recurringFees
-                .map((f) => '${f.name} ${f.amount}')
+                .map((f) => '${f.name} ${formatNumber(f.amount)}')
                 .join('\n'),
         showDivider: false,
       ),
@@ -263,7 +268,7 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
                 },
               ),
               body:
-                  '${room.areaSqm} m² · ${room.baseRent ?? '—'} VND/month (reference)',
+                  '${formatNumber(room.areaSqm)} m² · ${room.baseRent != null ? '${formatNumber(room.baseRent!)} VND/month (reference)' : '— VND/month (reference)'}',
               onTap: () => context
                   .push('/home/houses/${widget.houseId}/rooms/${room.id}'),
             ),

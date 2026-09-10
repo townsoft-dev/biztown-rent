@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/reading.dart';
@@ -50,7 +51,7 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
   }
 
   void _startEdit(Reading latest) {
-    _currentController.text = latest.currentReading.toString();
+    _currentController.text = formatReadingValue(latest.currentReading);
     _noteController.clear();
     setState(() {
       _editing = true;
@@ -59,7 +60,7 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
   }
 
   Future<void> _saveEdit(Reading latest) async {
-    final value = num.tryParse(_currentController.text.trim());
+    final value = parseFormattedNumber(_currentController.text);
     if (value == null) {
       setState(() => _error = 'Invalid number');
       return;
@@ -222,6 +223,7 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
                             controller: _currentController,
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
+                            inputFormatters: const [ThousandsInputFormatter()],
                             decoration: InputDecoration(
                               labelText: 'Current reading',
                               errorText: _error,

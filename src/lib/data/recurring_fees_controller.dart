@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/number_format.dart';
 import 'models/recurring_fee.dart';
 
 class RecurringFeeRow {
@@ -26,7 +27,7 @@ class RecurringFeesController extends ChangeNotifier {
   RecurringFeesController({List<RecurringFee>? initialFees})
       : rows = (initialFees ?? const [])
             .map((f) =>
-                RecurringFeeRow(name: f.name, amount: f.amount.toString()))
+                RecurringFeeRow(name: f.name, amount: formatNumber(f.amount)))
             .toList() {
     if (rows.isEmpty) rows.add(RecurringFeeRow());
   }
@@ -47,8 +48,7 @@ class RecurringFeesController extends ChangeNotifier {
     final result = <RecurringFee>[];
     for (final row in rows) {
       final name = row.nameController.text.trim();
-      final amount =
-          num.tryParse(row.amountController.text.trim().replaceAll(',', ''));
+      final amount = parseFormattedNumber(row.amountController.text);
       if (name.isNotEmpty && amount != null) {
         result.add(RecurringFee(name: name, amount: amount));
       }

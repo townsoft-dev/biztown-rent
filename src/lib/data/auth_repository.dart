@@ -23,6 +23,13 @@ class AuthRepository {
     return '+84$digits';
   }
 
+  /// Chuẩn hoá SĐT để LƯU DB (KHÔNG dấu "+") — khớp `current_user_phone()`/
+  /// `tb_user_house_access.phone` dùng khắp hệ thống, khác `normalizeVnPhone`
+  /// (có "+", chỉ dùng cho gọi Supabase Auth API). Dùng ở `ensureUserProfile`
+  /// và mọi nơi nhập SĐT để ghi thẳng vào cột `phone` (VD mời Manager ở P-06).
+  static String normalizePhoneForDb(String raw) =>
+      normalizeVnPhone(raw).replaceFirst('+', '');
+
   /// S-01: đăng nhập bằng SĐT + mật khẩu.
   Future<void> signInWithPassword(
       {required String phone, required String password}) async {
@@ -53,15 +60,7 @@ class AuthRepository {
       {required String phone, String? fullName}) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;
-    final normalizedPhone = normalizeVnPhone(phone);
-    // `tb_user.phone` phải lưu KHÔNG có dấu "+" — khớp định dạng
-    // `current_user_phone()` (đọc từ `auth.jwt() ->> 'phone'`, JWT của
-    // Supabase Auth không có "+") và `tb_user_house_access.phone`. Trước đó
-    // lưu nguyên `normalizedPhone` (có "+", đúng chuẩn E.164 Supabase Auth
-    // API cần) khiến mọi query join theo SĐT giữa 2 bảng này lệch định dạng,
-    // luôn không khớp được dòng nào — phát hiện lúc làm field "Manager"
-    // (H-03 hiện thẳng SĐT thay vì tên vì join tb_user thất bại âm thầm).
-    final dbPhone = normalizedPhone.replaceFirst('+', '');
+    final dbPhone = normalizePhoneForDb(phone);
     await _client.from('tb_user').upsert({
       'id': userId,
       'phone': dbPhone,

@@ -1,10 +1,10 @@
-import 'package:intl/intl.dart';
-
-final _readingNumberFormat = NumberFormat('#,##0.##');
+import '../../core/number_format.dart';
 
 /// Format số chỉ số (Previous/Current/Usage) có dấu phẩy phân cách hàng
 /// nghìn — đúng Figma (VD "1,120 kWh", "1,216", không phải "1120"/"1216").
-String formatReadingValue(num value) => _readingNumberFormat.format(value);
+/// Dùng chung [formatNumber] (`core/number_format.dart`) — cùng 1 chuẩn định
+/// dạng số cho mọi nơi trong app, không riêng gì chỉ số điện/nước.
+String formatReadingValue(num value) => formatNumber(value);
 
 /// Loại tiện ích — quyết định bảng nào bị tác động (`tb_electricity_reading`
 /// hay `tb_water_reading`, xem migration `20260909133320_v3_schema_rebuild.sql`).

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/house.dart';
@@ -75,9 +76,12 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
       house.bankAccountName,
       house.bankAccountNumber
     ].where((e) => e != null && e.isNotEmpty).join(' · ');
-    _electricityPriceController.text =
-        house.defaultElectricityPrice?.toString() ?? '';
-    _waterPriceController.text = house.defaultWaterPrice?.toString() ?? '';
+    _electricityPriceController.text = house.defaultElectricityPrice == null
+        ? ''
+        : formatNumber(house.defaultElectricityPrice!);
+    _waterPriceController.text = house.defaultWaterPrice == null
+        ? ''
+        : formatNumber(house.defaultWaterPrice!);
     _photos.existingPaths.addAll(house.photos);
     if (house.recurringFees.isNotEmpty) {
       _fees.rows
@@ -143,10 +147,9 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
         bankAccountNumber: bankParts.length > 1 && bankParts[1].isNotEmpty
             ? bankParts[1]
             : null,
-        defaultElectricityPrice: num.tryParse(
-            _electricityPriceController.text.trim().replaceAll(',', '')),
-        defaultWaterPrice:
-            num.tryParse(_waterPriceController.text.trim().replaceAll(',', '')),
+        defaultElectricityPrice:
+            parseFormattedNumber(_electricityPriceController.text),
+        defaultWaterPrice: parseFormattedNumber(_waterPriceController.text),
         recurringFees: _fees.fees,
         createdAt: DateTime.now(),
       );
@@ -321,6 +324,7 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
                           label: 'Electricity /kWh',
                           controller: _electricityPriceController,
                           keyboardType: TextInputType.number,
+                          inputFormatters: const [ThousandsInputFormatter()],
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -329,6 +333,7 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
                           label: 'Water /m³',
                           controller: _waterPriceController,
                           keyboardType: TextInputType.number,
+                          inputFormatters: const [ThousandsInputFormatter()],
                         ),
                       ),
                     ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme.dart';
@@ -18,6 +19,12 @@ class AppTextField extends StatelessWidget {
   final AppTextFieldTrailingIcon trailing;
   final VoidCallback? onTap;
   final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final String? errorText;
+  final ValueChanged<String>? onChanged;
+  final bool obscureText;
+  final FormFieldValidator<String>? validator;
+  final Widget? suffixWidget;
 
   const AppTextField({
     super.key,
@@ -30,17 +37,28 @@ class AppTextField extends StatelessWidget {
     this.trailing = AppTextFieldTrailingIcon.none,
     this.onTap,
     this.keyboardType,
+    this.inputFormatters,
+    this.errorText,
+    this.onChanged,
+    this.obscureText = false,
+    this.validator,
+    this.suffixWidget,
   });
 
   @override
   Widget build(BuildContext context) {
-    final suffixIcon = switch (trailing) {
-      AppTextFieldTrailingIcon.select => const Icon(Icons.expand_more_rounded,
-          color: AppColors.textTertiary, size: 20),
-      AppTextFieldTrailingIcon.date => const Icon(Icons.calendar_today_rounded,
-          color: AppColors.textTertiary, size: 18),
-      AppTextFieldTrailingIcon.none => null,
-    };
+    final suffixIcon = suffixWidget ??
+        switch (trailing) {
+          AppTextFieldTrailingIcon.select => const Icon(
+              Icons.expand_more_rounded,
+              color: AppColors.textTertiary,
+              size: 20),
+          AppTextFieldTrailingIcon.date => const Icon(
+              Icons.calendar_today_rounded,
+              color: AppColors.textTertiary,
+              size: 18),
+          AppTextFieldTrailingIcon.none => null,
+        };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,14 +75,20 @@ class AppTextField extends StatelessWidget {
           initialValue: controller == null ? initialValue : null,
           readOnly: readOnly || onTap != null,
           onTap: onTap,
-          maxLines: maxLines,
+          maxLines: obscureText ? 1 : maxLines,
+          obscureText: obscureText,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          onChanged: onChanged,
+          validator: validator,
           style: GoogleFonts.inter(
               fontSize: 14,
               color:
                   readOnly ? AppColors.textSecondary : AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: hintText,
+            errorText: errorText,
+            errorMaxLines: 3,
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: readOnly ? AppColors.bgMuted : AppColors.bgDefault,
