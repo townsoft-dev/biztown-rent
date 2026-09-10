@@ -43,6 +43,21 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
   String _keyFor(String roomId, UtilityType type) =>
       '$roomId:${type.name}:${_period.year}-${_period.month}';
 
+  /// "X/Y rooms recorded" phải đếm theo PHÒNG, không phải theo dòng
+  /// (room × tiện ích) — `entries` có 2 dòng/phòng (điện + nước) nên đếm
+  /// thẳng `entries.length`/`entries.where(recorded)` sẽ ra gấp đôi số phòng
+  /// thật (bug dungtv phát hiện: nhà chỉ có 1 phòng nhưng hiện "2/2 rooms").
+  /// 1 phòng chỉ tính "đã ghi" khi CẢ điện lẫn nước của phòng đó đều Recorded.
+  ({int done, int total}) _roomProgress(List<RoomMeterEntry> entries) {
+    final byRoom = <String, List<RoomMeterEntry>>{};
+    for (final entry in entries) {
+      byRoom.putIfAbsent(entry.room.id, () => []).add(entry);
+    }
+    final done =
+        byRoom.values.where((es) => es.every((e) => e.recorded)).length;
+    return (done: done, total: byRoom.length);
+  }
+
   TextEditingController _controllerFor(String roomId, UtilityType type,
       {num? prefill}) {
     final key = _keyFor(roomId, type);
@@ -163,9 +178,11 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
             subtitle: houseAsync.maybeWhen(
               data: (house) {
                 final entries = entriesAsync.valueOrNull;
-                final progress = entries == null
-                    ? ''
-                    : '  ·  ${entries.where((e) => e.recorded).length}/${entries.length} rooms recorded';
+                var progress = '';
+                if (entries != null) {
+                  final p = _roomProgress(entries);
+                  progress = '  ·  ${p.done}/${p.total} rooms recorded';
+                }
                 return '${house.name}$progress  ·  ${DateFormat('MMM yyyy').format(_period)}';
               },
               orElse: () => '',
@@ -177,7 +194,7 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, st) => Center(child: Text('Failed to load: $e')),
               data: (entries) {
-                final done = entries.where((e) => e.recorded).length;
+                final roomProgress = _roomProgress(entries);
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                   children: [
@@ -190,12 +207,18 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                       label: 'Reading period *',
                       initialValue:
                           '$periodLabel  ·  ${DateFormat('dd/MM/yyyy').format(_period)}',
-                      readOnly: true,
+                      // Cố tình KHÔNG set `readOnly: true` — đúng Figma field
+                      // này nền trắng + viền (như field đang gõ được), không
+                      // phải nền xám mờ `bgMuted` của field readonly thật sự
+                      // (VD "Previous"). `onTap` một mình đã đủ chặn gõ tay
+                      // (`AppTextField` tự tính `readOnly || onTap != null`
+                      // cho TextFormField) mà không đổi màu nền.
                       trailing: AppTextFieldTrailingIcon.date,
                       onTap: _pickPeriod,
                     ),
                     const SizedBox(height: 10),
-                    ProgressCard(done: done, total: entries.length),
+                    ProgressCard(
+                        done: roomProgress.done, total: roomProgress.total),
                     const SizedBox(height: 10),
                     if (entries.isEmpty)
                       const Padding(
