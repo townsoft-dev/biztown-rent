@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/app_strings.dart';
 import '../core/theme.dart';
 import '../data/auth_repository.dart';
 import '../data/login_rate_limiter.dart';
@@ -54,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final justLockedUntil = await loginRateLimiter.recordFailure(phone);
       setState(() => _errorText = justLockedUntil != null
           ? _lockedMessage(justLockedUntil)
-          : 'Sai số điện thoại hoặc mật khẩu');
+          : AppStrings.t('login.invalidCredentials'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -62,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String _lockedMessage(DateTime lockedUntil) {
     final minutesLeft = lockedUntil.difference(DateTime.now()).inMinutes + 1;
-    return 'Bạn đã nhập sai quá 5 lần. Vui lòng thử lại sau $minutesLeft phút.';
+    return AppStrings.t('login.lockedMessage', {'minutes': '$minutesLeft'});
   }
 
   @override
@@ -80,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 SvgPicture.asset('assets/logo/biztown-rent-manager-lockup.svg',
                     width: 200),
                 const SizedBox(height: 40),
-                Text('Log in',
+                Text(AppStrings.t('login.title'),
                     style: GoogleFonts.inter(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
@@ -88,32 +89,33 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: AppColors.textPrimary)),
                 const SizedBox(height: 12),
                 Text(
-                  'Welcome! Please sign in to continue.',
+                  AppStrings.t('login.welcome'),
                   style: GoogleFonts.inter(
                       fontSize: 13,
                       height: 18 / 13,
                       color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 32),
-                const FieldLabel('Phone number'),
+                FieldLabel(AppStrings.t('login.phoneNumber')),
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   style: GoogleFonts.inter(
                       fontSize: 14, color: AppColors.textPrimary),
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Nhập số điện thoại'
+                      ? AppStrings.t('login.phoneRequired')
                       : null,
                 ),
                 const SizedBox(height: 12),
-                const FieldLabel('Password'),
+                FieldLabel(AppStrings.t('login.password')),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
                   style: GoogleFonts.inter(
                       fontSize: 14, color: AppColors.textPrimary),
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Nhập mật khẩu' : null,
+                  validator: (v) => (v == null || v.isEmpty)
+                      ? AppStrings.t('login.passwordRequired')
+                      : null,
                 ),
                 if (_errorText != null) ...[
                   const SizedBox(height: 8),
@@ -132,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () => context.push('/signup'),
                     style: TextButton.styleFrom(
                         padding: EdgeInsets.zero, minimumSize: Size.zero),
-                    child: Text('Forgot password?',
+                    child: Text(AppStrings.t('login.forgotPassword'),
                         style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -150,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: 18,
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white))
-                        : const Text('Log in'),
+                        : Text(AppStrings.t('login.submit')),
                   ),
                 ),
                 const SizedBox(height: 5),
@@ -158,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: GestureDetector(
                     onTap: () => context.push('/signup'),
                     child: Text(
-                      "Don't have an account?  Sign up",
+                      AppStrings.t('login.noAccount'),
                       style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

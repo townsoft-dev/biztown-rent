@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/app_strings.dart';
 import 'core/router.dart';
 import 'core/supabase_client.dart';
 import 'core/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await AppStrings.init();
+  } catch (e) {
+    debugPrint('AppStrings.init() lỗi, dùng key thô tạm thời: $e');
+  }
   // S-00 edge case (SCREEN-SPEC.md): "Mạng chậm → timeout hợp lý (10s), không treo
   // màn hình." initSupabase() có thể phải làm mới session qua mạng — nếu quá 10s coi
   // như chưa xác định được session, cứ vào Splash bình thường (Splash tự check lại

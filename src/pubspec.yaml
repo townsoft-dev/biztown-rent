@@ -29,6 +29,7 @@ flutter:
   assets:
     - assets/logo/
     - assets/icons/
+    - assets/lang/
 
 flutter_launcher_icons:
   android: true

@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/app_strings.dart';
 import '../core/theme.dart';
 import '../data/auth_repository.dart';
 import 'field_label.dart';
@@ -71,7 +72,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> _sendOtp() async {
     if (_phoneController.text.trim().isEmpty) {
-      setState(() => _errorText = 'Nhập số điện thoại');
+      setState(() => _errorText = AppStrings.t('signup.phoneRequired'));
       return;
     }
     setState(() {
@@ -83,7 +84,7 @@ class _SignupScreenState extends State<SignupScreen> {
       setState(() => _otpSent = true);
       _startResendCountdown();
     } catch (e) {
-      setState(() => _errorText = 'Không gửi được OTP, thử lại sau');
+      setState(() => _errorText = AppStrings.t('signup.otpSendFailed'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -104,10 +105,10 @@ class _SignupScreenState extends State<SignupScreen> {
       // sai mã) — các lỗi khác (sai mã, đã dùng...) gộp chung 1 thông báo vì GoTrue
       // không tách rõ hơn được nữa. Xem SCREEN-SPEC.md edge case S-02.
       setState(() => _errorText = e.code == 'otp_expired'
-          ? 'Mã đã hết hạn, bấm "Resend code" để nhận mã mới'
-          : 'Mã OTP không đúng, thử lại');
+          ? AppStrings.t('signup.otpExpired')
+          : AppStrings.t('signup.otpIncorrect'));
     } catch (e) {
-      setState(() => _errorText = 'Mã OTP không đúng hoặc đã hết hạn');
+      setState(() => _errorText = AppStrings.t('signup.otpIncorrectOrExpired'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -117,18 +118,19 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() {
       _confirmPasswordError =
           value.isNotEmpty && value != _passwordController.text
-              ? 'Passwords do not match'
+              ? AppStrings.t('signup.passwordsDoNotMatch')
               : null;
     });
   }
 
   Future<void> _createAccount() async {
     if (_passwordController.text.length < 6) {
-      setState(() => _errorText = 'Mật khẩu tối thiểu 6 ký tự');
+      setState(() => _errorText = AppStrings.t('signup.passwordTooShort'));
       return;
     }
     if (_passwordController.text != _confirmPasswordController.text) {
-      setState(() => _confirmPasswordError = 'Passwords do not match');
+      setState(() =>
+          _confirmPasswordError = AppStrings.t('signup.passwordsDoNotMatch'));
       return;
     }
     setState(() {
@@ -148,7 +150,7 @@ class _SignupScreenState extends State<SignupScreen> {
       await _showSuccessSheet();
       // go_router redirect tự chuyển sang /home khi có session (đã có từ lúc verifyOtp).
     } catch (e) {
-      setState(() => _errorText = 'Không tạo được tài khoản, thử lại');
+      setState(() => _errorText = AppStrings.t('signup.accountCreationFailed'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -185,7 +187,7 @@ class _SignupScreenState extends State<SignupScreen> {
         body: Column(
           children: [
             TopBar(
-              title: 'Create account',
+              title: AppStrings.t('signup.topBarTitle'),
               opacity: _accountCreated ? 0.3 : 1,
               onBack: () => _handleBack(context),
             ),
@@ -224,14 +226,14 @@ class _SignupScreenState extends State<SignupScreen> {
       children: [
         const SignupStepper(current: 1),
         const SizedBox(height: 12),
-        Text('Verify your phone',
+        Text(AppStrings.t('signup.step1Title'),
             style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 height: 26 / 20,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 12),
-        const FieldLabel('Phone number'),
+        FieldLabel(AppStrings.t('signup.phoneNumber')),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
           decoration: BoxDecoration(
@@ -261,7 +263,8 @@ class _SignupScreenState extends State<SignupScreen> {
         if (_otpSent) ...[
           const SizedBox(height: 12),
           Text(
-            'We sent a 6-digit code to ${_phoneController.text.trim()}. The code expires in $_mmss.',
+            AppStrings.t('signup.otpSentMessage',
+                {'phone': _phoneController.text.trim(), 'countdown': _mmss}),
             style: GoogleFonts.inter(
                 fontSize: 13, height: 18 / 13, color: AppColors.textSecondary),
           ),
@@ -290,12 +293,14 @@ class _SignupScreenState extends State<SignupScreen> {
           const SizedBox(height: 12),
           Center(
             child: _resendSecondsLeft > 0
-                ? Text('Resend code  ·  $_mmss',
+                ? Text(
+                    AppStrings.t(
+                        'signup.resendCodeCountdown', {'countdown': _mmss}),
                     style: GoogleFonts.inter(
                         fontSize: 12, color: AppColors.secondaryLight))
                 : TextButton(
                     onPressed: _isLoading ? null : _sendOtp,
-                    child: const Text('Resend code')),
+                    child: Text(AppStrings.t('signup.resendCode'))),
           ),
         ],
         if (_errorText != null) ...[
@@ -311,7 +316,7 @@ class _SignupScreenState extends State<SignupScreen> {
             onPressed: _otpVerified
                 ? () => setState(() => _page = _SignupPage.setPassword)
                 : null,
-            child: const Text('Next - Set up your password'),
+            child: Text(AppStrings.t('signup.nextSetPassword')),
           ),
         ),
       ],
@@ -324,20 +329,20 @@ class _SignupScreenState extends State<SignupScreen> {
       children: [
         const SignupStepper(current: 2),
         const SizedBox(height: 12),
-        Text('SET PASSWORD',
+        Text(AppStrings.t('signup.step2Title').toUpperCase(),
             style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 height: 26 / 20,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 12),
-        const FieldLabel('Full name'),
+        FieldLabel(AppStrings.t('signup.fullName')),
         TextFormField(
             controller: _fullNameController,
             style:
                 GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary)),
         const SizedBox(height: 12),
-        const FieldLabel('Password'),
+        FieldLabel(AppStrings.t('signup.password')),
         TextFormField(
           controller: _passwordController,
           obscureText: true,
@@ -346,7 +351,7 @@ class _SignupScreenState extends State<SignupScreen> {
               _onConfirmPasswordChanged(_confirmPasswordController.text),
         ),
         const SizedBox(height: 12),
-        const FieldLabel('Confirm password'),
+        FieldLabel(AppStrings.t('signup.confirmPassword')),
         TextFormField(
           controller: _confirmPasswordController,
           obscureText: true,
@@ -386,7 +391,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     width: 18,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
-                : const Text('Create account'),
+                : Text(AppStrings.t('signup.createAccount')),
           ),
         ),
       ],
@@ -416,7 +421,7 @@ class _SendOtpChip extends StatelessWidget {
                 width: 11,
                 child: CircularProgressIndicator(
                     strokeWidth: 2, color: Colors.white))
-            : Text('Send OTP',
+            : Text(AppStrings.t('signup.sendOtp'),
                 style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -453,7 +458,7 @@ class _SignupSuccessSheet extends StatelessWidget {
                 width: 123, height: 123),
             const SizedBox(height: 30),
             Text(
-              'Congratulation! Account created.',
+              AppStrings.t('signup.successTitle'),
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                   fontSize: 14,
@@ -463,7 +468,7 @@ class _SignupSuccessSheet extends StatelessWidget {
             ),
             const SizedBox(height: 15),
             Text(
-              'Your account is ready. From here you can keep track of your properties, tenants, and bills — all in one place. Take a look around.',
+              AppStrings.t('signup.successBody'),
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                   fontSize: 13,
@@ -474,7 +479,8 @@ class _SignupSuccessSheet extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                  onPressed: onGetStarted, child: const Text('Get started')),
+                  onPressed: onGetStarted,
+                  child: Text(AppStrings.t('signup.getStarted'))),
             ),
           ],
         ),
