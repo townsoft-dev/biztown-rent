@@ -135,7 +135,7 @@
 | ID | Tích hợp | Trạng thái |
 |---|---|---|
 | INT-01 | Zalo ZNS (Zalo Notification Service) hoặc Zalo OA để gửi hoá đơn/thông báo kèm mã QR cho Tenant | đang tiến hành tạo và chờ phê duyệt tài khoản OA |
-| INT-02 | SMS Brandname (qua eSMS, Speedsms, hoặc nhà mạng) | đang nghiên cứu chọn nhà cung cấp |
+| INT-02 | SMS Brandname (qua eSMS.vn) | Đã chọn **eSMS**, tích hợp xong (09/09/2026) — đang dùng Brandname demo "Baotrixemay" để test, cần đăng ký Brandname thật trước production |
 | INT-03 | OTP xác thực đăng ký/đăng nhập (mọi tài khoản) | dùng chung với INT-02, qua Supabase Auth Send SMS Hook |
 | INT-04 | Push notification (Firebase Cloud Messaging / APNs) | Xác nhận lại ở [ARCHITECTURE](ARCHITECTURE.md) |
 | INT-05 | Cổng thanh toán online (VNPay/Momo/ZaloPay) | Ngoài phạm vi Phase 1 — Phase 1 chỉ sinh mã QR chuyển khoản tĩnh (VietQR/NAPAS-247), không xử lý thanh toán trong app |

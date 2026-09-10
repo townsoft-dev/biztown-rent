@@ -5,7 +5,9 @@
 //
 // CHƯA IMPLEMENT phần gửi thật — đang chờ quyết định/tài khoản trước khi code:
 // - Firebase project cho FCM (push Android) chưa tạo.
-// - Nhà cung cấp SMS Việt Nam (eSMS/Speedsms) + Zalo ZNS/OA chưa chọn/duyệt.
+// - eSMS.vn đã chọn cho OTP (xem send-otp-sms), nhưng kênh gửi hoá đơn/nhắc thanh toán
+//   Tenant ở đây vẫn chưa nối (cần Brandname CSKH thật, khác brandname demo dùng để test
+//   OTP). Zalo ZNS/OA cũng chưa chọn/duyệt.
 //
 // Đã cập nhật theo schema Version 3: đọc người nhận push qua `tb_user_house_access`
 // (theo house_id, không phân biệt owner/manager — BR-NOTI-01/02/05 gửi cho "người có
@@ -56,7 +58,8 @@ export default {
     }
 
     if (payload.tenant) {
-      // TODO: gọi SMS provider (eSMS/Speedsms) và/hoặc Zalo ZNS/OA với payload.tenant.message.
+      // TODO: gọi eSMS.vn (cần Brandname CSKH thật, khác brandname demo dùng test OTP)
+      // và/hoặc Zalo ZNS/OA với payload.tenant.message.
       results.tenantMessage = { warning: "SMS/Zalo chưa implement", phone: payload.tenant.phone };
     }
 

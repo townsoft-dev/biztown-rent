@@ -314,3 +314,16 @@ dungtv tự đăng nhập Figma bằng tài khoản CEO (`ceo@townsoftvina.com`,
 **Bài học quy trình**: `push()` và `go()` trong go_router không tương đương về mặt "vị trí" mà `redirect` nhìn thấy — trộn lẫn 2 kiểu điều hướng (1 số nơi dùng `push()` để giữ back-stack, số khác dựa vào `redirect` để tự chuyển trang theo auth state) tạo ra lỗi khó thấy bằng mắt (UI vẫn hiện đúng SignupScreen, chỉ lộ ra khi tạo session thật giữa chừng). Quy tắc từ nay: **không dựa vào `redirect` cho bất kỳ điều hướng nào xảy ra SAU một hành động của người dùng trong 1 flow nhiều bước** (kể cả khi flow đó dùng `go()` chứ không phải `push()`) — chỉ dùng `redirect` cho việc chặn/guard truy cập lúc vào màn, còn "đi tiếp tới đâu sau khi xong việc" luôn gọi tường minh từ chính màn đó.
 
 **Verify**: build thật, test toàn bộ Sign Up (SĐT → OTP → Set Password → Create account → bottom sheet → Get started → Home) bằng Test OTP number + backend Supabase thật (không phải giả lập) — chạy đúng, dừng lại ở Step 2 chờ đặt mật khẩu, không còn bị bắn sớm sang Home.
+
+## 2026-09-09 (Đợt 14) — Chọn xong nhà cung cấp SMS: eSMS.vn (thay SpeedSMS)
+
+**Quyết định**: dùng **eSMS.vn** cho `send-otp-sms` (Send SMS Hook), không dùng SpeedSMS nữa.
+
+**Lý do**: dungtv đăng ký thử cả 2 nhà cung cấp trong cùng phiên. SpeedSMS: tài khoản demo (2000đ) không gửi được SMS nào — API luôn trả lỗi "sender not found" cho mọi `type` thử (2, 4/Verify), vì gửi SMS (kể cả test) đòi hỏi **Brandname đã đăng ký và duyệt** (cần giấy tờ: công văn, ĐKKD, CMND người đại diện, duyệt thủ công qua email, không có gì dùng ngay được). eSMS.vn: có sẵn **Brandname demo "Baotrixemay"** dùng test miễn phí ngay bằng tài khoản khuyến mãi có sẵn (5.000đ), chỉ cần đúng 1 template nội dung cố định (`"{code} la ma xac minh dang ky Baotrixemay cua ban"`) — verify thành công ngay trong phiên bằng curl thật (`CodeResult: "100"`) và bằng SMS thật nhận được trên điện thoại dungtv.
+
+**Đã làm**:
+- Viết lại `send-otp-sms/index.ts`: gọi `POST https://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_post_json/` với `ApiKey`/`SecretKey`/`Phone`/`Content`/`Brandname`/`SmsType`. Thêm `toLocalVnPhone()` vì Supabase gửi payload SĐT dạng E.164 (`+84...`) nhưng eSMS cần dạng nội địa (`0...`).
+- Lưu `ESMS_API_KEY`/`ESMS_SECRET_KEY` làm Supabase Secret, xoá secret `SPEEDSMS_ACCESS_TOKEN` không dùng nữa.
+- Cập nhật `docs/REQUIREMENTS.md` INT-02, `docs/ARCHITECTURE.md`, `docs/API.md`, comment trong `send-notification/index.ts` — không còn nhắc SpeedSMS như 1 lựa chọn đang cân nhắc.
+
+**⚠️ Chưa xong hẳn — cảnh báo quan trọng cho production**: Brandname "Baotrixemay" là **demo dùng chung của eSMS**, nội dung tin nhắn bắt buộc đúng template của họ, **không nhắc gì tới BizTown cả** — chỉ hợp lệ để test kỹ thuật, tuyệt đối không dùng cho user thật. Trước khi launch, phải đăng ký Brandname CSKH thật (tên "BizTown" hoặc tương đương) qua eSMS, đợi duyệt, rồi đổi `ESMS_BRANDNAME`/nội dung `Content` trong `send-otp-sms/index.ts` — đã ghi rõ cảnh báo này ngay đầu file code.
