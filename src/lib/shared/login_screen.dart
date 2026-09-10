@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme.dart';
 import '../data/auth_repository.dart';
+import '../data/login_rate_limiter.dart';
 import 'field_label.dart';
 
 /// S-01 — Đăng nhập. Layout/copy khớp ảnh Figma thật (09/09/2026) — không suy
@@ -32,23 +33,33 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final phone = AuthRepository.normalizeVnPhone(_phoneController.text);
+
+    final lockedUntil = await loginRateLimiter.checkLocked(phone);
+    if (lockedUntil != null) {
+      setState(() => _errorText = _lockedMessage(lockedUntil));
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorText = null;
     });
     try {
-      await authRepository.signInWithPassword(
-        phone: _phoneController.text.trim(),
-        password: _passwordController.text,
-      );
+      await authRepository.signInWithPassword(phone: phone, password: _passwordController.text);
+      await loginRateLimiter.recordSuccess(phone);
       if (mounted) context.go('/home');
     } catch (e) {
-      // TODO: rate-limit sau 5 lần sai (edge case trong SCREEN-SPEC.md) — chưa
-      // implement, cần đếm số lần thử ở phía server/Edge Function.
-      setState(() => _errorText = 'Sai số điện thoại hoặc mật khẩu');
+      final justLockedUntil = await loginRateLimiter.recordFailure(phone);
+      setState(() => _errorText = justLockedUntil != null ? _lockedMessage(justLockedUntil) : 'Sai số điện thoại hoặc mật khẩu');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _lockedMessage(DateTime lockedUntil) {
+    final minutesLeft = lockedUntil.difference(DateTime.now()).inMinutes + 1;
+    return 'Bạn đã nhập sai quá 5 lần. Vui lòng thử lại sau $minutesLeft phút.';
   }
 
   @override
@@ -95,8 +106,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    // TODO: luồng "Quên mật khẩu" dùng lại OTP của SignupScreen — chưa nối.
-                    onPressed: () {},
+                    // Dùng lại luồng OTP của SignupScreen (Verify phone → Set password) —
+                    // verifyOTP tạo session hợp lệ cho SĐT đã tồn tại, setPassword đổi
+                    // đúng mật khẩu của tài khoản đó. Không có màn Forgot Password riêng
+                    // trong Figma — đây là cách tái dùng đã ghi trong TODO trước đó.
+                    onPressed: () => context.push('/signup'),
                     style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
                     child: Text('Forgot password?', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.info)),
                   ),

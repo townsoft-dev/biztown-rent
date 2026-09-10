@@ -7,7 +7,15 @@ import 'core/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initSupabase();
+  // S-00 edge case (SCREEN-SPEC.md): "Mạng chậm → timeout hợp lý (10s), không treo
+  // màn hình." initSupabase() có thể phải làm mới session qua mạng — nếu quá 10s coi
+  // như chưa xác định được session, cứ vào Splash bình thường (Splash tự check lại
+  // supabase.auth.currentSession, mạng vẫn chậm thì rơi về /login, không treo app).
+  try {
+    await initSupabase().timeout(const Duration(seconds: 10));
+  } on Exception catch (e) {
+    debugPrint('initSupabase() timeout/lỗi, vào Splash với session chưa xác định: $e');
+  }
   runApp(const ProviderScope(child: App()));
 }
 

@@ -15,13 +15,14 @@
 // bắt buộc đúng template "{code} la ma xac minh dang ky Baotrixemay cua ban", không thể
 // đổi thành nội dung có tên BizTown. CHỈ dùng để test luồng, PHẢI đổi sang Brandname thật
 // (SmsType "8" + Template riêng, hoặc đăng ký Brandname CSKH thật) trước khi lên production.
-// TODO: verify webhook signature (header `webhook-signature`, ký bằng hook_send_sms_secrets)
-// trước khi tin payload — bắt buộc cho production, hiện auth: "none" nên ai gọi cũng
-// được (nhưng nội dung request phải đúng shape SendSmsHookPayload GoTrue mới gửi được;
-// rủi ro: ai đó có thể tự gọi function này gửi SMS lung tung nếu biết URL — cần vá sớm).
+// Verify chữ ký webhook bằng thư viện chính thức `standardwebhooks` (Supabase Auth Hooks
+// theo chuẩn Standard Webhooks) — secret `SEND_SMS_HOOK_SECRET` phải khớp đúng với
+// `hook_send_sms_secrets` đã cấu hình trong Supabase Auth (Dashboard/Management API).
+// Không verify được (thiếu secret/sai chữ ký) → từ chối request, không gửi SMS.
 
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
+import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 
 interface SendSmsHookPayload {
   user: { phone: string };
@@ -64,7 +65,22 @@ async function sendViaEsms(phone: string, otp: string): Promise<void> {
 
 export default {
   fetch: withSupabase({ auth: ["none"] }, async (req) => {
-    const payload: SendSmsHookPayload = await req.json();
+    const rawBody = await req.text();
+    const hookSecret = Deno.env.get("SEND_SMS_HOOK_SECRET");
+    if (!hookSecret) {
+      console.error("[send-otp-sms] thiếu secret SEND_SMS_HOOK_SECRET, từ chối request");
+      return Response.json({ error: { http_code: 500, message: "Thiếu cấu hình xác thực hook" } }, { status: 500 });
+    }
+
+    let payload: SendSmsHookPayload;
+    try {
+      const wh = new Webhook(hookSecret.replace("v1,whsec_", ""));
+      const headers = Object.fromEntries(req.headers);
+      payload = wh.verify(rawBody, headers) as SendSmsHookPayload;
+    } catch (e) {
+      console.error("[send-otp-sms] chữ ký webhook không hợp lệ, từ chối request:", e);
+      return Response.json({ error: { http_code: 401, message: "Chữ ký webhook không hợp lệ" } }, { status: 401 });
+    }
 
     try {
       await sendViaEsms(payload.user.phone, payload.sms.otp);
@@ -78,7 +94,9 @@ export default {
       );
     }
 
-    // Trả 200 rỗng để báo Supabase là đã xử lý (theo spec Send SMS Hook).
-    return new Response(null, { status: 200 });
+    // Trả 200 kèm body JSON rỗng (không phải null) — GoTrue validate Content-Type của
+    // response hook, response rỗng không có header này từng gây lỗi
+    // "hook_payload_invalid_content_type" phía client dù function thực ra đã chạy đúng.
+    return Response.json({}, { status: 200 });
   }),
 };

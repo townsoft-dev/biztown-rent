@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/theme.dart';
 import '../data/auth_repository.dart';
@@ -96,8 +97,12 @@ class _SignupScreenState extends State<SignupScreen> {
     try {
       await authRepository.verifyOtp(phone: _phoneController.text.trim(), token: _otp);
       setState(() => _otpVerified = true);
+    } on AuthApiException catch (e) {
+      // GoTrue trả error_code "otp_expired" riêng cho trường hợp hết hạn (không phải
+      // sai mã) — các lỗi khác (sai mã, đã dùng...) gộp chung 1 thông báo vì GoTrue
+      // không tách rõ hơn được nữa. Xem SCREEN-SPEC.md edge case S-02.
+      setState(() => _errorText = e.code == 'otp_expired' ? 'Mã đã hết hạn, bấm "Resend code" để nhận mã mới' : 'Mã OTP không đúng, thử lại');
     } catch (e) {
-      // TODO: phân biệt "sai OTP" và "hết hạn" để hiện đúng thông báo (SCREEN-SPEC.md edge case).
       setState(() => _errorText = 'Mã OTP không đúng hoặc đã hết hạn');
     } finally {
       if (mounted) setState(() => _isLoading = false);
