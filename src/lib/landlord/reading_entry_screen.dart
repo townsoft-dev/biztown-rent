@@ -46,8 +46,13 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
   TextEditingController _controllerFor(String roomId, UtilityType type,
       {num? prefill}) {
     final key = _keyFor(roomId, type);
+    // Prefill có dấu phẩy (đúng Figma) — an toàn vì dòng đã Recorded thì
+    // field bị disable, `_save()` không bao giờ đọc lại controller này để
+    // parse số (xem `if (entry.recorded) continue;`).
     return _controllers.putIfAbsent(
-        key, () => TextEditingController(text: prefill?.toString() ?? ''));
+        key,
+        () => TextEditingController(
+            text: prefill == null ? '' : formatReadingValue(prefill)));
   }
 
   @override
@@ -156,7 +161,15 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
           TopBar(
             title: 'Record monthly readings',
             subtitle: houseAsync.maybeWhen(
-                data: (house) => house.name, orElse: () => ''),
+              data: (house) {
+                final entries = entriesAsync.valueOrNull;
+                final progress = entries == null
+                    ? ''
+                    : '  ·  ${entries.where((e) => e.recorded).length}/${entries.length} rooms recorded';
+                return '${house.name}$progress  ·  ${DateFormat('MMM yyyy').format(_period)}';
+              },
+              orElse: () => '',
+            ),
             onBack: () => context.pop(),
           ),
           Expanded(
@@ -207,12 +220,12 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                         recorded: entry.recorded,
                         previousValue: entry.previous == null
                             ? '—'
-                            : '${entry.previous!.currentReading} ${entry.utilityType.unit}',
+                            : '${formatReadingValue(entry.previous!.currentReading)} ${entry.utilityType.unit}',
                         currentController: _controllerFor(
                             entry.room.id, entry.utilityType,
                             prefill: entry.thisPeriod?.currentReading),
                         usageLabel: entry.thisPeriod?.usageAmount != null
-                            ? 'Usage this period: ${entry.thisPeriod!.usageAmount} ${entry.utilityType.unit}'
+                            ? 'Usage this period: ${formatReadingValue(entry.thisPeriod!.usageAmount!)} ${entry.utilityType.unit}'
                             : null,
                         errorText:
                             _errors[_keyFor(entry.room.id, entry.utilityType)],

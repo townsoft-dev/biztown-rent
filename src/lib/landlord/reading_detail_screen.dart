@@ -66,7 +66,7 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
     }
     if (latest.previousReading != null && value < latest.previousReading!) {
       setState(() => _error =
-          'Current reading must be ≥ previous (${latest.previousReading}).');
+          'Current reading must be ≥ previous (${formatReadingValue(latest.previousReading!)}).');
       return;
     }
     setState(() {
@@ -179,7 +179,7 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
                           DetailRow(
                               label: 'Previous → Current',
                               value:
-                                  '${latest.previousReading ?? '—'} → ${latest.currentReading}   ·   ${latest.usageAmount ?? '—'} ${widget.utilityType.unit}'),
+                                  '${latest.previousReading == null ? '—' : formatReadingValue(latest.previousReading!)} → ${formatReadingValue(latest.currentReading)}   ·   ${latest.usageAmount == null ? '—' : formatReadingValue(latest.usageAmount!)} ${widget.utilityType.unit}'),
                           DetailRow(
                               label: 'Recorded by',
                               value:
@@ -206,7 +206,7 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
                               label: DateFormat('dd/MM/yyyy')
                                   .format(history[i].readingDate),
                               value:
-                                  '${history[i].previousReading ?? '—'} → ${history[i].currentReading} · ${history[i].usageAmount ?? '—'} ${widget.utilityType.unit} · ${history[i].readingType.label}',
+                                  '${history[i].previousReading == null ? '—' : formatReadingValue(history[i].previousReading!)} → ${formatReadingValue(history[i].currentReading)} · ${history[i].usageAmount == null ? '—' : formatReadingValue(history[i].usageAmount!)} ${widget.utilityType.unit} · ${history[i].readingType.label}',
                               showDivider: i != history.length - 1,
                             ),
                         ]),

@@ -376,7 +376,7 @@ class _ReadingSummaryCard extends ConsumerWidget {
           title:
               '${DateFormat('dd/MM/yyyy').format(latest.readingDate)}  ·  ${utilityType.label}',
           body:
-              '${latest.previousReading ?? '—'} → ${latest.currentReading}  ·  ${latest.usageAmount ?? '—'} ${utilityType.unit}  ·  ${latest.readingType.label}',
+              '${latest.previousReading == null ? '—' : formatReadingValue(latest.previousReading!)} → ${formatReadingValue(latest.currentReading)}  ·  ${latest.usageAmount == null ? '—' : formatReadingValue(latest.usageAmount!)} ${utilityType.unit}  ·  ${latest.readingType.label}',
           onTap: onTap,
         );
       },

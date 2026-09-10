@@ -88,7 +88,7 @@ class ReadingRepository {
     final previous = await latestForRoom(roomId, type);
     if (previous != null && currentReading < previous.currentReading) {
       throw ReadingOrderException(
-          'Current reading must be ≥ previous reading (${previous.currentReading} ${type.unit}).');
+          'Current reading must be ≥ previous reading (${formatReadingValue(previous.currentReading)} ${type.unit}).');
     }
     final recordedByPhone = _client.auth.currentUser?.phone ?? '';
     final id = const Uuid().v4();
