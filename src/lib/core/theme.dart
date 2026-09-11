@@ -52,6 +52,8 @@ class AppRadii {
   static const thumbIcon = 11.0;
   static const xs =
       9.0; // token "radius-xs" trên Figma — dùng cho action pop-up (⋮ Edit/Delete)
+  static const checkRow =
+      12.0; // token "radius-md" trên Figma — "check row" (P-06 House access)
 }
 
 class AppSpacing {

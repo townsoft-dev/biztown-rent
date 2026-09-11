@@ -329,7 +329,6 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                   AppTextField(
                     label: 'Status',
                     initialValue: (room?.status ?? RoomStatus.empty).label,
-                    readOnly: true,
                     trailing: AppTextFieldTrailingIcon.select,
                   ),
                   Padding(
@@ -343,7 +342,10 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                     ),
                   ),
                   AppTextField(
-                      label: 'Note', controller: _noteController, maxLines: 3),
+                      label: 'Note',
+                      controller: _noteController,
+                      maxLines: 3,
+                      textarea: true),
                   if (_errorText != null) ...[
                     const SizedBox(height: 8),
                     Text(_errorText!,

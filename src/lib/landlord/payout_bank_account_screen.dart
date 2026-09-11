@@ -194,6 +194,7 @@ class _PayoutBankAccountScreenState
                       children: [
                         if (missingCount > 0) ...[
                           AppBanner(
+                            tone: AppBannerTone.warning,
                             message:
                                 '$missingCount ${missingCount == 1 ? 'house has' : 'houses have'} no payout account yet — invoices for that house will be sent without payment details.',
                           ),
@@ -229,7 +230,6 @@ class _PayoutBankAccountScreenState
                           initialValue: _selectedBank?.name ?? '',
                           key: ValueKey(
                               'bank-${editingHouse.id}-${_selectedBank?.bin}'),
-                          readOnly: true,
                           trailing: AppTextFieldTrailingIcon.select,
                           onTap: _pickBank,
                         ),

@@ -6,7 +6,22 @@ import '../core/theme.dart';
 
 /// "Input field" (165:60 trên Figma) — label 11px phía trên + ô nhập. Text
 /// dùng theme `inputDecorationTheme` có sẵn (viền/focus đã đúng token).
-/// Readonly = nền xám `bgMuted`, không viền. Select/Date thêm icon cuối ô.
+///
+/// 4 biến thể Figma, KHÔNG được trộn lẫn (đã xảy ra bug 2 lần — Status ở
+/// H-05, Bank name ở P-03 — do gán nhầm `readOnly: true` cho field đáng lẽ
+/// phải là "Select"):
+/// - **Text** (mặc định): nền trắng, viền `neutral200`, chữ `textPrimary`.
+/// - **Readonly** (`readOnly: true`, trailing != select): nền xám `bgMuted`,
+///   KHÔNG viền, chữ `textSecondary` — dùng cho field tĩnh thật sự (Phone,
+///   Created at, Join from, Previous reading...).
+/// - **Select** (`trailing: select`): LUÔN nền trắng + viền (giống Text),
+///   chữ `textTertiary`, kèm icon `expand_more` — dùng cho field bấm mở
+///   picker (Bank name ở P-03) hoặc field chỉ hiện giá trị đã chọn sẵn,
+///   không gõ tay được (Status ở H-05). Áp dụng bất kể `readOnly` truyền vào
+///   thế nào — không để caller tự chọn nhầm giữa Select và Readonly nữa.
+/// - **Textarea** (`textarea: true`, `maxLines > 1`): nền trắng + viền
+///   (giống Text), nhưng chữ `textTertiary` (đúng theo Figma — Note ở H-05/
+///   P-06 dùng tông chữ nhạt hơn cho ghi chú, khác hẳn field dữ liệu chính).
 enum AppTextFieldTrailingIcon { none, select, date }
 
 class AppTextField extends StatelessWidget {
@@ -25,6 +40,7 @@ class AppTextField extends StatelessWidget {
   final bool obscureText;
   final FormFieldValidator<String>? validator;
   final Widget? suffixWidget;
+  final bool textarea;
 
   const AppTextField({
     super.key,
@@ -43,10 +59,15 @@ class AppTextField extends StatelessWidget {
     this.obscureText = false,
     this.validator,
     this.suffixWidget,
+    this.textarea = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isSelect = trailing == AppTextFieldTrailingIcon.select;
+    // "Readonly" thật sự (nền xám, không viền) chỉ áp dụng khi KHÔNG phải
+    // biến thể Select — Select luôn nền trắng có viền dù `readOnly` là gì.
+    final isMuted = readOnly && !isSelect;
     final suffixIcon = suffixWidget ??
         switch (trailing) {
           AppTextFieldTrailingIcon.select => const Icon(
@@ -73,7 +94,7 @@ class AppTextField extends StatelessWidget {
         TextFormField(
           controller: controller,
           initialValue: controller == null ? initialValue : null,
-          readOnly: readOnly || onTap != null,
+          readOnly: readOnly || onTap != null || isSelect,
           onTap: onTap,
           maxLines: obscureText ? 1 : maxLines,
           obscureText: obscureText,
@@ -83,18 +104,21 @@ class AppTextField extends StatelessWidget {
           validator: validator,
           style: GoogleFonts.inter(
               fontSize: 14,
-              color:
-                  readOnly ? AppColors.textSecondary : AppColors.textPrimary),
+              color: isSelect || textarea
+                  ? AppColors.textTertiary
+                  : (isMuted
+                      ? AppColors.textSecondary
+                      : AppColors.textPrimary)),
           decoration: InputDecoration(
             hintText: hintText,
             errorText: errorText,
             errorMaxLines: 3,
             suffixIcon: suffixIcon,
             filled: true,
-            fillColor: readOnly ? AppColors.bgMuted : AppColors.bgDefault,
+            fillColor: isMuted ? AppColors.bgMuted : AppColors.bgDefault,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadii.inputField),
-              borderSide: readOnly
+              borderSide: isMuted
                   ? BorderSide.none
                   : const BorderSide(color: AppColors.neutral200, width: 1.5),
             ),

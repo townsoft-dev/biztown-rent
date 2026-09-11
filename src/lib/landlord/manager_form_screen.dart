@@ -11,8 +11,10 @@ import '../data/auth_repository.dart';
 import '../data/models/manager_account.dart';
 import '../shared/app_button.dart';
 import '../shared/app_text_field.dart';
+import '../shared/check_row.dart';
 import '../shared/confirm_dialog.dart';
 import '../shared/section_label.dart';
+import '../shared/toggle_row.dart';
 import '../shared/top_bar.dart';
 
 /// P-06 — Manager Detail (Create/Edit/Delete) (node 220:5099 + 410:2863,
@@ -203,7 +205,8 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                               ),
                               const SizedBox(width: 4),
                               Expanded(
-                                child: _AccountActiveToggle(
+                                child: ToggleRow(
+                                  label: 'Account active',
                                   value: _isActive,
                                   onChanged: (v) =>
                                       setState(() => _isActive = v),
@@ -255,6 +258,7 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                             label: 'Note',
                             controller: _noteController,
                             maxLines: 3,
+                            textarea: true,
                             hintText:
                                 'e.g. Manages the Binh An row on weekdays',
                           ),
@@ -270,24 +274,31 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                               ),
                             ),
                           for (final house in houses) ...[
-                            _HouseCheckRow(
-                              title: house.name,
-                              roomCount: roomStatuses[house.id]?.length ?? 0,
-                              checked: _selectedHouseIds.contains(house.id),
-                              conflictManagerName:
+                            Builder(builder: (context) {
+                              final conflict =
                                   activeManagers[house.id] != null &&
                                           activeManagers[house.id]!.phone !=
                                               (widget.phone ?? '')
                                       ? activeManagers[house.id]!.name
-                                      : null,
-                              onTap: () => setState(() {
-                                if (_selectedHouseIds.contains(house.id)) {
-                                  _selectedHouseIds.remove(house.id);
-                                } else {
-                                  _selectedHouseIds.add(house.id);
-                                }
-                              }),
-                            ),
+                                      : null;
+                              final roomCount =
+                                  roomStatuses[house.id]?.length ?? 0;
+                              return CheckRow(
+                                title: house.name,
+                                subtitle: conflict != null
+                                    ? 'Managed by $conflict'
+                                    : '$roomCount rooms',
+                                checked: _selectedHouseIds.contains(house.id),
+                                disabled: conflict != null,
+                                onTap: () => setState(() {
+                                  if (_selectedHouseIds.contains(house.id)) {
+                                    _selectedHouseIds.remove(house.id);
+                                  } else {
+                                    _selectedHouseIds.add(house.id);
+                                  }
+                                }),
+                              );
+                            }),
                             const SizedBox(height: 8),
                           ],
                           const SizedBox(height: 6),
@@ -328,120 +339,6 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                   }),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AccountActiveToggle extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _AccountActiveToggle({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.bgDefault,
-        border: Border.all(color: AppColors.borderSubtle),
-        borderRadius: BorderRadius.circular(AppRadii.xs),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text('Account active',
-                style: GoogleFonts.inter(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    height: 17 / 13.5,
-                    color: AppColors.textPrimary)),
-          ),
-          Transform.scale(
-            scale: 0.8,
-            child: Switch(
-              value: value,
-              onChanged: onChanged,
-              activeTrackColor: AppColors.success,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HouseCheckRow extends StatelessWidget {
-  final String title;
-  final int roomCount;
-  final bool checked;
-  final String? conflictManagerName;
-  final VoidCallback onTap;
-
-  const _HouseCheckRow({
-    required this.title,
-    required this.roomCount,
-    required this.checked,
-    this.conflictManagerName,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final disabled = conflictManagerName != null;
-    return InkWell(
-      onTap: disabled ? null : onTap,
-      borderRadius: BorderRadius.circular(AppRadii.card),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-        decoration: BoxDecoration(
-          color: disabled ? AppColors.bgMuted : AppColors.bgDefault,
-          border: Border.all(
-            color: disabled
-                ? AppColors.borderSubtle
-                : (checked ? AppColors.primary : AppColors.borderSubtle),
-            width: !disabled && checked ? 1.5 : 1,
-          ),
-          borderRadius: BorderRadius.circular(AppRadii.card),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              checked
-                  ? Icons.check_box_rounded
-                  : Icons.check_box_outline_blank_rounded,
-              size: 20,
-              color: disabled
-                  ? AppColors.neutral200
-                  : (checked ? AppColors.primary : AppColors.neutral200),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(title,
-                      style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          height: 18 / 13,
-                          color: AppColors.textPrimary)),
-                  Text(
-                      disabled
-                          ? 'Managed by $conflictManagerName'
-                          : '$roomCount rooms',
-                      style: GoogleFonts.inter(
-                          fontSize: 12,
-                          height: 17 / 12,
-                          color: AppColors.textTertiary)),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
