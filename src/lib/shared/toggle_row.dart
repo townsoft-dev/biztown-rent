@@ -24,7 +24,14 @@ class ToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      // Vertical padding 9 (không phải 12 như số Figma xuất ra) — tự tính lại
+      // cho khớp với chiều cao 42px Figma CHỦ Ý khai báo cho khung này
+      // (`h-[42px]`): switch cao 24 + padding 9×2 = 42 vừa khít. Số "py-12"
+      // trong export CSS của Figma mâu thuẫn với chính "h-42" nó khai báo
+      // (12×2+24=48 > 42) — ưu tiên khớp đúng CHIỀU CAO đã khai báo rõ ràng
+      // hơn là số padding suy ra, vì `IntrinsicHeight` dùng chiều cao này để
+      // ép ô "Manager" cạnh bên cùng cao theo.
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
         color: AppColors.bgDefault,
         border: Border.all(color: AppColors.borderSubtle),
@@ -52,9 +59,11 @@ class ToggleRow extends StatelessWidget {
                       color: AppColors.textPrimary)),
             ),
           ),
-          // Figma dùng `justify-content: space-between` — KHÔNG có khoảng
-          // cách cố định riêng giữa label và switch (đã bỏ SizedBox 8px tự
-          // thêm trước đó, chiếm mất khoảng trống hiếm hoi label cần).
+          // Figma dùng `justify-content: space-between` (không khai báo gap
+          // riêng) nhưng ở đúng tỉ lệ đó label gần như dính sát switch — thêm
+          // 1 khoảng thở nhỏ 6px cho dễ nhìn, đổi lại `FittedBox` phía trên
+          // co chữ nhỏ hơn 1 chút để bù (không đáng kể bằng mắt thường).
+          const SizedBox(width: 6),
           _MiniSwitch(value: value, onChanged: onChanged),
         ],
       ),
