@@ -23,6 +23,11 @@ import '../shared/login_screen.dart';
 import '../shared/notification_center_screen.dart';
 import '../shared/signup_screen.dart';
 import '../shared/splash_screen.dart';
+import '../tenant/contract_detail_screen.dart';
+import '../tenant/contract_form_screen.dart';
+import '../tenant/tenant_contract_screen.dart';
+import '../tenant/tenant_detail_screen.dart';
+import '../tenant/tenant_form_screen.dart';
 import 'app_strings.dart';
 import 'supabase_client.dart';
 
@@ -145,9 +150,36 @@ final appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/tenant',
-              builder: (context, state) => ComingSoonScreen(
-                  title: AppStrings.t('comingSoon.tenantContract'),
-                  icon: Icons.group_rounded),
+              builder: (context, state) => const TenantContractScreen(),
+              routes: [
+                GoRoute(
+                  path: 'new',
+                  builder: (context, state) => TenantFormScreen(
+                      presetHouseId: state.uri.queryParameters['houseId']),
+                ),
+                GoRoute(
+                  path: 'contracts/new',
+                  builder: (context, state) => ContractFormScreen(
+                      initialRoomId: state.uri.queryParameters['roomId']),
+                ),
+                GoRoute(
+                  path: 'contracts/:contractId',
+                  builder: (context, state) => ContractDetailScreen(
+                      contractId: state.pathParameters['contractId']!),
+                ),
+                GoRoute(
+                  path: ':tenantId',
+                  builder: (context, state) => TenantDetailScreen(
+                      tenantId: state.pathParameters['tenantId']!),
+                  routes: [
+                    GoRoute(
+                      path: 'edit',
+                      builder: (context, state) => TenantFormScreen(
+                          tenantId: state.pathParameters['tenantId']),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),

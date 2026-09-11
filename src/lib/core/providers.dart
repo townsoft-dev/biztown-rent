@@ -2,14 +2,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../data/auth_repository.dart';
+import '../data/contract_repository.dart';
 import '../data/house_repository.dart';
+import '../data/models/contract.dart';
 import '../data/models/house.dart';
 import '../data/models/manager_account.dart';
 import '../data/models/reading.dart';
 import '../data/models/room.dart';
+import '../data/models/tenant.dart';
 import '../data/models/user_profile.dart';
 import '../data/reading_repository.dart';
 import '../data/room_repository.dart';
+import '../data/tenant_repository.dart';
 import '../data/user_repository.dart';
 
 final authRepositoryProvider =
@@ -178,4 +182,186 @@ final readingHistoryProvider =
   return ref
       .watch(readingRepositoryProvider)
       .historyForRoom(key.roomId, key.utilityType);
+});
+
+// ============================================================
+// T-0x — Tenant & Contract
+// ============================================================
+
+final tenantRepositoryProvider =
+    Provider<TenantRepository>((ref) => tenantRepository);
+final contractRepositoryProvider =
+    Provider<ContractRepository>((ref) => contractRepository);
+
+/// Toàn bộ Tenant Pool thuộc phạm vi các Nhà đang có quyền — T-01.
+final tenantsProvider = FutureProvider<List<Tenant>>((ref) {
+  return ref.watch(tenantRepositoryProvider).listAll();
+});
+
+final tenantProvider = FutureProvider.family<Tenant, String>((ref, tenantId) {
+  return ref.watch(tenantRepositoryProvider).getById(tenantId);
+});
+
+/// Toàn bộ hợp đồng thuộc phạm vi các Nhà đang có quyền — nguồn thô cho T-02.
+final contractsProvider = FutureProvider<List<Contract>>((ref) {
+  return ref.watch(contractRepositoryProvider).listAll();
+});
+
+final contractProvider =
+    FutureProvider.family<Contract, String>((ref, contractId) {
+  return ref.watch(contractRepositoryProvider).getById(contractId);
+});
+
+/// Mọi hợp đồng (mọi trạng thái) của 1 Tenant, mới nhất trước — T-03.
+final contractsByTenantProvider =
+    FutureProvider.family<List<Contract>, String>((ref, tenantId) {
+  return ref.watch(contractRepositoryProvider).listByTenant(tenantId);
+});
+
+final contractVersionProvider =
+    FutureProvider.family<ContractVersion, String>((ref, versionId) {
+  return ref.watch(contractRepositoryProvider).getVersionById(versionId);
+});
+
+/// Lịch sử phiên bản điều khoản của 1 hợp đồng, mới nhất trước — T-08.
+final contractVersionsProvider =
+    FutureProvider.family<List<ContractVersion>, String>((ref, contractId) {
+  return ref
+      .watch(contractRepositoryProvider)
+      .listVersionsByContract(contractId);
+});
+
+final contractRoomIdsProvider =
+    FutureProvider.family<List<String>, String>((ref, contractId) {
+  return ref
+      .watch(contractRepositoryProvider)
+      .listRoomIdsByContract(contractId);
+});
+
+/// Danh sách phòng (đầy đủ) của 1 hợp đồng — T-03/T-05.
+final contractRoomsProvider =
+    FutureProvider.family<List<Room>, String>((ref, contractId) async {
+  final roomIds = await ref.watch(contractRoomIdsProvider(contractId).future);
+  return ref.watch(roomRepositoryProvider).listByIds(roomIds);
+});
+
+/// 1 dòng hiển thị cho T-01 (Tenant list) — Tenant + hợp đồng Active hiện tại
+/// (nếu có) + phòng/nhà đang thuê. `activeContract == null` ⇒ "Unassigned".
+class TenantListItem {
+  final Tenant tenant;
+  final Contract? activeContract;
+  final List<Room> rooms;
+  final House? house;
+
+  const TenantListItem({
+    required this.tenant,
+    this.activeContract,
+    this.rooms = const [],
+    this.house,
+  });
+
+  bool get isRenting => activeContract != null;
+}
+
+/// Ghép Tenant + hợp đồng Active + phòng/nhà — tránh N+1 query bằng cách gọi
+/// các hàm `...ByIds`/`...ByContractIds` theo lô, xem `ContractRepository`.
+final tenantListProvider = FutureProvider<List<TenantListItem>>((ref) async {
+  final contractRepo = ref.watch(contractRepositoryProvider);
+  final tenants = await ref.watch(tenantsProvider.future);
+  final contracts = await ref.watch(contractsProvider.future);
+
+  final activeByTenant = <String, Contract>{
+    for (final c in contracts)
+      if (c.status == ContractStatus.active) c.tenantId: c,
+  };
+  final roomIdsByContract = await contractRepo
+      .roomIdsByContractIds(activeByTenant.values.map((c) => c.id).toList());
+  final allRoomIds =
+      roomIdsByContract.values.expand((ids) => ids).toSet().toList();
+  final rooms = await ref.watch(roomRepositoryProvider).listByIds(allRoomIds);
+  final roomsById = {for (final r in rooms) r.id: r};
+  final houses = await ref.watch(housesProvider.future);
+  final housesById = {for (final h in houses) h.id: h};
+
+  return tenants.map((t) {
+    final contract = activeByTenant[t.id];
+    if (contract == null) return TenantListItem(tenant: t);
+    final roomIds = roomIdsByContract[contract.id] ?? const [];
+    final tenantRooms =
+        roomIds.map((id) => roomsById[id]).whereType<Room>().toList();
+    final house =
+        tenantRooms.isEmpty ? null : housesById[tenantRooms.first.houseId];
+    return TenantListItem(
+        tenant: t, activeContract: contract, rooms: tenantRooms, house: house);
+  }).toList();
+});
+
+/// 1 dòng hiển thị cho T-02 (Contract list) — Hợp đồng + điều khoản hiện
+/// hành + Tenant đại diện + phòng/nhà.
+class ContractListItem {
+  final Contract contract;
+  final ContractVersion currentVersion;
+  final Tenant tenant;
+  final List<Room> rooms;
+  final House house;
+
+  const ContractListItem({
+    required this.contract,
+    required this.currentVersion,
+    required this.tenant,
+    required this.rooms,
+    required this.house,
+  });
+
+  /// Ngưỡng 30 ngày theo SCREEN-SPEC.md T-05 — chỉ tính khi hợp đồng đang Active.
+  bool get isEndingSoon =>
+      contract.status == ContractStatus.active &&
+      !currentVersion.endDate.isBefore(DateTime.now()) &&
+      currentVersion.endDate.difference(DateTime.now()).inDays <= 30;
+}
+
+final contractListProvider =
+    FutureProvider<List<ContractListItem>>((ref) async {
+  final contractRepo = ref.watch(contractRepositoryProvider);
+  final contracts = await ref.watch(contractsProvider.future);
+  if (contracts.isEmpty) return const [];
+
+  final versionIds =
+      contracts.map((c) => c.currentVersionId).whereType<String>().toList();
+  final versions = await contractRepo.listVersionsByIds(versionIds);
+  final versionsById = {for (final v in versions) v.id: v};
+
+  final tenantIds = contracts.map((c) => c.tenantId).toSet().toList();
+  final tenants = await Future.wait(
+      tenantIds.map((id) => ref.watch(tenantRepositoryProvider).getById(id)));
+  final tenantsById = {for (final t in tenants) t.id: t};
+
+  final roomIdsByContract = await contractRepo
+      .roomIdsByContractIds(contracts.map((c) => c.id).toList());
+  final allRoomIds =
+      roomIdsByContract.values.expand((ids) => ids).toSet().toList();
+  final rooms = await ref.watch(roomRepositoryProvider).listByIds(allRoomIds);
+  final roomsById = {for (final r in rooms) r.id: r};
+  final houses = await ref.watch(housesProvider.future);
+  final housesById = {for (final h in houses) h.id: h};
+
+  final items = <ContractListItem>[];
+  for (final c in contracts) {
+    final version = versionsById[c.currentVersionId];
+    final tenant = tenantsById[c.tenantId];
+    if (version == null || tenant == null) continue;
+    final roomIds = roomIdsByContract[c.id] ?? const [];
+    final contractRooms =
+        roomIds.map((id) => roomsById[id]).whereType<Room>().toList();
+    if (contractRooms.isEmpty) continue;
+    final house = housesById[contractRooms.first.houseId];
+    if (house == null) continue;
+    items.add(ContractListItem(
+        contract: c,
+        currentVersion: version,
+        tenant: tenant,
+        rooms: contractRooms,
+        house: house));
+  }
+  return items;
 });

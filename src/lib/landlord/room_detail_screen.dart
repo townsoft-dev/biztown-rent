@@ -143,12 +143,20 @@ class RoomDetailScreen extends ConsumerWidget {
             onTap: () => context.push(
                 '/home/houses/$houseId/readings/${room.id}/${UtilityType.water.pathSegment}')),
         SectionLabel(AppStrings.t('roomDetail.sectionCurrentContract')),
-        // TODO: → T-03/T-05 khi seri màn Tenant & Contract có (chưa build).
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Text(AppStrings.t('roomDetail.noActiveContract'),
-              style: const TextStyle(color: AppColors.textSecondary)),
-        ),
+        if (room.status == RoomStatus.empty)
+          AppButton(
+            label: AppStrings.t('roomDetail.createContract'),
+            onPressed: () =>
+                context.push('/tenant/contracts/new?roomId=${room.id}'),
+          )
+        else
+          // TODO: thẻ tóm tắt hợp đồng hiện tại → T-05 (cần thêm lookup
+          // roomId → contractId Active, chưa làm ở đợt T-05/T-06 này).
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(AppStrings.t('roomDetail.noActiveContract'),
+                style: const TextStyle(color: AppColors.textSecondary)),
+          ),
       ],
     );
   }

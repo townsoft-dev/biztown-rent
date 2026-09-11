@@ -46,6 +46,14 @@ class RoomRepository {
     return Room.fromMap(row);
   }
 
+  /// Nhiều phòng theo ID (bất kể thuộc Nhà nào) — dùng ghép dữ liệu hiển thị
+  /// ở T-01/T-02 (Tenant/Contract list), tránh N+1 query theo từng phòng.
+  Future<List<Room>> listByIds(List<String> roomIds) async {
+    if (roomIds.isEmpty) return const [];
+    final rows = await _client.from('tb_room').select().inFilter('id', roomIds);
+    return rows.map((row) => Room.fromMap(row)).toList();
+  }
+
   Future<Room> create(Room room) async {
     final row = await _client
         .from('tb_room')
@@ -63,6 +71,16 @@ class RoomRepository {
         .select()
         .single();
     return Room.fromMap(row);
+  }
+
+  /// Đổi riêng `status` — dùng lúc tạo hợp đồng (→ Occupied) hoặc kết thúc
+  /// hợp đồng (→ Empty, T-09), tách khỏi `update()` (vốn ghi đè toàn bộ field
+  /// từ form H-05) để `ContractRepository` không cần biết/giữ nguyên các
+  /// field khác của phòng.
+  Future<void> updateStatus(String roomId, RoomStatus status) async {
+    await _client
+        .from('tb_room')
+        .update({'status': status.dbValue}).eq('id', roomId);
   }
 
   /// Xoá phòng — DB tự chặn (lỗi FK `on delete restrict`) nếu phòng còn từng

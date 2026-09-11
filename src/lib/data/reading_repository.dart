@@ -113,6 +113,38 @@ class ReadingRepository {
     return Reading.fromMap(row, type);
   }
 
+  /// Ghi chỉ số nhận phòng (MOVE_IN) — bước chặn bắt buộc trong flow Tạo hợp
+  /// đồng (T-06, BR-CTR-10). Không có "chỉ số cũ" (phòng vừa Empty), khác
+  /// [createPeriodic] — không tìm/validate `previous`. `contractId` gắn ngay
+  /// lúc tạo (khác PERIODIC luôn `contract_id = null`).
+  Future<Reading> createMoveIn({
+    required String roomId,
+    required String houseId,
+    required String contractId,
+    required UtilityType type,
+    required DateTime readingDate,
+    required num currentReading,
+  }) async {
+    final recordedByPhone = _client.auth.currentUser?.phone ?? '';
+    final id = const Uuid().v4();
+    final row = await _client
+        .from(type.table)
+        .insert({
+          'id': id,
+          'room_id': roomId,
+          'house_id': houseId,
+          'contract_id': contractId,
+          'reading_type': ReadingType.moveIn.dbValue,
+          'period_ym': _dateOnly(readingDate),
+          'reading_date': _dateOnly(readingDate),
+          'current_reading': currentReading,
+          'recorded_by_phone': recordedByPhone,
+        })
+        .select()
+        .single();
+    return Reading.fromMap(row, type);
+  }
+
   /// Sửa tại chỗ 1 bản ghi (chỉ gọi khi đã xác nhận `!isLocked` — xem
   /// BR-METER-13, repository không tự chặn vì đó là quyết định UI cần hiện
   /// thông báo phù hợp trước khi gọi).
