@@ -53,26 +53,55 @@ class ToggleRow extends StatelessWidget {
           // Figma dùng `justify-content: space-between` — KHÔNG có khoảng
           // cách cố định riêng giữa label và switch (đã bỏ SizedBox 8px tự
           // thêm trước đó, chiếm mất khoảng trống hiếm hoi label cần).
-          // Kích thước cố định 44×24 đúng Figma (node 331:2918) — trước đó
-          // dùng `Transform.scale` chỉ co lại phần VẼ, không co lại phần
-          // KHÔNG GIAN mà `Row` dành cho `Switch` (Transform không ảnh hưởng
-          // layout), khiến label bị bóp hẹp, tự xuống dòng và bị cắt mất chữ
-          // "active" (chỉ còn thấy "Account"). `FittedBox` co cả layout lẫn
-          // hình vẽ vào đúng khung 44×24 nên label có đủ chỗ hiện trọn vẹn.
-          SizedBox(
-            width: 44,
-            height: 24,
-            child: FittedBox(
-              fit: BoxFit.fill,
-              child: Switch(
-                value: value,
-                onChanged: onChanged,
-                activeTrackColor: AppColors.success,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
+          _MiniSwitch(value: value, onChanged: onChanged),
+        ],
+      ),
+    );
+  }
+}
+
+/// "switch" (Figma, node 331:2918 — ảnh minh hoạ 44×24) — tự vẽ lại bằng
+/// hình khối cơ bản thay vì ép `Switch` gốc của Material (kích thước tự
+/// nhiên ~59×39, tỉ lệ khác hẳn) vào đúng khung 44×24 bằng
+/// `FittedBox(fit: BoxFit.fill)` — cách đó ép sai tỉ lệ khiến cả track lẫn
+/// nút tròn bị kéo méo. Tự vẽ đúng 44×24 ngay từ đầu thì không có gì để méo.
+class _MiniSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _MiniSwitch({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 44,
+        height: 24,
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: value ? AppColors.success : AppColors.neutral200,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 150),
+          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 2,
+                    offset: Offset(0, 1)),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
