@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/user_profile.dart';
@@ -29,6 +34,7 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
   final _idNumberController = TextEditingController();
   bool _initialized = false;
   bool _isSaving = false;
+  bool _isUploadingAvatar = false;
   String? _errorText;
 
   void _prefill(UserProfile profile) {
@@ -36,6 +42,54 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
     _initialized = true;
     _fullNameController.text = profile.fullName;
     _idNumberController.text = profile.idNumber ?? '';
+  }
+
+  /// Đổi ảnh đại diện — thay vì gộp vào nút "Save" chung của form (chỉ dành
+  /// cho Full name/ID number), upload NGAY khi chọn xong ảnh, đúng hành vi
+  /// "Change photo" quen thuộc của hầu hết app (bấm là đổi luôn, không cần
+  /// bấm Save riêng). Xoá ảnh cũ SAU KHI DB đã trỏ sang ảnh mới thành công,
+  /// tránh cửa sổ hở nơi DB trỏ vào 1 path vừa bị xoá nếu có lỗi giữa chừng.
+  Future<void> _changePhoto(String? previousPath) async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_rounded),
+              title: Text(AppStrings.t('common.takePhoto')),
+              onTap: () => Navigator.of(context).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded),
+              title: Text(AppStrings.t('common.chooseFromGallery')),
+              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+    final file = await ImagePicker()
+        .pickImage(source: source, maxWidth: 800, imageQuality: 85);
+    if (file == null) return;
+
+    setState(() => _isUploadingAvatar = true);
+    try {
+      await ref.read(userRepositoryProvider).uploadAvatar(File(file.path));
+      if (previousPath != null) {
+        await ref.read(userRepositoryProvider).deleteAvatar(previousPath);
+      }
+      ref.invalidate(currentUserProfileProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(AppStrings.t('personalProfile.avatarUploadError'))));
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
+    }
   }
 
   @override
@@ -66,8 +120,7 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
       ref.invalidate(houseOwnerNameProvider);
       if (mounted) context.pop();
     } catch (e) {
-      setState(
-          () => _errorText = 'Could not save your profile. Please try again.');
+      setState(() => _errorText = AppStrings.t('personalProfile.saveError'));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -75,6 +128,7 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
     final profileAsync = ref.watch(currentUserProfileProvider);
     final isMainManagerAsync = ref.watch(isMainManagerProvider);
 
@@ -82,7 +136,9 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
       backgroundColor: AppColors.bgDefault,
       body: Column(
         children: [
-          TopBar(title: 'Personal profile', onBack: () => context.pop()),
+          TopBar(
+              title: AppStrings.t('personalProfile.title'),
+              onBack: () => context.pop()),
           Expanded(
             child: profileAsync.when(
               data: (profile) {
@@ -94,41 +150,52 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
                     children: [
                       Row(
                         children: [
-                          Avatar(initials: initialsFromName(profile.fullName)),
+                          Builder(builder: (context) {
+                            final avatarUrlAsync = profile.avatarPath == null
+                                ? null
+                                : ref.watch(
+                                    avatarUrlProvider(profile.avatarPath!));
+                            return Avatar(
+                              initials: initialsFromName(profile.fullName),
+                              imageUrl: avatarUrlAsync?.valueOrNull,
+                            );
+                          }),
                           const SizedBox(width: 12),
-                          // tb_user chưa có cột ảnh đại diện — chưa có backend
-                          // để "Change photo" thật sự đổi ảnh, hiện đúng chữ
-                          // Figma nhưng chỉ báo "sắp có" khi bấm, không bịa
-                          // tính năng upload chưa được quyết định.
-                          GestureDetector(
-                            onTap: () => ScaffoldMessenger.of(context)
-                                .showSnackBar(const SnackBar(
-                                    content:
-                                        Text('Coming in a future update.'))),
-                            child: Text('Change photo',
-                                style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    height: 18 / 13,
-                                    color: AppColors.info)),
-                          ),
+                          if (_isUploadingAvatar)
+                            const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2))
+                          else
+                            GestureDetector(
+                              onTap: () => _changePhoto(profile.avatarPath),
+                              child: Text(
+                                  AppStrings.t('personalProfile.changePhoto'),
+                                  style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      height: 18 / 13,
+                                      color: AppColors.info)),
+                            ),
                         ],
                       ),
                       const SizedBox(height: 10),
                       AppTextField(
-                        label: 'Full name *',
+                        label: AppStrings.t('personalProfile.fullName'),
                         controller: _fullNameController,
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? 'Required' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? AppStrings.t('common.required')
+                            : null,
                       ),
                       const SizedBox(height: 10),
                       AppTextField(
-                        label: 'Phone (login credential) *',
+                        label: AppStrings.t('personalProfile.phone'),
                         initialValue: profile.phone,
                         readOnly: true,
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Text('Phone number can not be changed.',
+                        child: Text(AppStrings.t('personalProfile.phoneHint'),
                             style: GoogleFonts.inter(
                                 fontSize: 12,
                                 height: 17 / 12,
@@ -136,20 +203,20 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
                       ),
                       const SizedBox(height: 6),
                       AppTextField(
-                        label: 'ID number (CCCD/CMND)',
+                        label: AppStrings.t('personalProfile.idNumber'),
                         controller: _idNumberController,
                       ),
                       const SizedBox(height: 10),
                       AppTextField(
-                        label: 'Role',
+                        label: AppStrings.t('personalProfile.role'),
                         initialValue: isMainManagerAsync.valueOrNull == true
-                            ? 'Main Manager'
-                            : 'Manager',
+                            ? AppStrings.t('common.mainManager')
+                            : AppStrings.t('common.manager'),
                         readOnly: true,
                       ),
                       const SizedBox(height: 10),
                       AppTextField(
-                        label: 'Created at',
+                        label: AppStrings.t('personalProfile.createdAt'),
                         initialValue:
                             DateFormat('dd/MM/yyyy').format(profile.createdAt),
                         readOnly: true,
@@ -165,7 +232,7 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
                         children: [
                           Expanded(
                             child: AppButton(
-                              label: 'Cancel',
+                              label: AppStrings.t('common.cancel'),
                               style: AppButtonStyle.ghost,
                               onPressed: _isSaving ? null : () => context.pop(),
                             ),
@@ -173,7 +240,7 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                               child: AppButton(
-                                  label: 'Save',
+                                  label: AppStrings.t('common.save'),
                                   onPressed: _isSaving ? null : _save)),
                         ],
                       ),
@@ -182,8 +249,9 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) =>
-                  Center(child: Text('Could not load your profile.\n$e')),
+              error: (e, st) => Center(
+                  child: Text(AppStrings.t(
+                      'personalProfile.loadError', {'error': '$e'}))),
             ),
           ),
         ],

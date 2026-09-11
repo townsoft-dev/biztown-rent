@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/theme.dart';
 
 /// Placeholder dùng chung cho các tab chưa code UI thật (Tenant & Contract,
 /// Bills, Profile) — tránh 3 file gần giống nhau; xoá dần từng cái khi tab đó
 /// có màn thật (T-0x/B-0x/P-0x).
-class ComingSoonScreen extends StatelessWidget {
+class ComingSoonScreen extends ConsumerWidget {
   final String title;
   final IconData icon;
   final Widget? footer;
@@ -15,7 +18,8 @@ class ComingSoonScreen extends StatelessWidget {
       {super.key, required this.title, required this.icon, this.footer});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
     return Scaffold(
       backgroundColor: AppColors.bgSubtle,
       body: SafeArea(
@@ -33,7 +37,7 @@ class ComingSoonScreen extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary)),
                 const SizedBox(height: 4),
-                Text('Coming soon',
+                Text(AppStrings.t('common.comingSoon'),
                     style: GoogleFonts.inter(
                         fontSize: 13, color: AppColors.textSecondary)),
                 if (footer != null) ...[const SizedBox(height: 24), footer!],

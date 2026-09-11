@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/app_strings.dart';
+import '../core/enum_labels.dart';
+import '../core/locale_provider.dart';
 import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
@@ -36,6 +39,10 @@ class RoomFormScreen extends ConsumerStatefulWidget {
 }
 
 class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
+  // Giá trị LƯU DB/so khớp cố định tiếng Anh (không đổi theo ngôn ngữ) — chỉ
+  // NHÃN HIỂN THỊ được dịch qua `_fixedAmenityLabel()`. Nếu dịch thẳng danh
+  // sách này, dữ liệu cũ trong `tb_room.amenities` (luôn lưu tiếng Anh) sẽ
+  // không còn khớp so sánh (`_selectedAmenities.contains`) khi đổi ngôn ngữ.
   static const _fixedAmenities = ['A/C', 'Water heater', 'Balcony', 'Window'];
 
   final _formKey = GlobalKey<FormState>();
@@ -52,6 +59,14 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
   bool _houseFeesPrefilled = false;
   bool _isSaving = false;
   String? _errorText;
+
+  String _fixedAmenityLabel(String amenity) => switch (amenity) {
+        'A/C' => AppStrings.t('roomForm.amenityAc'),
+        'Water heater' => AppStrings.t('roomForm.amenityWaterHeater'),
+        'Balcony' => AppStrings.t('roomForm.amenityBalcony'),
+        'Window' => AppStrings.t('roomForm.amenityWindow'),
+        _ => amenity,
+      };
 
   @override
   void initState() {
@@ -117,16 +132,16 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add amenity'),
+        title: Text(AppStrings.t('roomForm.addAmenityDialogTitle')),
         content: TextField(controller: controller, autofocus: true),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel')),
+              child: Text(AppStrings.t('common.cancel'))),
           TextButton(
               onPressed: () =>
                   Navigator.of(context).pop(controller.text.trim()),
-              child: const Text('Add')),
+              child: Text(AppStrings.t('roomForm.addAmenityConfirm'))),
         ],
       ),
     );
@@ -212,8 +227,8 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
       ref.invalidate(roomStatusesByHouseProvider);
       if (mounted) context.pop();
     } catch (e) {
-      setState(
-          () => _errorText = 'Could not save this room. Please try again.\n$e');
+      setState(() =>
+          _errorText = AppStrings.t('roomForm.saveError', {'error': '$e'}));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -221,6 +236,7 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
     if (!widget.isEdit) {
       return _buildScaffold(context, null);
     }
@@ -232,8 +248,10 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
       },
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, st) =>
-          Scaffold(body: Center(child: Text('Could not load this room.\n$e'))),
+      error: (e, st) => Scaffold(
+          body: Center(
+              child:
+                  Text(AppStrings.t('roomForm.loadError', {'error': '$e'})))),
     );
   }
 
@@ -245,7 +263,9 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
       body: Column(
         children: [
           TopBar(
-            title: widget.isEdit ? 'Edit room' : 'Add room',
+            title: widget.isEdit
+                ? AppStrings.t('roomForm.titleEdit')
+                : AppStrings.t('roomForm.titleAdd'),
             subtitle: houseAsync.value?.name,
             onBack: () => context.pop(),
           ),
@@ -255,7 +275,7 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                 children: [
-                  const SectionLabel('Photos'),
+                  SectionLabel(AppStrings.t('roomForm.sectionPhotos')),
                   PhotoPickerRow(
                     controller: _photos,
                     resolveExistingUrl: (path) =>
@@ -263,15 +283,15 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                   ),
                   const SizedBox(height: 10),
                   AppTextField(
-                      label: 'Room no *',
+                      label: AppStrings.t('roomForm.roomNo'),
                       controller: _roomNoController,
-                      hintText: 'e.g. P.105'),
+                      hintText: AppStrings.t('roomForm.roomNoHint')),
                   const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
                         child: AppTextField(
-                          label: 'Area (m²)',
+                          label: AppStrings.t('roomForm.area'),
                           controller: _areaController,
                           keyboardType: TextInputType.number,
                           inputFormatters: const [ThousandsInputFormatter()],
@@ -280,7 +300,7 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: AppTextField(
-                          label: 'Reference rent *',
+                          label: AppStrings.t('roomForm.referenceRent'),
                           controller: _referenceRentController,
                           keyboardType: TextInputType.number,
                           inputFormatters: const [ThousandsInputFormatter()],
@@ -291,33 +311,35 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Text(
-                      'Reference rent only suggests the monthly rent when a contract is created — it is never the billed amount.',
+                      AppStrings.t('roomForm.referenceRentHint'),
                       style: GoogleFonts.inter(
                           fontSize: 12,
                           height: 17 / 12,
                           color: AppColors.textTertiary),
                     ),
                   ),
-                  const SectionLabel('Amenities'),
+                  SectionLabel(AppStrings.t('roomForm.sectionAmenities')),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
                     children: [
                       for (final a in [..._fixedAmenities, ..._customAmenities])
                         AppChip(
-                          label: a,
+                          label: _fixedAmenityLabel(a),
                           selected: _selectedAmenities.contains(a),
                           onTap: () => setState(() =>
                               _selectedAmenities.contains(a)
                                   ? _selectedAmenities.remove(a)
                                   : _selectedAmenities.add(a)),
                         ),
-                      AppChip(label: '+ Add', onTap: _addCustomAmenity),
+                      AppChip(
+                          label: AppStrings.t('roomForm.addAmenity'),
+                          onTap: _addCustomAmenity),
                     ],
                   ),
-                  const SectionLabel('Default recurring fees'),
+                  SectionLabel(AppStrings.t('roomForm.sectionRecurringFees')),
                   Text(
-                    "Pre-filled from this house's Default recurring fees when the room is created — freely editable afterward and never re-synced automatically.",
+                    AppStrings.t('roomForm.recurringFeesHint'),
                     style: GoogleFonts.inter(
                         fontSize: 12,
                         height: 17 / 12,
@@ -327,14 +349,15 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                   RecurringFeesEditor(controller: _fees),
                   const SizedBox(height: 10),
                   AppTextField(
-                    label: 'Status',
-                    initialValue: (room?.status ?? RoomStatus.empty).label,
+                    label: AppStrings.t('roomForm.status'),
+                    initialValue:
+                        roomStatusLabel(room?.status ?? RoomStatus.empty),
                     trailing: AppTextFieldTrailingIcon.select,
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Text(
-                      '"Occupied" is set automatically when an active contract exists — it cannot be chosen manually.',
+                      AppStrings.t('roomForm.statusHint'),
                       style: GoogleFonts.inter(
                           fontSize: 12,
                           height: 17 / 12,
@@ -342,7 +365,7 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                     ),
                   ),
                   AppTextField(
-                      label: 'Note',
+                      label: AppStrings.t('roomForm.note'),
                       controller: _noteController,
                       maxLines: 3,
                       textarea: true),
@@ -357,7 +380,7 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                     children: [
                       Expanded(
                         child: AppButton(
-                          label: 'Cancel',
+                          label: AppStrings.t('roomForm.cancel'),
                           style: AppButtonStyle.ghost,
                           onPressed: _isSaving ? null : () => context.pop(),
                         ),
@@ -365,7 +388,7 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                           child: AppButton(
-                              label: 'Save',
+                              label: AppStrings.t('roomForm.save'),
                               onPressed: _isSaving ? null : _save)),
                     ],
                   ),

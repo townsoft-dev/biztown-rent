@@ -9,6 +9,7 @@ class UserProfile {
   final String? email;
   final String? idNumber;
   final String status;
+  final String? avatarPath;
   final DateTime createdAt;
 
   const UserProfile({
@@ -18,6 +19,7 @@ class UserProfile {
     this.email,
     this.idNumber,
     required this.status,
+    this.avatarPath,
     required this.createdAt,
   });
 
@@ -29,6 +31,7 @@ class UserProfile {
       email: map['email'] as String?,
       idNumber: map['id_number'] as String?,
       status: map['status'] as String,
+      avatarPath: map['avatar_path'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
     );
   }

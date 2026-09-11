@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../shared/app_button.dart';
@@ -44,16 +46,18 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   Future<void> _save() async {
     setState(() => _errorText = null);
     if (_currentController.text.isEmpty) {
-      setState(() => _errorText = 'Enter your current password.');
+      setState(() =>
+          _errorText = AppStrings.t('changePassword.currentPasswordRequired'));
       return;
     }
     if (!_hasMinLength || !_hasNumber || !_hasUppercase) {
-      setState(() =>
-          _errorText = 'New password does not meet all requirements above.');
+      setState(
+          () => _errorText = AppStrings.t('changePassword.requirementsNotMet'));
       return;
     }
     if (_newController.text != _confirmController.text) {
-      setState(() => _errorText = 'Passwords do not match.');
+      setState(() =>
+          _errorText = AppStrings.t('changePassword.passwordsDoNotMatch'));
       return;
     }
     setState(() => _isSaving = true);
@@ -64,10 +68,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           );
       if (mounted) context.pop();
     } on AuthException {
-      setState(() => _errorText = 'Current password is incorrect.');
+      setState(() =>
+          _errorText = AppStrings.t('changePassword.currentPasswordIncorrect'));
     } catch (e) {
-      setState(
-          () => _errorText = 'Could not change password. Please try again.');
+      setState(() => _errorText = AppStrings.t('changePassword.saveError'));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -75,43 +79,46 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
     return Scaffold(
       backgroundColor: AppColors.bgDefault,
       body: Column(
         children: [
-          TopBar(title: 'Change password', onBack: () => context.pop()),
+          TopBar(
+              title: AppStrings.t('changePassword.title'),
+              onBack: () => context.pop()),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               children: [
                 AppTextField(
-                  label: 'Current password *',
+                  label: AppStrings.t('changePassword.currentPassword'),
                   controller: _currentController,
                   obscureText: true,
                 ),
                 const SizedBox(height: 10),
                 AppTextField(
-                  label: 'New password *',
+                  label: AppStrings.t('changePassword.newPassword'),
                   controller: _newController,
                   obscureText: true,
                   onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: 10),
                 AppTextField(
-                  label: 'Confirm new password *',
+                  label: AppStrings.t('changePassword.confirmNewPassword'),
                   controller: _confirmController,
                   obscureText: true,
                 ),
                 const SizedBox(height: 10),
                 DetailBlock(children: [
                   DetailRow(
-                      label: 'At least 8 characters',
+                      label: AppStrings.t('changePassword.reqMinLength'),
                       value: _hasMinLength ? '✓' : '—'),
                   DetailRow(
-                      label: 'At least 1 number',
+                      label: AppStrings.t('changePassword.reqNumber'),
                       value: _hasNumber ? '✓' : '—'),
                   DetailRow(
-                      label: 'At least 1 uppercase letter',
+                      label: AppStrings.t('changePassword.reqUppercase'),
                       value: _hasUppercase ? '✓' : '—',
                       showDivider: false),
                 ]),
@@ -126,7 +133,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   children: [
                     Expanded(
                       child: AppButton(
-                        label: 'Cancel',
+                        label: AppStrings.t('common.cancel'),
                         style: AppButtonStyle.ghost,
                         onPressed: _isSaving ? null : () => context.pop(),
                       ),
@@ -134,7 +141,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                         child: AppButton(
-                            label: 'Save',
+                            label: AppStrings.t('common.save'),
                             onPressed: _isSaving ? null : _save)),
                   ],
                 ),

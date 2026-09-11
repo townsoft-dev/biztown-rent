@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../core/app_strings.dart';
+import '../core/enum_labels.dart';
+import '../core/locale_provider.dart';
 import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
@@ -89,7 +92,7 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
       initialDatePickerMode: DatePickerMode.year,
-      helpText: 'Select reading period',
+      helpText: AppStrings.t('readingEntry.selectPeriodHelpText'),
     );
     if (picked == null) return;
     setState(() {
@@ -121,7 +124,7 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       if (text.isEmpty) continue;
       final value = parseFormattedNumber(text);
       if (value == null) {
-        setState(() => _errors[key] = 'Invalid number');
+        setState(() => _errors[key] = AppStrings.t('common.invalidNumber'));
         hadError = true;
         continue;
       }
@@ -141,7 +144,7 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
         setState(() => _errors[key] = e.message);
         hadError = true;
       } catch (e) {
-        setState(() => _errors[key] = 'Could not save — try again.');
+        setState(() => _errors[key] = AppStrings.t('common.saveRowError'));
         hadError = true;
       }
     }
@@ -153,12 +156,13 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       ref.invalidate(houseMeterEntriesProvider(_periodKey));
     }
     if (hadError) {
-      setState(() => _saveError =
-          'Some rooms could not be saved — check the highlighted fields.');
+      setState(
+          () => _saveError = AppStrings.t('readingEntry.partialSaveError'));
       return;
     }
     if (!savedAny) {
-      setState(() => _saveError = 'Enter at least 1 reading before saving.');
+      setState(
+          () => _saveError = AppStrings.t('readingEntry.noReadingsEntered'));
       return;
     }
     if (mounted) context.pop();
@@ -166,6 +170,7 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
     final houseAsync = ref.watch(houseProvider(widget.houseId));
     final entriesAsync = ref.watch(houseMeterEntriesProvider(_periodKey));
     final periodLabel = DateFormat('MMMM yyyy').format(_period);
@@ -175,14 +180,18 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       body: Column(
         children: [
           TopBar(
-            title: 'Record monthly readings',
+            title: AppStrings.t('readingEntry.title'),
             subtitle: houseAsync.maybeWhen(
               data: (house) {
                 final entries = entriesAsync.valueOrNull;
                 var progress = '';
                 if (entries != null) {
                   final p = _roomProgress(entries);
-                  progress = '  ·  ${p.done}/${p.total} rooms recorded';
+                  progress =
+                      '  ·  ${AppStrings.t('readingEntry.roomsRecordedSuffix', {
+                        'done': '${p.done}',
+                        'total': '${p.total}',
+                      })}';
                 }
                 return '${house.name}$progress  ·  ${DateFormat('MMM yyyy').format(_period)}';
               },
@@ -193,7 +202,9 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
           Expanded(
             child: entriesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(child: Text('Failed to load: $e')),
+              error: (e, st) => Center(
+                  child: Text(
+                      AppStrings.t('readingEntry.loadError', {'error': '$e'}))),
               data: (entries) {
                 final roomProgress = _roomProgress(entries);
                 return ListView(
@@ -205,7 +216,7 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                       // (bấm mũi tên hoặc chọn ngày), nếu không chữ hiển thị
                       // sẽ đứng yên dù `_period` đã đổi.
                       key: ValueKey(_period),
-                      label: 'Reading period *',
+                      label: AppStrings.t('readingEntry.readingPeriod'),
                       initialValue:
                           '$periodLabel  ·  ${DateFormat('dd/MM/yyyy').format(_period)}',
                       // Cố tình KHÔNG set `readOnly: true` — đúng Figma field
@@ -222,11 +233,12 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                         done: roomProgress.done, total: roomProgress.total),
                     const SizedBox(height: 10),
                     if (entries.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: Text('No rooms yet — add a room first.',
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Text(AppStrings.t('readingEntry.noRoomsYet'),
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.textSecondary)),
+                            style: const TextStyle(
+                                color: AppColors.textSecondary)),
                       ),
                     for (final entry in entries) ...[
                       MeterCard(
@@ -237,10 +249,16 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                             ? AppColors.accentOrange
                             : AppColors.info,
                         title:
-                            '${entry.room.roomNo}  ·  ${entry.utilityType.label}',
+                            '${entry.room.roomNo}  ·  ${utilityTypeLabel(entry.utilityType)}',
                         lastReadingLabel: entry.previous == null
-                            ? 'No previous reading yet'
-                            : 'Last reading: ${DateFormat('dd/MM/yyyy').format(entry.previous!.readingDate)} (${entry.previous!.readingType.label.toLowerCase()})',
+                            ? AppStrings.t('readingEntry.noPreviousReading')
+                            : AppStrings.t('readingEntry.lastReadingLabel', {
+                                'date': DateFormat('dd/MM/yyyy')
+                                    .format(entry.previous!.readingDate),
+                                'type': readingTypeLabel(
+                                        entry.previous!.readingType)
+                                    .toLowerCase(),
+                              }),
                         recorded: entry.recorded,
                         previousValue: entry.previous == null
                             ? '—'
@@ -249,7 +267,10 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                             entry.room.id, entry.utilityType,
                             prefill: entry.thisPeriod?.currentReading),
                         usageLabel: entry.thisPeriod?.usageAmount != null
-                            ? 'Usage this period: ${formatReadingValue(entry.thisPeriod!.usageAmount!)} ${entry.utilityType.unit}'
+                            ? AppStrings.t('readingEntry.usageThisPeriod', {
+                                'value':
+                                    '${formatReadingValue(entry.thisPeriod!.usageAmount!)} ${entry.utilityType.unit}',
+                              })
                             : null,
                         errorText:
                             _errors[_keyFor(entry.room.id, entry.utilityType)],
@@ -265,13 +286,14 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                       const SizedBox(height: 10),
                     ],
                     AppButton(
-                        label: _saving ? 'Saving…' : 'Save readings',
+                        label: _saving
+                            ? AppStrings.t('common.saving')
+                            : AppStrings.t('readingEntry.saveReadings'),
                         style: AppButtonStyle.accent,
                         onPressed: _saving || entries.isEmpty ? null : _save),
                     const SizedBox(height: 10),
-                    const AppBanner(
-                      message:
-                          'Saving stays on this screen. Invoices are created separately in the Bills tab. Empty rooms are still read — that usage belongs to the landlord, not to the next tenant.',
+                    AppBanner(
+                      message: AppStrings.t('readingEntry.banner'),
                     ),
                   ],
                 );

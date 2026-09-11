@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/app_strings.dart';
 import '../core/theme.dart';
 
 /// "Top bar" — component dùng chung (166:34 trên Figma), 3 variant: Title,
@@ -171,25 +172,27 @@ class TopBarActionMenuButton extends StatelessWidget {
         _TopBarMenuAction.delete => onDelete(),
       },
       itemBuilder: (context) => [
-        const PopupMenuItem(
+        PopupMenuItem(
           value: _TopBarMenuAction.edit,
           padding: EdgeInsets.zero,
           height: 0,
-          child: _ActionPopupRow(label: 'Edit', showDivider: true),
+          child: _ActionPopupRow(
+              label: AppStrings.t('common.edit'), showDivider: true),
         ),
         if (onRecordReadings != null)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: _TopBarMenuAction.recordReadings,
             padding: EdgeInsets.zero,
             height: 0,
             child: _ActionPopupRow(
-                label: 'Record monthly readings', showDivider: true),
+                label: AppStrings.t('common.recordMonthlyReadings'),
+                showDivider: true),
           ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: _TopBarMenuAction.delete,
           padding: EdgeInsets.zero,
           height: 0,
-          child: _ActionPopupRow(label: 'Delete'),
+          child: _ActionPopupRow(label: AppStrings.t('common.delete')),
         ),
       ],
       child: const _TopBarCircleIcon(

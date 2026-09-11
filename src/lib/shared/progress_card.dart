@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/theme.dart';
 
 /// "Progress card" (171:56 trên Figma) — thanh tiến độ ghi chỉ số ở H-06.
-class ProgressCard extends StatelessWidget {
-  final String label;
+class ProgressCard extends ConsumerWidget {
+  final String? label;
   final int done;
   final int total;
 
   const ProgressCard(
-      {super.key,
-      this.label = 'Recording progress',
-      required this.done,
-      required this.total});
+      {super.key, this.label, required this.done, required this.total});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
     final ratio = total == 0 ? 0.0 : done / total;
     return Container(
       width: double.infinity,
@@ -32,13 +33,17 @@ class ProgressCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label,
+              Text(label ?? AppStrings.t('readingEntry.recordingProgress'),
                   style: GoogleFonts.inter(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
                       height: 17 / 11.5,
                       color: AppColors.textSecondary)),
-              Text('$done/$total rooms',
+              Text(
+                  AppStrings.t('readingEntry.roomsCount', {
+                    'done': '$done',
+                    'total': '$total',
+                  }),
                   style: GoogleFonts.inter(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,

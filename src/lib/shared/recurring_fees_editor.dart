@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/number_format.dart';
 import '../data/recurring_fees_controller.dart';
 import 'app_button.dart';
@@ -8,13 +11,14 @@ import 'app_text_field.dart';
 /// Danh sách dòng phí định kỳ có thể thêm/xoá (H-02 & H-05 "Default recurring
 /// fees") — cùng 1 widget dùng chung cho cả House và Room form thay vì lặp lại
 /// UI ở từng màn (2 field Fee name/Amount + nút "+ Add fee").
-class RecurringFeesEditor extends StatelessWidget {
+class RecurringFeesEditor extends ConsumerWidget {
   final RecurringFeesController controller;
 
   const RecurringFeesEditor({super.key, required this.controller});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
@@ -27,12 +31,12 @@ class RecurringFeesEditor extends StatelessWidget {
                 children: [
                   Expanded(
                       child: AppTextField(
-                          label: 'Fee name',
+                          label: AppStrings.t('common.feeName'),
                           controller: controller.rows[i].nameController)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: AppTextField(
-                      label: 'Amount',
+                      label: AppStrings.t('common.amount'),
                       controller: controller.rows[i].amountController,
                       keyboardType: TextInputType.number,
                       inputFormatters: const [ThousandsInputFormatter()],
@@ -51,7 +55,7 @@ class RecurringFeesEditor extends StatelessWidget {
               const SizedBox(height: 10),
             ],
             AppButton(
-                label: '+ Add fee',
+                label: AppStrings.t('common.addFee'),
                 style: AppButtonStyle.ghost,
                 size: AppButtonSize.sm,
                 onPressed: controller.addRow),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/theme.dart';
 import 'list_card.dart';
 import 'segmented_control.dart';
@@ -8,15 +11,16 @@ import 'status_pill.dart';
 import 'top_bar.dart';
 
 /// S-03 — Notification Center (node 220:2270, lấy qua Figma MCP 09/09/2026).
-class NotificationCenterScreen extends StatefulWidget {
+class NotificationCenterScreen extends ConsumerStatefulWidget {
   const NotificationCenterScreen({super.key});
 
   @override
-  State<NotificationCenterScreen> createState() =>
+  ConsumerState<NotificationCenterScreen> createState() =>
       _NotificationCenterScreenState();
 }
 
-class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
+class _NotificationCenterScreenState
+    extends ConsumerState<NotificationCenterScreen> {
   int _tab = 0; // 0 = All, 1 = Unread
 
   static const _items = [
@@ -64,13 +68,14 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
     return Scaffold(
       backgroundColor: AppColors.bgSubtle,
       body: Column(
         children: [
           TopBar(
-            title: 'Notifications',
-            subtitle: '4 unread',
+            title: AppStrings.t('notifications.title'),
+            subtitle: AppStrings.t('notifications.unreadCount', {'count': '4'}),
             onBack: () => context.pop(),
             trailing: TopBarMoreButton(onTap: () {}),
           ),
@@ -79,7 +84,10 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               children: [
                 AppSegmentedControl(
-                    labels: const ['All', 'Unread'],
+                    labels: [
+                      AppStrings.t('notifications.tabAll'),
+                      AppStrings.t('notifications.tabUnread')
+                    ],
                     selectedIndex: _tab,
                     onChanged: (i) => setState(() => _tab = i)),
                 const SizedBox(height: 8),
@@ -88,7 +96,9 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                     thumbColor: item.thumbColor,
                     icon: item.icon,
                     title: item.title,
-                    trailing: StatusPill(text: 'Unread', style: item.badge),
+                    trailing: StatusPill(
+                        text: AppStrings.t('notifications.tabUnread'),
+                        style: item.badge),
                     body: item.body,
                     meta: item.meta,
                   ),

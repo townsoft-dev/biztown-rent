@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/theme.dart';
 
 /// "Bottom navigation" (166:103 trên Figma) — 4 tab cố định (Home/Tenant &
 /// Contract/Bills/Profile), giống hệt nhau ở mọi role. Dùng bên trong
 /// `AppShell` (core/router.dart), không tự đặt lẻ trong từng màn con.
-class AppBottomNav extends StatelessWidget {
+class AppBottomNav extends ConsumerWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
   const AppBottomNav(
       {super.key, required this.currentIndex, required this.onTap});
 
-  static const _tabs = [
-    (icon: Icons.home_rounded, label: 'Home'),
-    (icon: Icons.group_rounded, label: 'Tenant'),
-    (icon: Icons.receipt_long_rounded, label: 'Bills'),
-    (icon: Icons.person_rounded, label: 'Profile'),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Nhãn không còn là `static const` được nữa vì `AppStrings.t()` không
+    // phải hằng biên dịch — tính lại mỗi lần build, rẻ (4 lần tra JSON trong
+    // bộ nhớ) nên không cần tối ưu thêm.
+    ref.watch(languageProvider);
+    final tabs = [
+      (icon: Icons.home_rounded, label: AppStrings.t('bottomNav.home')),
+      (icon: Icons.group_rounded, label: AppStrings.t('bottomNav.tenant')),
+      (
+        icon: Icons.receipt_long_rounded,
+        label: AppStrings.t('bottomNav.bills')
+      ),
+      (icon: Icons.person_rounded, label: AppStrings.t('bottomNav.profile')),
+    ];
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.bgDefault,
@@ -36,7 +45,7 @@ class AppBottomNav extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(4, 8, 4, 14),
           child: Row(
             children: [
-              for (var i = 0; i < _tabs.length; i++)
+              for (var i = 0; i < tabs.length; i++)
                 Expanded(
                   child: InkWell(
                     onTap: () => onTap(i),
@@ -45,14 +54,14 @@ class AppBottomNav extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(_tabs[i].icon,
+                          Icon(tabs[i].icon,
                               size: 24,
                               color: i == currentIndex
                                   ? AppColors.primary
                                   : AppColors.textTertiary),
                           const SizedBox(height: 3),
                           Text(
-                            _tabs[i].label,
+                            tabs[i].label,
                             style: GoogleFonts.inter(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,

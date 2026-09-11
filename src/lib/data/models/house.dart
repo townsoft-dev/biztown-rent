@@ -1,5 +1,10 @@
 import 'recurring_fee.dart';
 
+/// Sentinel riêng cho `House.copyWith()` — phân biệt "không truyền tham số
+/// này" (giữ nguyên) với "truyền `null` thật" (xoá trắng field), điều mà
+/// `param ?? this.param` không làm được.
+const _unset = Object();
+
 /// `tb_house` (docs/DATABASE.md mục "tb_house"). `photos` là danh sách path
 /// object trong bucket Storage `property-photos` (không phải URL công khai —
 /// bucket private, phải qua `HouseRepository.signedPhotoUrl`).
@@ -74,12 +79,21 @@ class House {
 
   /// Bản sao đổi 1 vài field — dùng ở P-03 "Apply to all houses" (đổi bank
   /// account cho nhiều Nhà cùng lúc, giữ nguyên mọi field khác của từng Nhà).
+  ///
+  /// 4 field optional dưới đây dùng sentinel `_unset` thay vì mặc định
+  /// `null` — phát hiện lúc test lại P-03 (11/09/2026): xoá trắng "Account
+  /// name"/"Account number" trong form rồi Save tưởng đã xoá, nhưng
+  /// `ownerTaxCode ?? this.ownerTaxCode` kiểu cũ khiến truyền `null` (ý
+  /// "xoá trắng") bị hiểu nhầm thành "không đổi gì" (giữ nguyên giá trị cũ)
+  /// — 2 ý nghĩa hoàn toàn khác nhau nhưng `??` không phân biệt được. Sentinel
+  /// cho phép truyền `null` THẬT để xoá trắng, chỉ giữ nguyên khi bỏ qua
+  /// tham số hẳn.
   House copyWith({
     String? ownerFullName,
-    String? ownerTaxCode,
-    String? bankAccountName,
-    String? bankAccountNumber,
-    String? bankBin,
+    Object? ownerTaxCode = _unset,
+    Object? bankAccountName = _unset,
+    Object? bankAccountNumber = _unset,
+    Object? bankBin = _unset,
   }) {
     return House(
       id: id,
@@ -91,11 +105,17 @@ class House {
       ownerFullName: ownerFullName ?? this.ownerFullName,
       ownerPhone: ownerPhone,
       ownerIdNumber: ownerIdNumber,
-      ownerTaxCode: ownerTaxCode ?? this.ownerTaxCode,
+      ownerTaxCode: identical(ownerTaxCode, _unset)
+          ? this.ownerTaxCode
+          : ownerTaxCode as String?,
       ownerEmail: ownerEmail,
-      bankAccountName: bankAccountName ?? this.bankAccountName,
-      bankAccountNumber: bankAccountNumber ?? this.bankAccountNumber,
-      bankBin: bankBin ?? this.bankBin,
+      bankAccountName: identical(bankAccountName, _unset)
+          ? this.bankAccountName
+          : bankAccountName as String?,
+      bankAccountNumber: identical(bankAccountNumber, _unset)
+          ? this.bankAccountNumber
+          : bankAccountNumber as String?,
+      bankBin: identical(bankBin, _unset) ? this.bankBin : bankBin as String?,
       serviceFeeRatePerSqm: serviceFeeRatePerSqm,
       defaultElectricityPrice: defaultElectricityPrice,
       defaultWaterPrice: defaultWaterPrice,

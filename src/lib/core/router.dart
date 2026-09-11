@@ -23,6 +23,7 @@ import '../shared/login_screen.dart';
 import '../shared/notification_center_screen.dart';
 import '../shared/signup_screen.dart';
 import '../shared/splash_screen.dart';
+import 'app_strings.dart';
 import 'supabase_client.dart';
 
 /// Chuyển Stream thành Listenable để go_router tự redirect lại mỗi khi auth
@@ -144,8 +145,9 @@ final appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/tenant',
-              builder: (context, state) => const ComingSoonScreen(
-                  title: 'Tenant & Contract', icon: Icons.group_rounded),
+              builder: (context, state) => ComingSoonScreen(
+                  title: AppStrings.t('comingSoon.tenantContract'),
+                  icon: Icons.group_rounded),
             ),
           ],
         ),
@@ -153,8 +155,9 @@ final appRouter = GoRouter(
           routes: [
             GoRoute(
                 path: '/bills',
-                builder: (context, state) => const ComingSoonScreen(
-                    title: 'Bills', icon: Icons.receipt_long_rounded))
+                builder: (context, state) => ComingSoonScreen(
+                    title: AppStrings.t('comingSoon.bills'),
+                    icon: Icons.receipt_long_rounded))
           ],
         ),
         StatefulShellBranch(

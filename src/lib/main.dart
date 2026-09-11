@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/app_strings.dart';
+import 'core/locale_provider.dart';
 import 'core/router.dart';
 import 'core/supabase_client.dart';
 import 'core/theme.dart';
@@ -10,6 +11,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await AppStrings.init();
+    AppStrings.current = await resolveInitialLanguage();
   } catch (e) {
     debugPrint('AppStrings.init() lỗi, dùng key thô tạm thời: $e');
   }

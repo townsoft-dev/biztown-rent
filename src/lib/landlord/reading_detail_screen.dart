@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../core/app_strings.dart';
+import '../core/enum_labels.dart';
+import '../core/locale_provider.dart';
 import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
@@ -62,12 +65,13 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
   Future<void> _saveEdit(Reading latest) async {
     final value = parseFormattedNumber(_currentController.text);
     if (value == null) {
-      setState(() => _error = 'Invalid number');
+      setState(() => _error = AppStrings.t('common.invalidNumber'));
       return;
     }
     if (latest.previousReading != null && value < latest.previousReading!) {
-      setState(() => _error =
-          'Current reading must be ≥ previous (${formatReadingValue(latest.previousReading!)}).');
+      setState(() => _error = AppStrings.t(
+          'readingDetail.currentMustBeGreaterOrEqual',
+          {'value': formatReadingValue(latest.previousReading!)}));
       return;
     }
     setState(() {
@@ -92,7 +96,7 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
           (houseId: widget.houseId, periodYm: latest.periodYm)));
       if (mounted) setState(() => _editing = false);
     } catch (e) {
-      setState(() => _error = 'Could not save — try again.');
+      setState(() => _error = AppStrings.t('common.saveRowError'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -100,6 +104,7 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
     final houseAsync = ref.watch(houseProvider(widget.houseId));
     final roomAsync = ref.watch(roomProvider(widget.roomId));
     final historyAsync = ref.watch(readingHistoryProvider(_key));
@@ -109,22 +114,27 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
       body: Column(
         children: [
           TopBar(
-            title: 'Reading detail',
+            title: AppStrings.t('readingDetail.title'),
             subtitle: roomAsync.maybeWhen(
-                data: (room) =>
-                    '${room.roomNo}  ·  ${widget.utilityType.label}  ·  periodic reading',
-                orElse: () => widget.utilityType.label),
+                data: (room) => AppStrings.t('readingDetail.subtitle', {
+                      'room': room.roomNo,
+                      'utility': utilityTypeLabel(widget.utilityType),
+                    }),
+                orElse: () => utilityTypeLabel(widget.utilityType)),
             onBack: () => context.pop(),
           ),
           Expanded(
             child: historyAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(child: Text('Failed to load: $e')),
+              error: (e, st) => Center(
+                  child: Text(AppStrings.t(
+                      'readingDetail.loadError', {'error': '$e'}))),
               data: (history) {
                 if (history.isEmpty) {
-                  return const Center(
-                      child: Text('No readings recorded yet.',
-                          style: TextStyle(color: AppColors.textSecondary)));
+                  return Center(
+                      child: Text(AppStrings.t('readingDetail.noReadingsYet'),
+                          style:
+                              const TextStyle(color: AppColors.textSecondary)));
                 }
                 final latest = history.first;
                 return FutureBuilder<bool>(
@@ -165,55 +175,59 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
                                       color: AppColors.textPrimary)),
                             ),
                             StatusPill(
-                                text: latest.readingType.label,
+                                text: readingTypeLabel(latest.readingType),
                                 style: StatusBadgeStyle.sent),
                           ],
                         ),
                         const SizedBox(height: 10),
                         DetailBlock(children: [
                           DetailRow(
-                              label: 'Reading type',
+                              label: AppStrings.t('readingDetail.readingType'),
                               value:
-                                  '${latest.readingType.label}  (${latest.readingType.dbValue})'),
+                                  '${readingTypeLabel(latest.readingType)}  (${latest.readingType.dbValue})'),
                           DetailRow(
-                              label: 'Room',
+                              label: AppStrings.t('readingDetail.room'),
                               value:
                                   '${roomAsync.maybeWhen(data: (r) => r.roomNo, orElse: () => '')}  —  ${houseAsync.maybeWhen(data: (h) => h.name, orElse: () => '')}'),
                           DetailRow(
-                              label: 'Period',
+                              label: AppStrings.t('readingDetail.period'),
                               value: DateFormat('MMMM yyyy')
                                   .format(latest.periodYm)),
                           DetailRow(
-                              label: 'Previous → Current',
+                              label: AppStrings.t(
+                                  'readingDetail.previousToCurrent'),
                               value:
                                   '${latest.previousReading == null ? '—' : formatReadingValue(latest.previousReading!)} → ${formatReadingValue(latest.currentReading)}   ·   ${latest.usageAmount == null ? '—' : formatReadingValue(latest.usageAmount!)} ${widget.utilityType.unit}'),
                           DetailRow(
-                              label: 'Recorded by',
+                              label: AppStrings.t('readingDetail.recordedBy'),
                               value:
-                                  '${latest.recordedByPhone}  ·  ${DateFormat('dd/MM HH:mm').format(latest.createdAt)}${latest.photoUrl != null ? '  ·  photo ✓' : ''}'),
+                                  '${latest.recordedByPhone}  ·  ${DateFormat('dd/MM HH:mm').format(latest.createdAt)}${latest.photoUrl != null ? AppStrings.t('readingDetail.photoConfirmedSuffix') : ''}'),
                           DetailRow(
-                              label: 'Lock status',
+                              label: AppStrings.t('readingDetail.lockStatus'),
                               value: isLocked
-                                  ? 'Locked — used by an invoice'
-                                  : 'Unlocked — no invoice uses it yet',
+                                  ? AppStrings.t('readingDetail.locked')
+                                  : AppStrings.t('readingDetail.unlocked'),
                               showDivider: false),
                         ]),
                         if (isLocked) ...[
                           const SizedBox(height: 10),
-                          const AppBanner(
-                            message:
-                                'A reading locks as soon as any invoice other than Draft uses it. Locked readings cannot be edited; correct them with an adjustment line on the next invoice.',
+                          AppBanner(
+                            message: AppStrings.t('readingDetail.banner'),
                           ),
                         ],
                         SectionLabel(
-                            'Reading history  ·  ${roomAsync.maybeWhen(data: (r) => r.roomNo, orElse: () => '')} · ${widget.utilityType.label}'),
+                            AppStrings.t('readingDetail.sectionHistory', {
+                          'room': roomAsync.maybeWhen(
+                              data: (r) => r.roomNo, orElse: () => ''),
+                          'type': utilityTypeLabel(widget.utilityType),
+                        })),
                         DetailBlock(children: [
                           for (var i = 0; i < history.length; i++)
                             DetailRow(
                               label: DateFormat('dd/MM/yyyy')
                                   .format(history[i].readingDate),
                               value:
-                                  '${history[i].previousReading == null ? '—' : formatReadingValue(history[i].previousReading!)} → ${formatReadingValue(history[i].currentReading)} · ${history[i].usageAmount == null ? '—' : formatReadingValue(history[i].usageAmount!)} ${widget.utilityType.unit} · ${history[i].readingType.label}',
+                                  '${history[i].previousReading == null ? '—' : formatReadingValue(history[i].previousReading!)} → ${formatReadingValue(history[i].currentReading)} · ${history[i].usageAmount == null ? '—' : formatReadingValue(history[i].usageAmount!)} ${widget.utilityType.unit} · ${readingTypeLabel(history[i].readingType)}',
                               showDivider: i != history.length - 1,
                             ),
                         ]),
@@ -225,22 +239,24 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
                                 decimal: true),
                             inputFormatters: const [ThousandsInputFormatter()],
                             decoration: InputDecoration(
-                              labelText: 'Current reading',
+                              labelText: AppStrings.t(
+                                  'readingDetail.currentReadingFieldLabel'),
                               errorText: _error,
                             ),
                           ),
                           const SizedBox(height: 10),
                           TextField(
                             controller: _noteController,
-                            decoration: const InputDecoration(
-                                labelText: 'Reason for edit (optional)'),
+                            decoration: InputDecoration(
+                                labelText: AppStrings.t(
+                                    'readingDetail.reasonForEdit')),
                           ),
                           const SizedBox(height: 10),
                           Row(
                             children: [
                               Expanded(
                                 child: AppButton(
-                                    label: 'Cancel',
+                                    label: AppStrings.t('common.cancel'),
                                     style: AppButtonStyle.ghost,
                                     onPressed: _saving
                                         ? null
@@ -250,7 +266,9 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: AppButton(
-                                    label: _saving ? 'Saving…' : 'Save',
+                                    label: _saving
+                                        ? AppStrings.t('common.saving')
+                                        : AppStrings.t('common.save'),
                                     style: AppButtonStyle.accent,
                                     onPressed: _saving
                                         ? null
@@ -260,7 +278,7 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
                           ),
                         ] else
                           AppButton(
-                              label: 'Edit reading',
+                              label: AppStrings.t('readingDetail.editReading'),
                               style: AppButtonStyle.accent,
                               onPressed:
                                   isLocked ? null : () => _startEdit(latest)),

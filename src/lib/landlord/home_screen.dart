@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/room.dart';
@@ -20,6 +22,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
     final housesAsync = ref.watch(housesProvider);
     final statusesAsync = ref.watch(roomStatusesByHouseProvider);
     final nameAsync = ref.watch(currentUserNameProvider);
@@ -31,7 +34,7 @@ class HomeScreen extends ConsumerWidget {
       body: Column(
         children: [
           TopBar.home(
-            greeting: 'Hello,',
+            greeting: AppStrings.t('home.greeting'),
             name: nameAsync.valueOrNull ?? '',
             overview: housesAsync.hasValue && statusesAsync.hasValue
                 ? _overviewLine(
@@ -50,13 +53,13 @@ class HomeScreen extends ConsumerWidget {
                     allStatuses.where((s) => s == RoomStatus.empty).length;
 
                 if (houses.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(24),
                       child: Text(
-                        "You don't have any house yet. Tap + to add your first house.",
+                        AppStrings.t('home.emptyState'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textSecondary),
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     ),
                   );
@@ -69,14 +72,16 @@ class HomeScreen extends ConsumerWidget {
                       children: [
                         Expanded(
                             child: StatCard(
-                                value: '$total', label: 'Total rooms')),
+                                value: '$total',
+                                label: AppStrings.t('home.totalRooms'))),
                         const SizedBox(width: 8),
                         Expanded(
                             child: StatCard(
-                                value: '$empty', label: 'Empty rooms')),
+                                value: '$empty',
+                                label: AppStrings.t('home.emptyRooms'))),
                       ],
                     ),
-                    const SectionLabel('Your houses'),
+                    SectionLabel(AppStrings.t('home.yourHouses')),
                     for (final house in houses) ...[
                       Builder(builder: (context) {
                         final houseStatuses = statuses[house.id] ?? const [];
@@ -95,8 +100,10 @@ class HomeScreen extends ConsumerWidget {
                                 : StatusBadgeStyle.empty,
                           ),
                           body: house.address,
-                          meta:
-                              '${houseStatuses.length} rooms  ·  $occupied/${houseStatuses.length} occupied',
+                          meta: AppStrings.t('home.houseListMeta', {
+                            'total': '${houseStatuses.length}',
+                            'occupied': '$occupied',
+                          }),
                           onTap: () => context.push('/home/houses/${house.id}'),
                         );
                       }),
@@ -106,8 +113,8 @@ class HomeScreen extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) =>
-                  Center(child: Text('Could not load your houses.\n$e')),
+              error: (e, st) => Center(
+                  child: Text(AppStrings.t('home.loadError', {'error': '$e'}))),
             ),
           ),
         ],
@@ -119,6 +126,10 @@ class HomeScreen extends ConsumerWidget {
     final allStatuses = statuses.values.expand((e) => e);
     final total = allStatuses.length;
     final occupied = allStatuses.where((s) => s == RoomStatus.occupied).length;
-    return '$houseCount houses · $occupied/$total rooms occupied';
+    return AppStrings.t('home.overview', {
+      'houseCount': '$houseCount',
+      'occupied': '$occupied',
+      'total': '$total',
+    });
   }
 }

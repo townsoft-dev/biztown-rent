@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/number_format.dart';
 import '../core/theme.dart';
 import 'status_pill.dart';
@@ -8,7 +11,7 @@ import 'status_pill.dart';
 /// "Meter card" (171:160 trên Figma) — 1 thẻ / 1 đồng hồ (không phải / phòng)
 /// ở H-06 Entry. `previous` luôn readonly (chỉ số kỳ trước); `current` cho
 /// nhập tay. Chưa ghi (`recorded = false`) thì viền cam + badge "Not recorded".
-class MeterCard extends StatelessWidget {
+class MeterCard extends ConsumerWidget {
   final IconData icon;
   final Color iconColor;
   final String title;
@@ -37,7 +40,8 @@ class MeterCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(13),
@@ -86,7 +90,9 @@ class MeterCard extends StatelessWidget {
                   ),
                 ),
                 StatusPill(
-                    text: recorded ? 'Recorded' : 'Not recorded',
+                    text: recorded
+                        ? AppStrings.t('status.recorded')
+                        : AppStrings.t('status.notRecorded'),
                     style: recorded
                         ? StatusBadgeStyle.occupied
                         : StatusBadgeStyle.expiringSoon),
@@ -107,7 +113,7 @@ class MeterCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Previous',
+                    Text(AppStrings.t('readingEntry.previous'),
                         style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
@@ -135,7 +141,7 @@ class MeterCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Current',
+                    Text(AppStrings.t('readingEntry.current'),
                         style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
@@ -152,7 +158,7 @@ class MeterCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                           fontSize: 14, color: AppColors.textPrimary),
                       decoration: InputDecoration(
-                        hintText: 'Enter…',
+                        hintText: AppStrings.t('readingEntry.currentHint'),
                         errorText: errorText,
                         errorMaxLines: 3,
                         contentPadding: const EdgeInsets.symmetric(

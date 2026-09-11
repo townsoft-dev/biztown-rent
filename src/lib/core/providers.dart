@@ -37,6 +37,13 @@ final currentUserProfileProvider = FutureProvider<UserProfile>((ref) {
   return ref.watch(userRepositoryProvider).getCurrentProfile();
 });
 
+/// URL tạm để hiển thị avatar (P-01/P-02) — family theo path vì mỗi lần đổi
+/// ảnh, `avatar_path` đổi sang 1 UUID mới nên tự tạo key cache mới, không cần
+/// tự tay invalidate provider này khi đổi ảnh.
+final avatarUrlProvider = FutureProvider.family<String, String>((ref, path) {
+  return ref.watch(userRepositoryProvider).signedAvatarUrl(path);
+});
+
 /// "Main Manager" badge (P-01/P-02) — xem `UserRepository.isMainManager`.
 final isMainManagerProvider = FutureProvider<bool>((ref) {
   ref.watch(authStateProvider);

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../core/app_strings.dart';
 import '../core/theme.dart';
 import '../data/photo_picker_controller.dart';
 
@@ -26,12 +27,12 @@ class PhotoPickerRow extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_rounded),
-              title: const Text('Take photo'),
+              title: Text(AppStrings.t('common.takePhoto')),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_rounded),
-              title: const Text('Choose from gallery'),
+              title: Text(AppStrings.t('common.chooseFromGallery')),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
           ],

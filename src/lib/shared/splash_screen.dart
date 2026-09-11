@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/app_strings.dart';
 import '../core/supabase_client.dart';
 import '../core/theme.dart';
 
@@ -42,9 +43,9 @@ class _SplashScreenState extends State<SplashScreen> {
                 'assets/logo/biztown-rent-manager-lockup-on-navy.svg',
                 width: 280),
             const SizedBox(height: 12),
-            const Text(
-              'Houses and Rooms Renting Management Tool',
-              style: TextStyle(
+            Text(
+              AppStrings.t('splash.tagline'),
+              style: const TextStyle(
                   color: Color(0xFFC9CEE0), fontSize: 13, height: 18 / 13),
               textAlign: TextAlign.center,
             ),

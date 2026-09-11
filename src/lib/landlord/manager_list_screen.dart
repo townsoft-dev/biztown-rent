@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../shared/app_fab.dart';
@@ -17,6 +19,7 @@ class ManagerListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
     final managersAsync = ref.watch(managerAccountsProvider);
     final ownedIdsAsync = ref.watch(ownedHouseIdsProvider);
     final totalHouses = ownedIdsAsync.valueOrNull?.length ?? 0;
@@ -27,18 +30,20 @@ class ManagerListScreen extends ConsumerWidget {
           AppFab(onPressed: () => context.push('/profile/managers/new')),
       body: Column(
         children: [
-          TopBar(title: 'Manager accounts', onBack: () => context.pop()),
+          TopBar(
+              title: AppStrings.t('managerList.title'),
+              onBack: () => context.pop()),
           Expanded(
             child: managersAsync.when(
               data: (managers) {
                 if (managers.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(24),
                       child: Text(
-                        "No manager accounts yet. Tap + to invite someone to help manage your houses.",
+                        AppStrings.t('managerList.emptyState'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textSecondary),
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     ),
                   );
@@ -46,7 +51,7 @@ class ManagerListScreen extends ConsumerWidget {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                   children: [
-                    const SectionLabel('Managers'),
+                    SectionLabel(AppStrings.t('managerList.sectionManagers')),
                     for (final manager in managers) ...[
                       ListCard(
                         thumbColor: AppColors.primary,
@@ -54,15 +59,20 @@ class ManagerListScreen extends ConsumerWidget {
                         initials: manager.initials,
                         title: manager.fullName,
                         trailing: StatusPill(
-                          text: manager.isActive ? 'Active' : 'Disabled',
+                          text: manager.isActive
+                              ? AppStrings.t('managerList.statusActive')
+                              : AppStrings.t('managerList.statusDisabled'),
                           style: manager.isActive
                               ? StatusBadgeStyle.active
                               : StatusBadgeStyle.disabled,
                         ),
                         body: manager.phone,
                         meta: manager.houseIds.isEmpty
-                            ? 'No house granted'
-                            : '${manager.houseIds.length} of $totalHouses houses granted',
+                            ? AppStrings.t('managerList.noHouseGranted')
+                            : AppStrings.t('managerList.housesGranted', {
+                                'count': '${manager.houseIds.length}',
+                                'total': '$totalHouses',
+                              }),
                         onTap: () =>
                             context.push('/profile/managers/${manager.phone}'),
                       ),
@@ -72,8 +82,9 @@ class ManagerListScreen extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) =>
-                  Center(child: Text('Could not load manager accounts.\n$e')),
+              error: (e, st) => Center(
+                  child: Text(
+                      AppStrings.t('managerList.loadError', {'error': '$e'}))),
             ),
           ),
         ],

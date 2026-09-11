@@ -4,11 +4,15 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/app_strings.dart';
+import '../core/enum_labels.dart';
+import '../core/locale_provider.dart';
 import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/house.dart';
 import '../data/models/room.dart';
+import '../data/models/vn_bank.dart';
 import '../shared/app_chip.dart';
 import '../shared/app_fab.dart';
 import '../shared/confirm_dialog.dart';
@@ -38,6 +42,7 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
     final houseAsync = ref.watch(houseProvider(widget.houseId));
     final roomsAsync = ref.watch(roomsProvider(widget.houseId));
 
@@ -57,8 +62,11 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
                   rooms.where((r) => r.status == RoomStatus.occupied).length;
               return TopBar(
                 title: house.name,
-                subtitle:
-                    '${house.address} · $occupied/${rooms.length} rooms occupied',
+                subtitle: AppStrings.t('roomList.headerSubtitle', {
+                  'address': house.address,
+                  'occupied': '$occupied',
+                  'total': '${rooms.length}',
+                }),
                 onBack: () => context.pop(),
                 trailing: TopBarActionMenuButton(
                   onEdit: () =>
@@ -70,8 +78,9 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
               );
             },
             loading: () => TopBar(title: '', onBack: () => context.pop()),
-            error: (e, st) =>
-                TopBar(title: 'Error', onBack: () => context.pop()),
+            error: (e, st) => TopBar(
+                title: AppStrings.t('common.error'),
+                onBack: () => context.pop()),
           ),
           Expanded(
             child: houseAsync.when(
@@ -79,7 +88,10 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                 children: [
                   AppSegmentedControl(
-                      labels: const ['House detail', 'Rooms'],
+                      labels: [
+                        AppStrings.t('roomList.tabHouseDetail'),
+                        AppStrings.t('roomList.tabRooms'),
+                      ],
                       selectedIndex: _tab,
                       onChanged: (i) => setState(() => _tab = i)),
                   const SizedBox(height: 8),
@@ -91,8 +103,9 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
                 ],
               ),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) =>
-                  Center(child: Text('Could not load this house.\n$e')),
+              error: (e, st) => Center(
+                  child: Text(
+                      AppStrings.t('roomList.loadError', {'error': '$e'}))),
             ),
           ),
         ],
@@ -103,10 +116,9 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
   Future<void> _confirmDeleteHouse(BuildContext context) async {
     final confirmed = await ConfirmDialog.show(
       context,
-      title: 'Delete house?',
-      description:
-          'Are you sure you want to delete this house? This action cannot be undone.',
-      confirmLabel: 'Delete',
+      title: AppStrings.t('roomList.deleteHouseTitle'),
+      description: AppStrings.t('roomList.deleteHouseDescription'),
+      confirmLabel: AppStrings.t('common.delete'),
     );
     if (!confirmed || !context.mounted) return;
     try {
@@ -122,17 +134,24 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
       final blocked = e.code == '23503'; // foreign_key_violation
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(blocked
-            ? "Can't delete: this house still has rooms with contract history."
-            : 'Could not delete this house. Please try again.'),
+            ? AppStrings.t('roomList.deleteBlockedSnackbar')
+            : AppStrings.t('roomList.deleteFailedSnackbar')),
       ));
     }
   }
 
   List<Widget> _buildHouseDetail(House house, List<Room> rooms) {
     final occupied = rooms.where((r) => r.status == RoomStatus.occupied).length;
-    final bankAccount = [house.bankAccountName, house.bankAccountNumber]
-        .where((e) => e != null && e.isNotEmpty)
-        .join(' · ');
+    // Thiếu tên ngân hàng ở đây là bug thật (phát hiện lúc test lại toàn bộ
+    // luồng P-0x lần cuối 11/09/2026) — P-03 đã lưu/hiển thị đúng `bankBin`
+    // từ lâu, nhưng field "Payout bank account" ở H-03 chưa bao giờ ghép
+    // tên ngân hàng vào, chỉ ghép Account name/number. Khớp đúng cách ghép
+    // đã dùng ở `payout_bank_account_screen.dart`.
+    final bankAccount = [
+      VnBank.byBin(house.bankBin)?.name,
+      house.bankAccountName,
+      house.bankAccountNumber
+    ].where((e) => e != null && e.isNotEmpty).join(' · ');
     return [
       _HousePhoto(house: house),
       const SizedBox(height: 8),
@@ -142,26 +161,41 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
       Text(house.address,
           style: GoogleFonts.inter(
               fontSize: 13, height: 18 / 13, color: Colors.black)),
-      const SectionLabel('House info'),
+      SectionLabel(AppStrings.t('roomList.sectionHouseInfo')),
       if (house.description != null)
-        DetailRow(label: 'Description', value: house.description!),
+        DetailRow(
+            label: AppStrings.t('roomList.description'),
+            value: house.description!),
       DetailRow(
-          label: 'Rooms',
-          value: '${rooms.length} rooms  ·  $occupied/${rooms.length} occupied',
+          label: AppStrings.t('roomList.rooms'),
+          value: AppStrings.t('roomList.roomsSummary',
+              {'total': '${rooms.length}', 'occupied': '$occupied'}),
           showDivider: false),
-      const SectionLabel('Owner'),
-      DetailRow(label: 'Owner Name', value: house.ownerFullName),
-      if (house.ownerPhone != null)
-        DetailRow(label: 'Phone number', value: house.ownerPhone!),
-      if (house.ownerIdNumber != null)
-        DetailRow(label: 'Owner ID number', value: house.ownerIdNumber!),
-      if (house.ownerTaxCode != null)
-        DetailRow(label: 'Owner tax code', value: house.ownerTaxCode!),
-      if (bankAccount.isNotEmpty)
-        DetailRow(label: 'Payout bank account', value: bankAccount),
-      DetailRow(label: 'Owner email', value: house.ownerEmail ?? '—'),
+      SectionLabel(AppStrings.t('roomList.sectionOwner')),
       DetailRow(
-        label: 'Manager',
+          label: AppStrings.t('roomList.ownerName'),
+          value: house.ownerFullName),
+      if (house.ownerPhone != null)
+        DetailRow(
+            label: AppStrings.t('roomList.phoneNumber'),
+            value: house.ownerPhone!),
+      if (house.ownerIdNumber != null)
+        DetailRow(
+            label: AppStrings.t('roomList.ownerIdNumber'),
+            value: house.ownerIdNumber!),
+      if (house.ownerTaxCode != null)
+        DetailRow(
+            label: AppStrings.t('roomList.ownerTaxCode'),
+            value: house.ownerTaxCode!),
+      if (bankAccount.isNotEmpty)
+        DetailRow(
+            label: AppStrings.t('roomList.payoutBankAccount'),
+            value: bankAccount),
+      DetailRow(
+          label: AppStrings.t('roomList.ownerEmail'),
+          value: house.ownerEmail ?? '—'),
+      DetailRow(
+        label: AppStrings.t('roomList.manager'),
         value: ref.watch(houseManagersProvider(house.id)).when(
               data: (names) {
                 if (names.isNotEmpty) return names.join(', ');
@@ -177,19 +211,19 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
             ),
         showDivider: false,
       ),
-      const SectionLabel('Pricing & fees defaults'),
+      SectionLabel(AppStrings.t('roomList.sectionPricing')),
       DetailRow(
-          label: 'Electricity /kWh',
+          label: AppStrings.t('roomList.electricityPrice'),
           value: house.defaultElectricityPrice == null
               ? '—'
               : formatNumber(house.defaultElectricityPrice!)),
       DetailRow(
-          label: 'Water /m³',
+          label: AppStrings.t('roomList.waterPrice'),
           value: house.defaultWaterPrice == null
               ? '—'
               : formatNumber(house.defaultWaterPrice!)),
       DetailRow(
-        label: 'Recurring fees',
+        label: AppStrings.t('roomList.recurringFees'),
         value: house.recurringFees.isEmpty
             ? '—'
             : house.recurringFees
@@ -221,22 +255,26 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
             child: Row(
               children: [
                 AppChip(
-                    label: 'All (${rooms.length})',
+                    label: AppStrings.t(
+                        'roomList.filterAll', {'count': '${rooms.length}'}),
                     selected: _filter == 0,
                     onTap: () => setState(() => _filter = 0)),
                 const SizedBox(width: 6),
                 AppChip(
-                    label: 'Empty ($emptyCount)',
+                    label: AppStrings.t(
+                        'roomList.filterEmpty', {'count': '$emptyCount'}),
                     selected: _filter == 1,
                     onTap: () => setState(() => _filter = 1)),
                 const SizedBox(width: 6),
                 AppChip(
-                    label: 'Occupied ($occupiedCount)',
+                    label: AppStrings.t(
+                        'roomList.filterOccupied', {'count': '$occupiedCount'}),
                     selected: _filter == 2,
                     onTap: () => setState(() => _filter = 2)),
                 const SizedBox(width: 6),
                 AppChip(
-                    label: 'Under repair ($underRepairCount)',
+                    label: AppStrings.t('roomList.filterUnderRepair',
+                        {'count': '$underRepairCount'}),
                     selected: _filter == 3,
                     onTap: () => setState(() => _filter = 3)),
               ],
@@ -244,11 +282,11 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
           ),
           const SizedBox(height: 8),
           if (rooms.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text('No rooms yet. Tap + to add the first room.',
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(AppStrings.t('roomList.noRoomsYet'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary)),
+                  style: const TextStyle(color: AppColors.textSecondary)),
             ),
           for (final room in filtered) ...[
             ListCard(
@@ -260,15 +298,21 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
               icon: Icons.bed_rounded,
               title: room.roomNo,
               trailing: StatusPill(
-                text: room.status.label,
+                text: roomStatusLabel(room.status),
                 style: switch (room.status) {
                   RoomStatus.occupied => StatusBadgeStyle.occupied,
                   RoomStatus.empty => StatusBadgeStyle.empty,
                   RoomStatus.underRepair => StatusBadgeStyle.underRepair,
                 },
               ),
-              body:
-                  '${formatNumber(room.areaSqm)} m² · ${room.baseRent != null ? '${formatNumber(room.baseRent!)} VND/month (reference)' : '— VND/month (reference)'}',
+              body: AppStrings.t('roomList.roomAreaRent', {
+                'area': formatNumber(room.areaSqm),
+                'rentLine': AppStrings.t('roomList.rentReferenceValue', {
+                  'rent': room.baseRent != null
+                      ? formatNumber(room.baseRent!)
+                      : '—',
+                }),
+              }),
               onTap: () => context
                   .push('/home/houses/${widget.houseId}/rooms/${room.id}'),
             ),
@@ -277,7 +321,9 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
         ];
       },
       loading: () => [const Center(child: CircularProgressIndicator())],
-      error: (e, st) => [Text('Could not load rooms.\n$e')],
+      error: (e, st) => [
+        Text(AppStrings.t('roomList.loadRoomsError', {'error': '$e'}))
+      ],
     );
   }
 }

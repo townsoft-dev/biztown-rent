@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/theme.dart';
 import 'app_button.dart';
 
@@ -9,10 +12,13 @@ import 'app_button.dart';
 /// Luôn hiện qua `ConfirmDialog.show(...)` — không tự `showDialog` thủ công
 /// từng màn, và không bao giờ xoá/phá huỷ trực tiếp khi bấm nút gốc mà chưa
 /// qua xác nhận này.
-class ConfirmDialog extends StatelessWidget {
+class ConfirmDialog extends ConsumerWidget {
   final String title;
   final String description;
-  final String cancelLabel;
+  // `null` = dùng mặc định "Cancel" đã dịch (`common.cancel`) — để `null`
+  // thay vì literal `'Cancel'` vì tham số mặc định của constructor PHẢI là
+  // hằng biên dịch, không gọi được `AppStrings.t()` trực tiếp ở đây.
+  final String? cancelLabel;
   final String confirmLabel;
   final AppButtonStyle confirmStyle;
 
@@ -20,7 +26,7 @@ class ConfirmDialog extends StatelessWidget {
     super.key,
     required this.title,
     required this.description,
-    this.cancelLabel = 'Cancel',
+    this.cancelLabel,
     required this.confirmLabel,
     this.confirmStyle = AppButtonStyle.danger,
   });
@@ -30,7 +36,7 @@ class ConfirmDialog extends StatelessWidget {
     BuildContext context, {
     required String title,
     required String description,
-    String cancelLabel = 'Cancel',
+    String? cancelLabel,
     required String confirmLabel,
     AppButtonStyle confirmStyle = AppButtonStyle.danger,
   }) async {
@@ -49,7 +55,8 @@ class ConfirmDialog extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 36),
@@ -87,7 +94,7 @@ class ConfirmDialog extends StatelessWidget {
               children: [
                 Expanded(
                   child: AppButton(
-                      label: cancelLabel,
+                      label: cancelLabel ?? AppStrings.t('common.cancel'),
                       style: AppButtonStyle.ghost,
                       onPressed: () => Navigator.of(context).pop(false)),
                 ),

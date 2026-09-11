@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
@@ -203,7 +205,7 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
       if (mounted) context.pop();
     } catch (e) {
       setState(() =>
-          _errorText = 'Could not save this house. Please try again.\n$e');
+          _errorText = AppStrings.t('houseForm.saveError', {'error': '$e'}));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -211,6 +213,7 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
     if (!_isEdit) {
       return _buildScaffold(context, null);
     }
@@ -222,8 +225,10 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
       },
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, st) =>
-          Scaffold(body: Center(child: Text('Could not load this house.\n$e'))),
+      error: (e, st) => Scaffold(
+          body: Center(
+              child:
+                  Text(AppStrings.t('houseForm.loadError', {'error': '$e'})))),
     );
   }
 
@@ -233,7 +238,9 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
       body: Column(
         children: [
           TopBar(
-            title: _isEdit ? 'Edit house' : 'Add house',
+            title: _isEdit
+                ? AppStrings.t('houseForm.titleEdit')
+                : AppStrings.t('houseForm.titleAdd'),
             subtitle: house?.name,
             onBack: () => context.pop(),
           ),
@@ -243,7 +250,7 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                 children: [
-                  const SectionLabel('House info'),
+                  SectionLabel(AppStrings.t('houseForm.sectionHouseInfo')),
                   PhotoPickerRow(
                     controller: _photos,
                     resolveExistingUrl: (path) =>
@@ -251,33 +258,33 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
                   ),
                   const SizedBox(height: 10),
                   AppTextField(
-                    label: 'Name *',
+                    label: AppStrings.t('houseForm.name'),
                     controller: _nameController,
-                    hintText: 'e.g. Nha tro Binh An',
+                    hintText: AppStrings.t('houseForm.nameHint'),
                   ),
                   const SizedBox(height: 10),
                   AppTextField(
-                    label: 'Address *',
+                    label: AppStrings.t('houseForm.address'),
                     controller: _addressController,
-                    hintText: 'Street, ward, district, city',
+                    hintText: AppStrings.t('houseForm.addressHint'),
                   ),
                   const SizedBox(height: 10),
                   AppTextField(
-                      label: 'Description',
+                      label: AppStrings.t('houseForm.description'),
                       controller: _descriptionController,
                       maxLines: 3),
                   const SizedBox(height: 6),
-                  const SectionLabel('Owner info · Main Manager only'),
+                  SectionLabel(AppStrings.t('houseForm.sectionOwnerInfo')),
                   Row(
                     children: [
                       Expanded(
                           child: AppTextField(
-                              label: 'Owner full name',
+                              label: AppStrings.t('houseForm.ownerFullName'),
                               controller: _ownerFullNameController)),
                       const SizedBox(width: 8),
                       Expanded(
                         child: AppTextField(
-                          label: 'Owner phone',
+                          label: AppStrings.t('houseForm.ownerPhone'),
                           controller: _ownerPhoneController,
                           keyboardType: TextInputType.phone,
                         ),
@@ -289,22 +296,22 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
                     children: [
                       Expanded(
                           child: AppTextField(
-                              label: 'Owner ID number',
+                              label: AppStrings.t('houseForm.ownerIdNumber'),
                               controller: _ownerIdNumberController)),
                       const SizedBox(width: 8),
                       Expanded(
                           child: AppTextField(
-                              label: 'Owner tax code',
+                              label: AppStrings.t('houseForm.ownerTaxCode'),
                               controller: _ownerTaxCodeController)),
                     ],
                   ),
                   const SizedBox(height: 10),
                   AppTextField(
-                      label: 'Owner bank account *',
+                      label: AppStrings.t('houseForm.ownerBankAccount'),
                       controller: _bankAccountController),
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: Text('Printed on every invoice for this house.',
+                    child: Text(AppStrings.t('houseForm.ownerBankAccountHint'),
                         style: GoogleFonts.inter(
                             fontSize: 12,
                             height: 17 / 12,
@@ -312,16 +319,16 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
                   ),
                   const SizedBox(height: 10),
                   AppTextField(
-                      label: 'Owner email',
+                      label: AppStrings.t('houseForm.ownerEmail'),
                       controller: _ownerEmailController,
                       keyboardType: TextInputType.emailAddress),
                   const SizedBox(height: 6),
-                  const SectionLabel('Default unit prices'),
+                  SectionLabel(AppStrings.t('houseForm.sectionUnitPrices')),
                   Row(
                     children: [
                       Expanded(
                         child: AppTextField(
-                          label: 'Electricity /kWh',
+                          label: AppStrings.t('houseForm.electricityPrice'),
                           controller: _electricityPriceController,
                           keyboardType: TextInputType.number,
                           inputFormatters: const [ThousandsInputFormatter()],
@@ -330,7 +337,7 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: AppTextField(
-                          label: 'Water /m³',
+                          label: AppStrings.t('houseForm.waterPrice'),
                           controller: _waterPriceController,
                           keyboardType: TextInputType.number,
                           inputFormatters: const [ThousandsInputFormatter()],
@@ -339,13 +346,10 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  const SectionLabel('Default recurring fees'),
+                  SectionLabel(AppStrings.t('houseForm.recurringFees')),
                   RecurringFeesEditor(controller: _fees),
                   const SizedBox(height: 10),
-                  const AppBanner(
-                    message:
-                        "Unit prices auto-fill a new contract (invoices always use the price on the contract version); recurring fees auto-fill a new room's own recurring fees, which can then be edited per room.",
-                  ),
+                  AppBanner(message: AppStrings.t('houseForm.banner')),
                   if (_errorText != null) ...[
                     const SizedBox(height: 8),
                     Text(_errorText!,
@@ -357,7 +361,7 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
                     children: [
                       Expanded(
                         child: AppButton(
-                          label: 'Cancel',
+                          label: AppStrings.t('houseForm.cancel'),
                           style: AppButtonStyle.ghost,
                           onPressed: _isSaving ? null : () => context.pop(),
                         ),
@@ -365,7 +369,7 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                           child: AppButton(
-                              label: 'Save',
+                              label: AppStrings.t('houseForm.save'),
                               onPressed: _isSaving ? null : _save)),
                     ],
                   ),

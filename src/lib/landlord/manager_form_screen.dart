@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/auth_repository.dart';
@@ -97,11 +99,10 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
       if (mounted) context.pop();
     } on PostgrestException catch (e) {
       setState(() => _errorText = e.code == '23505'
-          ? 'One of the selected houses already has an active manager. Please go back and try again.'
-          : 'Could not save this manager. Please try again.');
+          ? AppStrings.t('managerForm.conflictError')
+          : AppStrings.t('managerForm.saveError'));
     } catch (e) {
-      setState(
-          () => _errorText = 'Could not save this manager. Please try again.');
+      setState(() => _errorText = AppStrings.t('managerForm.saveError'));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -110,10 +111,9 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
   Future<void> _remove() async {
     final confirmed = await ConfirmDialog.show(
       context,
-      title: 'Remove manager account?',
-      description:
-          'Are you sure you want to remove this manager account from your houses? This action cannot be undone.',
-      confirmLabel: 'Remove',
+      title: AppStrings.t('managerForm.removeConfirmTitle'),
+      description: AppStrings.t('managerForm.removeConfirmDescription'),
+      confirmLabel: AppStrings.t('managerForm.remove'),
     );
     if (!confirmed || !mounted) return;
     setState(() => _isSaving = true);
@@ -124,7 +124,7 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
     } catch (e) {
       setState(() {
         _isSaving = false;
-        _errorText = 'Could not remove this manager. Please try again.';
+        _errorText = AppStrings.t('managerForm.removeError');
       });
     }
   }
@@ -140,6 +140,7 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
     final managersAsync = _isEdit
         ? ref.watch(managerAccountsProvider)
         : const AsyncValue<List<ManagerAccount>>.data([]);
@@ -147,6 +148,7 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
     final housesAsync = ref.watch(housesProvider);
     final roomStatusesAsync = ref.watch(roomStatusesByHouseProvider);
     final activeManagersAsync = ref.watch(activeManagerByHouseProvider);
+    final myPhone = ref.watch(currentUserProfileProvider).valueOrNull?.phone;
 
     ManagerAccount? manager;
     if (_isEdit) {
@@ -166,7 +168,9 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
       backgroundColor: AppColors.bgDefault,
       body: Column(
         children: [
-          TopBar(title: 'Manager account', onBack: () => context.pop()),
+          TopBar(
+              title: AppStrings.t('managerForm.title'),
+              onBack: () => context.pop()),
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -185,12 +189,13 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                       child: ListView(
                         padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                         children: [
-                          const SectionLabel('Manager profile'),
+                          SectionLabel(
+                              AppStrings.t('managerForm.sectionProfile')),
                           AppTextField(
-                            label: 'Full name *',
+                            label: AppStrings.t('managerForm.fullName'),
                             controller: _fullNameController,
                             validator: (v) => (v == null || v.trim().isEmpty)
-                                ? 'Required'
+                                ? AppStrings.t('common.required')
                                 : null,
                           ),
                           const SizedBox(height: 10),
@@ -203,7 +208,7 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                           // `IntrinsicHeight` + `stretch` ép cả 2 ô LUÔN cùng
                           // 1 chiều cao thật sự, không phụ thuộc tính toán
                           // tay dễ sai giữa `TextFormField` và `ToggleRow`.
-                          const FieldLabel('Role'),
+                          FieldLabel(AppStrings.t('managerForm.role')),
                           IntrinsicHeight(
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -218,7 +223,7 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                                       borderRadius: BorderRadius.circular(
                                           AppRadii.inputField),
                                     ),
-                                    child: Text('Manager',
+                                    child: Text(AppStrings.t('common.manager'),
                                         style: GoogleFonts.inter(
                                             fontSize: 14,
                                             color: AppColors.textSecondary)),
@@ -227,7 +232,8 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: ToggleRow(
-                                    label: 'Account active',
+                                    label: AppStrings.t(
+                                        'managerForm.accountActive'),
                                     value: _isActive,
                                     onChanged: (v) =>
                                         setState(() => _isActive = v),
@@ -239,13 +245,14 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                           const SizedBox(height: 10),
                           if (_isEdit) ...[
                             AppTextField(
-                              label: 'Phone (login credential) *',
+                              label: AppStrings.t('managerForm.phone'),
                               initialValue: widget.phone,
                               readOnly: true,
                             ),
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Text('The phone cannot be changed.',
+                              child: Text(
+                                  AppStrings.t('managerForm.phoneReadonlyNote'),
                                   style: GoogleFonts.inter(
                                       fontSize: 12,
                                       height: 17 / 12,
@@ -253,23 +260,37 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                             ),
                           ] else
                             AppTextField(
-                              label: 'Phone (login credential) *',
+                              label: AppStrings.t('managerForm.phone'),
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
-                              hintText: 'e.g. 0988 111 222',
-                              validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? 'Required'
-                                  : null,
+                              hintText: AppStrings.t('managerForm.phoneHint'),
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) {
+                                  return AppStrings.t('common.required');
+                                }
+                                final digits =
+                                    v.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                                if (digits.length < 9 || digits.length > 11) {
+                                  return AppStrings.t('common.invalidPhone');
+                                }
+                                if (myPhone != null &&
+                                    AuthRepository.normalizePhoneForDb(v) ==
+                                        myPhone) {
+                                  return AppStrings.t(
+                                      'managerForm.cannotInviteSelf');
+                                }
+                                return null;
+                              },
                             ),
                           const SizedBox(height: 10),
                           AppTextField(
-                            label: 'ID number',
+                            label: AppStrings.t('managerForm.idNumber'),
                             controller: _idNumberController,
                           ),
                           if (_isEdit && _joinedAt != null) ...[
                             const SizedBox(height: 10),
                             AppTextField(
-                              label: 'Join from',
+                              label: AppStrings.t('managerForm.joinFrom'),
                               initialValue:
                                   DateFormat('dd/MM/yyyy').format(_joinedAt!),
                               readOnly: true,
@@ -277,22 +298,22 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                           ],
                           const SizedBox(height: 10),
                           AppTextField(
-                            label: 'Note',
+                            label: AppStrings.t('managerForm.note'),
                             controller: _noteController,
                             maxLines: 3,
                             textarea: true,
-                            hintText:
-                                'e.g. Manages the Binh An row on weekdays',
+                            hintText: AppStrings.t('managerForm.noteHint'),
                           ),
                           const SizedBox(height: 6),
-                          const SectionLabel('House access'),
+                          SectionLabel(
+                              AppStrings.t('managerForm.sectionHouseAccess')),
                           if (houses.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 12),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                               child: Text(
-                                "You don't own any house yet — create a house first.",
-                                style:
-                                    TextStyle(color: AppColors.textSecondary),
+                                AppStrings.t('managerForm.noHousesOwned'),
+                                style: const TextStyle(
+                                    color: AppColors.textSecondary),
                               ),
                             ),
                           for (final house in houses) ...[
@@ -308,8 +329,10 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                               return CheckRow(
                                 title: house.name,
                                 subtitle: conflict != null
-                                    ? 'Managed by $conflict'
-                                    : '$roomCount rooms',
+                                    ? AppStrings.t('managerForm.managedByOther',
+                                        {'name': conflict})
+                                    : AppStrings.t('managerForm.roomCount',
+                                        {'count': '$roomCount'}),
                                 checked: _selectedHouseIds.contains(house.id),
                                 disabled: conflict != null,
                                 onTap: () => setState(() {
@@ -323,6 +346,16 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                             }),
                             const SizedBox(height: 8),
                           ],
+                          if (houses.isNotEmpty && _selectedHouseIds.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2, bottom: 6),
+                              child: Text(
+                                AppStrings.t('managerForm.noHouseSelectedHint'),
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textTertiary),
+                              ),
+                            ),
                           const SizedBox(height: 6),
                           if (_errorText != null) ...[
                             Text(_errorText!,
@@ -334,7 +367,7 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                             children: [
                               Expanded(
                                 child: AppButton(
-                                  label: 'Cancel',
+                                  label: AppStrings.t('common.cancel'),
                                   style: AppButtonStyle.ghost,
                                   onPressed:
                                       _isSaving ? null : () => context.pop(),
@@ -343,14 +376,15 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                   child: AppButton(
-                                      label: 'Save',
+                                      label: AppStrings.t('common.save'),
                                       onPressed: _isSaving ? null : _save)),
                             ],
                           ),
                           if (_isEdit) ...[
                             const SizedBox(height: 8),
                             AppButton(
-                              label: 'Remove manager account',
+                              label: AppStrings.t(
+                                  'managerForm.removeAccountButton'),
                               style: AppButtonStyle.danger,
                               onPressed: _isSaving ? null : _remove,
                             ),

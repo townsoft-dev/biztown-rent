@@ -352,11 +352,11 @@
 
 ### P-06 — House Access Detail (Invite/Edit theo House)
 - **Mục đích:** Mời quản lý mới bằng số điện thoại, hoặc xem/thu hồi 1 quyền đã cấp.
-- **Thành phần chính:** Input số điện thoại (bắt buộc khi mời mới), hiển thị tên che một phần nếu số đã có tài khoản (BR-ROLE-06), chọn 1 hoặc nhiều Nhà/Dãy trọ đang có `role=owner` để cấp quyền cho số này, nút Lưu, nút "Thu hồi quyền" (chỉ hiện khi xem 1 dòng do chính mình đã cấp).
+- **Thành phần chính:** Input số điện thoại (bắt buộc khi mời mới), hiển thị tên che một phần nếu số đã có tài khoản (BR-ROLE-06), chọn 0/1/nhiều Nhà/Dãy trọ đang có `role=owner` để cấp quyền cho số này (**chọn 0 nhà vẫn lưu được**, xem bên dưới), nút Lưu, nút "Thu hồi quyền" (chỉ hiện khi xem 1 dòng do chính mình đã cấp).
 - **Trạng thái:** Mời mới / Xem / Lỗi validate.
-- **Hành động & điều hướng:** Lưu → ghi 1 dòng `tb_user_house_access` (`role=manager`) cho từng nhà đã chọn, **không tạo tài khoản** → P-05.
+- **Hành động & điều hướng:** Lưu → ghi 1 dòng `tb_user_house_access` (`role=manager`) cho từng nhà đã chọn, **không tạo tài khoản** → P-05. **Chọn 0 nhà** (VD nhà duy nhất đã có Manager active khác nên checkbox bị disable) → vẫn Lưu được, ghi 1 dòng "nháp" (`houseId=null`) mang hồ sơ Manager, hiện hint "chưa gán Nhà, gán sau bằng cách Sửa" ngay dưới danh sách Nhà — không còn mất trắng dữ liệu khi Save như trước 2026-09-11 (xem [DECISIONS.md](DECISIONS.md) Đợt 25).
 - **Dữ liệu hiển thị:** Thông tin dòng quyền (nếu xem).
-- **Edge cases:** Số điện thoại là chính mình → chặn, báo lỗi. Thu hồi quyền do người khác cấp (không phải mình) → không hiện nút thu hồi.
+- **Edge cases:** Số điện thoại là chính mình → chặn, báo lỗi. Thu hồi quyền do người khác cấp (không phải mình) → không hiện nút thu hồi. Bật lại "Account active" cho 1 Manager trong khi Nhà đó đang có Manager KHÁC active → chặn ở tầng DB (unique index `one_active_manager_per_house`), hiện lỗi rõ ràng, không tạo ra 2 Manager active cùng lúc cho 1 Nhà.
 
 ### P-07 — Xác nhận Đăng xuất
 - **Mục đích:** Xác nhận trước khi đăng xuất.

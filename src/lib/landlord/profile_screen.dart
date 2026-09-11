@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../shared/app_chip.dart';
@@ -20,6 +22,7 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final language = ref.watch(languageProvider);
     final profileAsync = ref.watch(currentUserProfileProvider);
     final isMainManagerAsync = ref.watch(isMainManagerProvider);
     final managersAsync = ref.watch(managerAccountsProvider);
@@ -28,7 +31,7 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: AppColors.bgSubtle,
       body: Column(
         children: [
-          const TopBar(title: 'Profile & Settings'),
+          TopBar(title: AppStrings.t('profile.title')),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
@@ -37,7 +40,15 @@ class ProfileScreen extends ConsumerWidget {
                   data: (profile) => Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Avatar(initials: initialsFromName(profile.fullName)),
+                      Builder(builder: (context) {
+                        final avatarUrlAsync = profile.avatarPath == null
+                            ? null
+                            : ref.watch(avatarUrlProvider(profile.avatarPath!));
+                        return Avatar(
+                          initials: initialsFromName(profile.fullName),
+                          imageUrl: avatarUrlAsync?.valueOrNull,
+                        );
+                      }),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -57,8 +68,8 @@ class ProfileScreen extends ConsumerWidget {
                                     color: AppColors.textSecondary)),
                             const SizedBox(height: 2),
                             if (isMainManagerAsync.valueOrNull == true)
-                              const StatusPill(
-                                  text: 'Main Manager',
+                              StatusPill(
+                                  text: AppStrings.t('common.mainManager'),
                                   style: StatusBadgeStyle.empty),
                           ],
                         ),
@@ -68,65 +79,82 @@ class ProfileScreen extends ConsumerWidget {
                   loading: () => const SizedBox(
                       height: 56,
                       child: Center(child: CircularProgressIndicator())),
-                  error: (e, st) => Text('Could not load your profile.\n$e'),
+                  error: (e, st) =>
+                      Text(AppStrings.t('profile.loadError', {'error': '$e'})),
                 ),
                 const SizedBox(height: 6),
-                const SectionLabel('Account'),
+                SectionLabel(AppStrings.t('profile.sectionAccount')),
                 MenuRow(
                   icon: Icons.badge_rounded,
-                  label: 'Personal profile',
+                  label: AppStrings.t('profile.personalProfile'),
                   onTap: () => context.push('/profile/personal'),
                 ),
                 const SizedBox(height: 8),
                 MenuRow(
                   icon: Icons.account_balance_rounded,
-                  label: 'Payout bank account',
+                  label: AppStrings.t('profile.payoutBankAccount'),
                   onTap: () => context.push('/profile/bank-account'),
                 ),
                 const SizedBox(height: 8),
                 MenuRow(
                   icon: Icons.lock_rounded,
-                  label: 'Change password',
+                  label: AppStrings.t('profile.changePassword'),
                   onTap: () => context.push('/profile/password'),
                 ),
                 if (isMainManagerAsync.valueOrNull == true) ...[
                   const SizedBox(height: 6),
-                  const SectionLabel('Management  ·  Main Manager only'),
+                  SectionLabel(AppStrings.t('profile.sectionManagement')),
                   MenuRow(
                     icon: Icons.manage_accounts_rounded,
-                    label: 'Manager accounts',
+                    label: AppStrings.t('profile.managerAccounts'),
                     badgeText: managersAsync.valueOrNull?.length.toString(),
                     onTap: () => context.push('/profile/managers'),
                   ),
                 ],
                 const SizedBox(height: 6),
-                const SectionLabel('Other'),
+                SectionLabel(AppStrings.t('profile.sectionOther')),
                 MenuRow(
                   icon: Icons.notifications_rounded,
-                  label: 'Notification center',
+                  label: AppStrings.t('profile.notificationCenter'),
                   onTap: () => context.push('/notifications'),
                 ),
                 const SizedBox(height: 8),
                 MenuRow(
                   icon: Icons.language_rounded,
-                  label: 'Language',
-                  // Đa ngôn ngữ để Phase 2 (docs/CLAUDE.md mục "Ngôn ngữ UI") —
-                  // hiện chỉ hiện đúng chip Figma, chưa đổi được ngôn ngữ thật.
+                  label: AppStrings.t('profile.language'),
                   trailingWidget: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const AppChip(label: 'EN', selected: true),
+                      AppChip(
+                        label: 'EN',
+                        selected: language == AppLanguage.en,
+                        onTap: () => ref
+                            .read(languageProvider.notifier)
+                            .setLanguage(AppLanguage.en),
+                      ),
                       const SizedBox(width: 6),
-                      AppChip(label: 'VI', onTap: () => _comingSoon(context)),
+                      AppChip(
+                        label: 'VI',
+                        selected: language == AppLanguage.vi,
+                        onTap: () => ref
+                            .read(languageProvider.notifier)
+                            .setLanguage(AppLanguage.vi),
+                      ),
                       const SizedBox(width: 6),
-                      AppChip(label: 'KO', onTap: () => _comingSoon(context)),
+                      AppChip(
+                        label: 'KO',
+                        selected: language == AppLanguage.ko,
+                        onTap: () => ref
+                            .read(languageProvider.notifier)
+                            .setLanguage(AppLanguage.ko),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 8),
                 MenuRow(
                   icon: Icons.logout_rounded,
-                  label: 'Log out',
+                  label: AppStrings.t('profile.logOut'),
                   type: MenuRowType.danger,
                   onTap: () => _confirmLogout(context, ref),
                 ),
@@ -138,19 +166,12 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _comingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Coming in a future update.')),
-    );
-  }
-
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final confirmed = await ConfirmDialog.show(
       context,
-      title: 'Log out of BizTown Rent-Manager?',
-      description:
-          'You will need your phone number and password to sign back in.',
-      confirmLabel: 'Log out',
+      title: AppStrings.t('profile.logOutConfirmTitle'),
+      description: AppStrings.t('profile.logOutConfirmDescription'),
+      confirmLabel: AppStrings.t('profile.logOut'),
     );
     if (!confirmed) return;
     await ref.read(authRepositoryProvider).signOut();

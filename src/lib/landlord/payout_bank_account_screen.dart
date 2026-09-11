@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/app_strings.dart';
+import '../core/locale_provider.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/house.dart';
@@ -30,6 +32,7 @@ class PayoutBankAccountScreen extends ConsumerStatefulWidget {
 
 class _PayoutBankAccountScreenState
     extends ConsumerState<PayoutBankAccountScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _accountNameController = TextEditingController();
   final _accountNumberController = TextEditingController();
   final _ownerFullNameController = TextEditingController();
@@ -82,6 +85,7 @@ class _PayoutBankAccountScreenState
   }
 
   Future<void> _save(House house) async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() {
       _isSaving = true;
       _errorText = null;
@@ -107,13 +111,14 @@ class _PayoutBankAccountScreenState
       ref.invalidate(houseProvider(house.id));
       if (mounted) context.pop();
     } catch (e) {
-      setState(() => _errorText = 'Could not save. Please try again.');
+      setState(() => _errorText = AppStrings.t('payoutBankAccount.saveError'));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
   Future<void> _applyToAll(List<House> houses) async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() {
       _isSaving = true;
       _errorText = null;
@@ -139,12 +144,13 @@ class _PayoutBankAccountScreenState
       }
       ref.invalidate(housesProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Applied to ${houses.length} houses.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(AppStrings.t('payoutBankAccount.appliedToHouses',
+                {'count': '${houses.length}'}))));
       }
     } catch (e) {
-      setState(() =>
-          _errorText = 'Could not apply to all houses. Please try again.');
+      setState(
+          () => _errorText = AppStrings.t('payoutBankAccount.applyAllError'));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -152,6 +158,7 @@ class _PayoutBankAccountScreenState
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
     final ownedIdsAsync = ref.watch(ownedHouseIdsProvider);
     final housesAsync = ref.watch(housesProvider);
 
@@ -159,7 +166,9 @@ class _PayoutBankAccountScreenState
       backgroundColor: AppColors.bgSubtle,
       body: Column(
         children: [
-          TopBar(title: 'Payout bank account', onBack: () => context.pop()),
+          TopBar(
+              title: AppStrings.t('payoutBankAccount.title'),
+              onBack: () => context.pop()),
           Expanded(
             child: (ownedIdsAsync.valueOrNull == null ||
                     housesAsync.valueOrNull == null)
@@ -170,12 +179,13 @@ class _PayoutBankAccountScreenState
                         .where((h) => ownedIds.contains(h.id))
                         .toList();
                     if (houses.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Padding(
-                          padding: EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(24),
                           child: Text(
-                            "You don't own any house yet.",
-                            style: TextStyle(color: AppColors.textSecondary),
+                            AppStrings.t('payoutBankAccount.noHouses'),
+                            style:
+                                const TextStyle(color: AppColors.textSecondary),
                           ),
                         ),
                       );
@@ -189,114 +199,139 @@ class _PayoutBankAccountScreenState
                       _selectHouse(editingHouse);
                     }
 
-                    return ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                      children: [
-                        if (missingCount > 0) ...[
-                          AppBanner(
-                            tone: AppBannerTone.warning,
-                            message:
-                                '$missingCount ${missingCount == 1 ? 'house has' : 'houses have'} no payout account yet — invoices for that house will be sent without payment details.',
+                    return Form(
+                      key: _formKey,
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                        children: [
+                          if (missingCount > 0) ...[
+                            AppBanner(
+                              tone: AppBannerTone.warning,
+                              message: AppStrings.t(
+                                  'payoutBankAccount.missingAccountsBanner',
+                                  {'count': '$missingCount'}),
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                          SectionLabel(
+                              AppStrings.t('payoutBankAccount.sectionHouses')),
+                          for (final house in houses) ...[
+                            ListCard(
+                              thumbColor: AppColors.primary,
+                              icon: Icons.account_balance_rounded,
+                              title: house.name,
+                              trailing: StatusPill(
+                                text: _hasAccount(house)
+                                    ? AppStrings.t(
+                                        'payoutBankAccount.statusSet')
+                                    : AppStrings.t(
+                                        'payoutBankAccount.statusMissing'),
+                                style: _hasAccount(house)
+                                    ? StatusBadgeStyle.active
+                                    : StatusBadgeStyle.disabled,
+                              ),
+                              body: _hasAccount(house)
+                                  ? [
+                                      VnBank.byBin(house.bankBin)?.name,
+                                      house.bankAccountName,
+                                      house.bankAccountNumber
+                                    ].whereType<String>().join(' · ')
+                                  : AppStrings.t(
+                                      'payoutBankAccount.noAccountYet'),
+                              onTap: () => _selectHouse(house),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          const SizedBox(height: 6),
+                          SectionLabel(AppStrings.t(
+                              'payoutBankAccount.editSectionLabel',
+                              {'houseName': editingHouse.name})),
+                          AppTextField(
+                            label: AppStrings.t('payoutBankAccount.bankName'),
+                            initialValue: _selectedBank?.name ?? '',
+                            key: ValueKey(
+                                'bank-${editingHouse.id}-${_selectedBank?.bin}'),
+                            trailing: AppTextFieldTrailingIcon.select,
+                            onTap: _pickBank,
+                            validator: (v) => _selectedBank == null
+                                ? AppStrings.t('common.required')
+                                : null,
                           ),
                           const SizedBox(height: 10),
-                        ],
-                        const SectionLabel('Houses'),
-                        for (final house in houses) ...[
-                          ListCard(
-                            thumbColor: AppColors.primary,
-                            icon: Icons.account_balance_rounded,
-                            title: house.name,
-                            trailing: StatusPill(
-                              text: _hasAccount(house) ? 'Set' : 'Missing',
-                              style: _hasAccount(house)
-                                  ? StatusBadgeStyle.active
-                                  : StatusBadgeStyle.disabled,
-                            ),
-                            body: _hasAccount(house)
-                                ? [
-                                    VnBank.byBin(house.bankBin)?.name,
-                                    house.bankAccountName,
-                                    house.bankAccountNumber
-                                  ].whereType<String>().join(' · ')
-                                : 'No account yet',
-                            onTap: () => _selectHouse(house),
+                          AppTextField(
+                            label:
+                                AppStrings.t('payoutBankAccount.accountName'),
+                            controller: _accountNameController,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? AppStrings.t('common.required')
+                                : null,
                           ),
-                          const SizedBox(height: 8),
-                        ],
-                        const SizedBox(height: 6),
-                        SectionLabel('Edit — ${editingHouse.name}'),
-                        AppTextField(
-                          label: 'Bank name *',
-                          initialValue: _selectedBank?.name ?? '',
-                          key: ValueKey(
-                              'bank-${editingHouse.id}-${_selectedBank?.bin}'),
-                          trailing: AppTextFieldTrailingIcon.select,
-                          onTap: _pickBank,
-                        ),
-                        const SizedBox(height: 10),
-                        AppTextField(
-                          label: 'Account name *',
-                          controller: _accountNameController,
-                        ),
-                        const SizedBox(height: 10),
-                        AppTextField(
-                          label: 'Account number *',
-                          controller: _accountNumberController,
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AppTextField(
-                                label: 'Owner full name',
-                                controller: _ownerFullNameController,
+                          const SizedBox(height: 10),
+                          AppTextField(
+                            label:
+                                AppStrings.t('payoutBankAccount.accountNumber'),
+                            controller: _accountNumberController,
+                            keyboardType: TextInputType.number,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? AppStrings.t('common.required')
+                                : null,
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppTextField(
+                                  label: AppStrings.t(
+                                      'payoutBankAccount.ownerFullName'),
+                                  controller: _ownerFullNameController,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: AppTextField(
-                                label: 'Owner tax code',
-                                controller: _ownerTaxCodeController,
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: AppTextField(
+                                  label: AppStrings.t(
+                                      'payoutBankAccount.ownerTaxCode'),
+                                  controller: _ownerTaxCodeController,
+                                ),
                               ),
-                            ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          AppButton(
+                            label: AppStrings.t('payoutBankAccount.applyToAll'),
+                            style: AppButtonStyle.ghost,
+                            size: AppButtonSize.sm,
+                            onPressed:
+                                _isSaving ? null : () => _applyToAll(houses),
+                          ),
+                          if (_errorText != null) ...[
+                            const SizedBox(height: 8),
+                            Text(_errorText!,
+                                style: const TextStyle(
+                                    color: AppColors.error, fontSize: 12)),
                           ],
-                        ),
-                        const SizedBox(height: 10),
-                        AppButton(
-                          label: 'Apply to all houses',
-                          style: AppButtonStyle.ghost,
-                          size: AppButtonSize.sm,
-                          onPressed:
-                              _isSaving ? null : () => _applyToAll(houses),
-                        ),
-                        if (_errorText != null) ...[
-                          const SizedBox(height: 8),
-                          Text(_errorText!,
-                              style: const TextStyle(
-                                  color: AppColors.error, fontSize: 12)),
-                        ],
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AppButton(
-                                label: 'Cancel',
-                                style: AppButtonStyle.ghost,
-                                onPressed:
-                                    _isSaving ? null : () => context.pop(),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Expanded(
                                 child: AppButton(
-                                    label: 'Save',
-                                    onPressed: _isSaving
-                                        ? null
-                                        : () => _save(editingHouse))),
-                          ],
-                        ),
-                      ],
+                                  label: AppStrings.t('common.cancel'),
+                                  style: AppButtonStyle.ghost,
+                                  onPressed:
+                                      _isSaving ? null : () => context.pop(),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                  child: AppButton(
+                                      label: AppStrings.t('common.save'),
+                                      onPressed: _isSaving
+                                          ? null
+                                          : () => _save(editingHouse))),
+                            ],
+                          ),
+                        ],
+                      ),
                     );
                   }),
           ),

@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../core/supabase_client.dart';
 import 'models/manager_account.dart';
 import 'models/user_profile.dart';
+
+const _avatarsBucket = 'avatars';
 
 /// CRUD cho hồ sơ cá nhân (`tb_user`, P-01/P-02), đổi mật khẩu, và quản lý
 /// Manager (`tb_user_house_access` role=manager, P-05/P-06) — seri màn
@@ -30,6 +35,31 @@ class UserRepository {
       'full_name': fullName,
       'id_number': idNumber,
     }).eq('id', userId);
+  }
+
+  /// Upload ảnh đại diện mới, cập nhật `tb_user.avatar_path` luôn (không đợi
+  /// bấm "Save" chung của form — đổi ảnh là hành động tức thời, tách khỏi
+  /// Full name/ID number vẫn cần Save riêng). Trả về path mới để màn gọi tự
+  /// xoá ảnh cũ (nếu có) sau khi cập nhật DB thành công.
+  Future<String> uploadAvatar(File file) async {
+    final userId = _client.auth.currentUser!.id;
+    final ext = file.path.split('.').last;
+    final path = '$userId/${const Uuid().v4()}.$ext';
+    await _client.storage.from(_avatarsBucket).upload(path, file);
+    await _client
+        .from('tb_user')
+        .update({'avatar_path': path}).eq('id', userId);
+    return path;
+  }
+
+  Future<void> deleteAvatar(String path) async {
+    await _client.storage.from(_avatarsBucket).remove([path]);
+  }
+
+  /// URL tạm (1h) để hiển thị avatar — bucket private nên không dùng
+  /// `getPublicUrl`, cùng quy ước với `HouseRepository.signedPhotoUrl`.
+  Future<String> signedAvatarUrl(String path) async {
+    return _client.storage.from(_avatarsBucket).createSignedUrl(path, 3600);
   }
 
   /// Đổi mật khẩu — Supabase không có API riêng để "xác thực mật khẩu hiện
@@ -73,16 +103,28 @@ class UserRepository {
     return rows.map((r) => r['house_id'] as String).toSet();
   }
 
-  /// Gộp mọi dòng quyền `role=manager` của các Nhà tôi sở hữu THEO NGƯỜI
-  /// (1 người có thể được giao nhiều Nhà → nhiều dòng) — nguồn cho P-05.
+  /// Gộp mọi dòng quyền `role=manager` của các Nhà tôi sở hữu THEO NGƯỜI (1
+  /// người có thể được giao nhiều Nhà → nhiều dòng), CỘNG THÊM hồ sơ "nháp"
+  /// (chưa gán Nhà nào, `house_id is null`) do CHÍNH tôi tạo — nguồn cho
+  /// P-05. Đợt 2026-09-11: cho phép 1 Manager tồn tại mà chưa gán Nhà nào
+  /// (trước đó bắt buộc phải có ≥1 Nhà mới lưu được gì, xem DECISIONS.md).
   Future<List<ManagerAccount>> listManagerAccounts() async {
     final ownedIds = await listOwnedHouseIds();
-    if (ownedIds.isEmpty) return const [];
-    final rows = await _client
+    final houseRows = ownedIds.isEmpty
+        ? const <Map<String, dynamic>>[]
+        : await _client
+            .from('tb_user_house_access')
+            .select()
+            .eq('role', 'manager')
+            .inFilter('house_id', ownedIds.toList());
+    final draftRows = await _client
         .from('tb_user_house_access')
         .select()
         .eq('role', 'manager')
-        .inFilter('house_id', ownedIds.toList());
+        .eq('granted_by_phone', _myPhone)
+        .isFilter('house_id', null);
+    final rows = [...houseRows, ...draftRows];
+    if (rows.isEmpty) return const [];
 
     final grouped = <String, List<Map<String, dynamic>>>{};
     for (final row in rows) {
@@ -100,7 +142,11 @@ class UserRepository {
         joinedAt: personRows
             .map((r) => DateTime.parse(r['granted_at'] as String))
             .reduce((a, b) => a.isBefore(b) ? a : b),
-        houseIds: personRows.map((r) => r['house_id'] as String).toSet(),
+        // `house_id` null cho dòng nháp — loại bỏ trước khi gom vào Set.
+        houseIds: personRows
+            .map((r) => r['house_id'] as String?)
+            .whereType<String>()
+            .toSet(),
       );
     }).toList()
       ..sort((a, b) => a.fullName.compareTo(b.fullName));
@@ -133,6 +179,12 @@ class UserRepository {
   /// `isActive` xuống MỌI dòng `tb_user_house_access` của người này thuộc
   /// các Nhà vừa tick ở `houseIds`, thêm dòng mới cho Nhà mới tick, xoá dòng
   /// cho Nhà vừa bỏ tick. `previousHouseIds` rỗng khi tạo Manager mới.
+  ///
+  /// `houseIds` rỗng (chưa/không còn gán Nhà nào) KHÔNG có nghĩa là không
+  /// lưu gì — tự lưu/giữ lại 1 dòng "nháp" (`house_id = null`) mang hồ sơ
+  /// (tên/SĐT/CCCD/note/active) để Manager vẫn "tồn tại", gán Nhà sau này
+  /// cũng được (đổi kiến trúc 2026-09-11, xem DECISIONS.md — trước đó Save
+  /// với 0 Nhà sẽ mất trắng toàn bộ form mà không báo lỗi gì).
   Future<void> saveManager({
     required String phone,
     required String fullName,
@@ -179,20 +231,68 @@ class UserRepository {
           .eq('house_id', houseId)
           .eq('role', 'manager');
     }
+
+    if (houseIds.isEmpty) {
+      final draftData = {
+        'phone': phone,
+        'house_id': null,
+        'role': 'manager',
+        'full_name': fullName,
+        'id_number': idNumber,
+        'note': note,
+        'is_active': isActive,
+        'granted_by_phone': _myPhone,
+      };
+      final existingDraft = await _client
+          .from('tb_user_house_access')
+          .select('id')
+          .eq('phone', phone)
+          .eq('granted_by_phone', _myPhone)
+          .eq('role', 'manager')
+          .isFilter('house_id', null)
+          .maybeSingle();
+      if (existingDraft == null) {
+        await _client.from('tb_user_house_access').insert(draftData);
+      } else {
+        await _client
+            .from('tb_user_house_access')
+            .update(draftData)
+            .eq('id', existingDraft['id'] as String);
+      }
+    } else {
+      // Vừa được gán ≥1 Nhà thật — hồ sơ nay sống trên các dòng đó, dòng
+      // nháp (nếu còn sót từ trước) không cần nữa.
+      await _client
+          .from('tb_user_house_access')
+          .delete()
+          .eq('phone', phone)
+          .eq('granted_by_phone', _myPhone)
+          .eq('role', 'manager')
+          .isFilter('house_id', null);
+    }
   }
 
   /// Thu quyền Manager hoàn toàn — xoá mọi dòng `role=manager` của người này
   /// thuộc các Nhà tôi sở hữu (không đụng dòng ở Nhà của chủ khác nếu người
-  /// này quản lý nhiều nơi).
+  /// này quản lý nhiều nơi), CỘNG cả dòng "nháp" (chưa gán Nhà) do tôi tạo
+  /// nếu có.
   Future<void> removeManager(String phone) async {
     final ownedIds = await listOwnedHouseIds();
-    if (ownedIds.isEmpty) return;
+    if (ownedIds.isNotEmpty) {
+      await _client
+          .from('tb_user_house_access')
+          .delete()
+          .eq('phone', phone)
+          .eq('role', 'manager')
+          .inFilter('house_id', ownedIds.toList());
+    }
     await _client
         .from('tb_user_house_access')
         .delete()
         .eq('phone', phone)
+        .eq('granted_by_phone', _myPhone)
         .eq('role', 'manager')
-        .inFilter('house_id', ownedIds.toList());
+        .isFilter('house_id', null);
   }
 }
 

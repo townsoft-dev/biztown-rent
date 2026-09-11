@@ -6,6 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:intl/intl.dart';
 
+import '../core/app_strings.dart';
+import '../core/enum_labels.dart';
+import '../core/locale_provider.dart';
 import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
@@ -34,6 +37,7 @@ class RoomDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
     final roomAsync = ref.watch(roomProvider(roomId));
     return Scaffold(
       backgroundColor: AppColors.bgSubtle,
@@ -51,15 +55,17 @@ class RoomDetailScreen extends ConsumerWidget {
               ),
             ),
             loading: () => TopBar(title: '', onBack: () => context.pop()),
-            error: (e, st) =>
-                TopBar(title: 'Error', onBack: () => context.pop()),
+            error: (e, st) => TopBar(
+                title: AppStrings.t('common.error'),
+                onBack: () => context.pop()),
           ),
           Expanded(
             child: roomAsync.when(
               data: (room) => _buildBody(context, ref, room),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) =>
-                  Center(child: Text('Could not load this room.\n$e')),
+              error: (e, st) => Center(
+                  child: Text(
+                      AppStrings.t('roomDetail.loadError', {'error': '$e'}))),
             ),
           ),
         ],
@@ -83,7 +89,7 @@ class RoomDetailScreen extends ConsumerWidget {
                       color: AppColors.textPrimary)),
             ),
             StatusPill(
-              text: room.status.label,
+              text: roomStatusLabel(room.status),
               style: switch (room.status) {
                 RoomStatus.occupied => StatusBadgeStyle.occupied,
                 RoomStatus.empty => StatusBadgeStyle.empty,
@@ -95,32 +101,36 @@ class RoomDetailScreen extends ConsumerWidget {
         const SizedBox(height: 10),
         DetailBlock(children: [
           DetailRow(
-              label: 'Area (optional)',
+              label: AppStrings.t('roomDetail.area'),
               value: '${formatNumber(room.areaSqm)} m²'),
           DetailRow(
-              label: 'Reference rent',
+              label: AppStrings.t('roomDetail.referenceRent'),
               value: room.baseRent != null
-                  ? '${formatNumber(room.baseRent!)} / month'
+                  ? AppStrings.t('roomDetail.referenceRentValue',
+                      {'rent': formatNumber(room.baseRent!)})
                   : '—'),
           DetailRow(
-              label: 'Amenities',
+              label: AppStrings.t('roomDetail.amenities'),
               value: room.amenities.isEmpty ? '—' : room.amenities.join(', ')),
           DetailRow(
-            label: 'Recurring fees',
+            label: AppStrings.t('roomDetail.recurringFees'),
             value: room.recurringFees.isEmpty
                 ? '—'
                 : room.recurringFees
                     .map((f) => '${f.name} ${formatNumber(f.amount)}')
                     .join('\n'),
           ),
-          DetailRow(label: 'Note', value: room.note ?? '—', showDivider: false),
+          DetailRow(
+              label: AppStrings.t('roomDetail.note'),
+              value: room.note ?? '—',
+              showDivider: false),
         ]),
         const SizedBox(height: 10),
         AppButton(
-            label: 'View reading history',
+            label: AppStrings.t('roomDetail.viewReadingHistory'),
             style: AppButtonStyle.ghost,
             onPressed: () => _chooseUtilityAndOpenHistory(context, room.id)),
-        const SectionLabel('Reading history  ·  this room'),
+        SectionLabel(AppStrings.t('roomDetail.sectionReadingHistory')),
         _ReadingSummaryCard(
             roomId: room.id,
             utilityType: UtilityType.electricity,
@@ -132,12 +142,12 @@ class RoomDetailScreen extends ConsumerWidget {
             utilityType: UtilityType.water,
             onTap: () => context.push(
                 '/home/houses/$houseId/readings/${room.id}/${UtilityType.water.pathSegment}')),
-        const SectionLabel('Current contract'),
+        SectionLabel(AppStrings.t('roomDetail.sectionCurrentContract')),
         // TODO: → T-03/T-05 khi seri màn Tenant & Contract có (chưa build).
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
-          child: Text('No active contract.',
-              style: TextStyle(color: AppColors.textSecondary)),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Text(AppStrings.t('roomDetail.noActiveContract'),
+              style: const TextStyle(color: AppColors.textSecondary)),
         ),
       ],
     );
@@ -154,13 +164,13 @@ class RoomDetailScreen extends ConsumerWidget {
             ListTile(
               leading:
                   const Icon(Icons.bolt_rounded, color: AppColors.accentOrange),
-              title: const Text('Electricity'),
+              title: Text(utilityTypeLabel(UtilityType.electricity)),
               onTap: () => Navigator.of(context).pop(UtilityType.electricity),
             ),
             ListTile(
               leading:
                   const Icon(Icons.water_drop_rounded, color: AppColors.info),
-              title: const Text('Water'),
+              title: Text(utilityTypeLabel(UtilityType.water)),
               onTap: () => Navigator.of(context).pop(UtilityType.water),
             ),
           ],
@@ -174,10 +184,9 @@ class RoomDetailScreen extends ConsumerWidget {
   Future<void> _confirmDeleteRoom(BuildContext context, WidgetRef ref) async {
     final confirmed = await ConfirmDialog.show(
       context,
-      title: 'Delete room?',
-      description:
-          'Are you sure you want to delete this room? This action cannot be undone.',
-      confirmLabel: 'Delete',
+      title: AppStrings.t('roomDetail.deleteRoomTitle'),
+      description: AppStrings.t('roomDetail.deleteRoomDescription'),
+      confirmLabel: AppStrings.t('common.delete'),
     );
     if (!confirmed || !context.mounted) return;
     try {
@@ -193,8 +202,8 @@ class RoomDetailScreen extends ConsumerWidget {
       final blocked = e.code == '23503'; // foreign_key_violation
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(blocked
-            ? "Can't delete: this room still has contract history."
-            : 'Could not delete this room. Please try again.'),
+            ? AppStrings.t('roomDetail.deleteBlockedSnackbar')
+            : AppStrings.t('roomDetail.deleteFailedSnackbar')),
       ));
     }
   }
@@ -348,6 +357,7 @@ class _ReadingSummaryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
     final historyAsync = ref.watch(
         readingHistoryProvider((roomId: roomId, utilityType: utilityType)));
     final thumbColor = utilityType == UtilityType.electricity
@@ -356,25 +366,27 @@ class _ReadingSummaryCard extends ConsumerWidget {
     final icon = utilityType == UtilityType.electricity
         ? Icons.bolt_rounded
         : Icons.water_drop_rounded;
+    final utilityLabel = utilityTypeLabel(utilityType);
 
     return historyAsync.when(
       loading: () => ListCard(
           thumbColor: thumbColor,
           icon: icon,
-          title: utilityType.label,
-          body: 'Loading…'),
+          title: utilityLabel,
+          body: AppStrings.t('common.loading')),
       error: (e, st) => ListCard(
           thumbColor: thumbColor,
           icon: icon,
-          title: utilityType.label,
-          body: 'Could not load.'),
+          title: utilityLabel,
+          body: AppStrings.t('roomDetail.readingLoadError')),
       data: (history) {
         if (history.isEmpty) {
           return ListCard(
             thumbColor: thumbColor,
             icon: icon,
-            title: '${utilityType.label}  ·  no reading yet',
-            body: 'Tap to record the first reading.',
+            title: AppStrings.t(
+                'roomDetail.readingNoneYet', {'utility': utilityLabel}),
+            body: AppStrings.t('roomDetail.tapToRecordFirst'),
             onTap: onTap,
           );
         }
@@ -383,9 +395,9 @@ class _ReadingSummaryCard extends ConsumerWidget {
           thumbColor: thumbColor,
           icon: icon,
           title:
-              '${DateFormat('dd/MM/yyyy').format(latest.readingDate)}  ·  ${utilityType.label}',
+              '${DateFormat('dd/MM/yyyy').format(latest.readingDate)}  ·  $utilityLabel',
           body:
-              '${latest.previousReading == null ? '—' : formatReadingValue(latest.previousReading!)} → ${formatReadingValue(latest.currentReading)}  ·  ${latest.usageAmount == null ? '—' : formatReadingValue(latest.usageAmount!)} ${utilityType.unit}  ·  ${latest.readingType.label}',
+              '${latest.previousReading == null ? '—' : formatReadingValue(latest.previousReading!)} → ${formatReadingValue(latest.currentReading)}  ·  ${latest.usageAmount == null ? '—' : formatReadingValue(latest.usageAmount!)} ${utilityType.unit}  ·  ${readingTypeLabel(latest.readingType)}',
           onTap: onTap,
         );
       },
