@@ -4,9 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/theme.dart';
 
 /// "toggle row" (Figma, node 331:2916 ở P-06 "Account active") — khung viền
-/// hairline bo góc 9px cao 42px, chứa 1 nhãn + 1 `Switch`. Dùng ở field nào
-/// cần bật/tắt 1 trạng thái boolean ngay trong form (khác hẳn `Switch` trần
-/// không khung của Material mặc định).
+/// hairline bo góc 9px, chứa 1 nhãn + 1 switch. Dùng ở field nào cần bật/tắt
+/// 1 trạng thái boolean ngay trong form (khác hẳn `Switch` trần không khung
+/// của Material mặc định). KHÔNG tự đặt chiều cao cố định — luôn đặt bên
+/// trong `IntrinsicHeight` + `CrossAxisAlignment.stretch` cùng 1 ô khác (VD ô
+/// readonly "Manager" ở P-06) để 2 ô LUÔN cùng chiều cao thật sự, tránh lệch
+/// cao thấp giữa `ToggleRow` và `TextFormField`/`Container` cạnh nó.
 class ToggleRow extends StatelessWidget {
   final String label;
   final bool value;
@@ -21,7 +24,6 @@ class ToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.bgDefault,

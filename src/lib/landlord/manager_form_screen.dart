@@ -13,6 +13,7 @@ import '../shared/app_button.dart';
 import '../shared/app_text_field.dart';
 import '../shared/check_row.dart';
 import '../shared/confirm_dialog.dart';
+import '../shared/field_label.dart';
 import '../shared/section_label.dart';
 import '../shared/toggle_row.dart';
 import '../shared/top_bar.dart';
@@ -193,26 +194,47 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                                 : null,
                           ),
                           const SizedBox(height: 10),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              const Expanded(
-                                child: AppTextField(
-                                  label: 'Role',
-                                  initialValue: 'Manager',
-                                  readOnly: true,
+                          // Figma chỉ có 1 label "Role" DÙNG CHUNG cho cả 2
+                          // ô bên dưới (không phải 2 field tự có label
+                          // riêng) — trước đó dùng `AppTextField(label:
+                          // 'Role', ...)` khiến ô "Manager" tự có thêm label
+                          // riêng còn `ToggleRow` thì không, làm 2 ô lệch
+                          // chiều cao khi bám đáy (`crossAxisAlignment.end`).
+                          // `IntrinsicHeight` + `stretch` ép cả 2 ô LUÔN cùng
+                          // 1 chiều cao thật sự, không phụ thuộc tính toán
+                          // tay dễ sai giữa `TextFormField` và `ToggleRow`.
+                          const FieldLabel('Role'),
+                          IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 11),
+                                    alignment: Alignment.centerLeft,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.bgMuted,
+                                      borderRadius: BorderRadius.circular(
+                                          AppRadii.inputField),
+                                    ),
+                                    child: Text('Manager',
+                                        style: GoogleFonts.inter(
+                                            fontSize: 14,
+                                            color: AppColors.textSecondary)),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: ToggleRow(
-                                  label: 'Account active',
-                                  value: _isActive,
-                                  onChanged: (v) =>
-                                      setState(() => _isActive = v),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: ToggleRow(
+                                    label: 'Account active',
+                                    value: _isActive,
+                                    onChanged: (v) =>
+                                        setState(() => _isActive = v),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 10),
                           if (_isEdit) ...[
