@@ -62,6 +62,7 @@ class _Chip extends StatelessWidget {
   final Color? background;
   final Color? textColor;
   final Color? borderColor;
+  final bool dashed;
   final VoidCallback? onTap;
 
   const _Chip({
@@ -69,6 +70,7 @@ class _Chip extends StatelessWidget {
     this.background,
     this.textColor,
     this.borderColor,
+    this.dashed = false,
     this.onTap,
   });
 
@@ -101,6 +103,7 @@ class _Chip extends StatelessWidget {
           background: AppColors.bgDefault,
           textColor: AppColors.neutral200,
           borderColor: AppColors.neutral200,
+          dashed: true,
           onTap: onTap),
     };
   }
@@ -113,21 +116,21 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // `dashed` (kỳ "scheduled") lẽ ra viền đứt nét theo Figma — `Border.all`
-    // không hỗ trợ trực tiếp, `CustomPaint` là thừa cho 1 chip 34px; chấp
-    // nhận viền liền nét cùng màu xám nhạt đúng token, khác biệt không đáng
-    // kể ở kích thước này.
+    final radius = BorderRadius.circular(AppRadii.xs);
     final child = Container(
       width: 34,
       height: 30,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadii.xs),
+        borderRadius: radius,
         color: background,
-        border: borderColor != null
+        border: borderColor != null && !dashed
             ? Border.all(color: borderColor!, width: 1.5)
             : null,
       ),
+      foregroundDecoration: borderColor != null && dashed
+          ? _DashedRRectDecoration(color: borderColor!, radius: radius)
+          : null,
       child: Text(label,
           style: TextStyle(
               fontSize: 11, fontWeight: FontWeight.w700, color: textColor)),
@@ -137,6 +140,49 @@ class _Chip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadii.xs),
         child: child);
+  }
+}
+
+/// Viền đứt nét cho state "Scheduled" (167:50 trên Figma — `border-dashed`).
+/// `Border.all` không hỗ trợ dashed nên vẽ tay qua `Decoration`/`BoxPainter`.
+class _DashedRRectDecoration extends Decoration {
+  final Color color;
+  final BorderRadius radius;
+
+  const _DashedRRectDecoration({required this.color, required this.radius});
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) =>
+      _DashedRRectPainter(color: color, radius: radius);
+}
+
+class _DashedRRectPainter extends BoxPainter {
+  final Color color;
+  final BorderRadius radius;
+  static const _strokeWidth = 1.5;
+  static const _dashWidth = 3.0;
+  static const _gapWidth = 2.0;
+
+  _DashedRRectPainter({required this.color, required this.radius});
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final rect = offset & configuration.size!;
+    final rrect = radius.toRRect(rect).deflate(_strokeWidth / 2);
+    final path = Path()..addRRect(rrect);
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth;
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final next = distance + _dashWidth;
+        canvas.drawPath(
+            metric.extractPath(distance, next.clamp(0, metric.length)), paint);
+        distance = next + _gapWidth;
+      }
+    }
   }
 }
 
