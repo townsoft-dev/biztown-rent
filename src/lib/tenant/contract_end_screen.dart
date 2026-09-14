@@ -113,7 +113,7 @@ class _ContractEndScreenState extends ConsumerState<ContractEndScreen> {
               {'amount': formatNumber(-refundAmount)})
           : AppStrings.t('contractEnd.confirmDescriptionRefund',
               {'amount': formatNumber(refundAmount)}),
-      confirmLabel: AppStrings.t('contractEnd.confirmMoveOut'),
+      confirmLabel: AppStrings.t('common.delete'),
     );
     if (!confirmed || !mounted) return;
 
