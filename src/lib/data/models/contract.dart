@@ -170,6 +170,7 @@ class ContractVersion {
   final num? serviceFeeAmount;
   final ServiceBillingMethod serviceBillingMethod;
   final String? lateFeeTerms;
+  final String? specialNote;
   final RealEstateInfo? realEstate;
   final DateTime createdAt;
 
@@ -197,6 +198,7 @@ class ContractVersion {
     this.serviceFeeAmount,
     required this.serviceBillingMethod,
     this.lateFeeTerms,
+    this.specialNote,
     this.realEstate,
     required this.createdAt,
   });
@@ -231,6 +233,7 @@ class ContractVersion {
       serviceBillingMethod:
           ServiceBillingMethodX.fromDb(map['service_billing_method'] as String),
       lateFeeTerms: map['late_fee_terms'] as String?,
+      specialNote: map['special_note'] as String?,
       realEstate: map['real_estate'] == null
           ? null
           : RealEstateInfo.fromMap(map['real_estate'] as Map<String, dynamic>),
@@ -263,6 +266,7 @@ class ContractVersion {
         'service_fee_amount': serviceFeeAmount,
         'service_billing_method': serviceBillingMethod.dbValue,
         'late_fee_terms': lateFeeTerms,
+        'special_note': specialNote,
         'real_estate': (realEstate == null || realEstate!.isEmpty)
             ? null
             : realEstate!.toMap(),

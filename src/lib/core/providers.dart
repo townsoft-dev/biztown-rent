@@ -4,8 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/auth_repository.dart';
 import '../data/contract_repository.dart';
 import '../data/house_repository.dart';
+import '../data/invoice_repository.dart';
 import '../data/models/contract.dart';
 import '../data/models/house.dart';
+import '../data/models/invoice.dart';
 import '../data/models/manager_account.dart';
 import '../data/models/reading.dart';
 import '../data/models/room.dart';
@@ -231,6 +233,30 @@ final contractVersionsProvider =
       .listVersionsByContract(contractId);
 });
 
+/// Hợp đồng Active hiện tại của 1 phòng (kèm điều khoản hiện hành + Tenant),
+/// null nếu phòng đang Empty — H-04 Room Detail khối "Current contract".
+class RoomActiveContract {
+  final Contract contract;
+  final ContractVersion version;
+  final Tenant tenant;
+
+  const RoomActiveContract(
+      {required this.contract, required this.version, required this.tenant});
+}
+
+final roomActiveContractProvider =
+    FutureProvider.family<RoomActiveContract?, String>((ref, roomId) async {
+  final contractRepo = ref.watch(contractRepositoryProvider);
+  final contractId = await contractRepo.activeContractIdForRoom(roomId);
+  if (contractId == null) return null;
+  final contract = await contractRepo.getById(contractId);
+  final version = await ref
+      .watch(contractVersionProvider(contract.currentVersionId!).future);
+  final tenant = await ref.watch(tenantProvider(contract.tenantId).future);
+  return RoomActiveContract(
+      contract: contract, version: version, tenant: tenant);
+});
+
 final contractRoomIdsProvider =
     FutureProvider.family<List<String>, String>((ref, contractId) {
   return ref
@@ -364,4 +390,21 @@ final contractListProvider =
         house: house));
   }
   return items;
+});
+
+final invoiceRepositoryProvider =
+    Provider<InvoiceRepository>((ref) => invoiceRepository);
+
+/// Hoá đơn chưa `Collected` của 1 hợp đồng — T-09 "Outstanding invoices".
+/// Bills (B-0x) chưa có UI tạo hoá đơn nên trong thực tế list này luôn rỗng.
+final unpaidInvoicesProvider =
+    FutureProvider.family<List<Invoice>, String>((ref, contractId) {
+  return ref.watch(invoiceRepositoryProvider).listUnpaidByContract(contractId);
+});
+
+/// Mọi hoá đơn (mọi trạng thái) của 1 hợp đồng — T-05 dải chip "Invoice
+/// schedule".
+final contractInvoicesProvider =
+    FutureProvider.family<List<Invoice>, String>((ref, contractId) {
+  return ref.watch(invoiceRepositoryProvider).listByContract(contractId);
 });

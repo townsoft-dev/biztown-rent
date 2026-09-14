@@ -255,12 +255,12 @@
 - **Edge cases:** Thiếu chỉ số trả phòng cho bất kỳ phòng nào (không `NOT_BILLED`) → chặn nút "Xác nhận trả phòng", điều hướng ghi chỉ số ngay tại chỗ.
 
 ### T-10 — Invoice Schedule Preview
-- **Mục đích:** Xem trước lịch các kỳ hoá đơn sắp tới của 1 hợp đồng, dựa trên chu kỳ thu tiền nhà và chu kỳ điện/nước hàng tháng.
-- **Thành phần chính:** List các kỳ sắp tới (VD 3-6 kỳ), mỗi dòng: khoảng thời gian kỳ, có thu tiền nhà kỳ này hay không (theo `rentCycleMonths`/`rentCycleAnchorYm`), chip "Scheduled" (chưa phải hoá đơn thật).
+- **Mục đích:** Xem trước ĐÚNG 1 kỳ hoá đơn sắp tới của 1 hợp đồng, dựa trên chu kỳ thu tiền nhà (`rentCycleMonths`) và điều khoản hiện hành — **không phải list nhiều kỳ** (sửa lại 11/09/2026 cho khớp Figma thật, xem [DECISIONS.md](DECISIONS.md) Đợt 27/28; bản trước của tài liệu này từng ghi nhầm "list 3-6 kỳ").
+- **Thành phần chính:** Banner tone Preview ("this invoice has not been created yet. Nothing is stored in the database"), khối thông tin kỳ (Nhà, Phòng, Tenant, khoảng thời gian kỳ, hạn thanh toán, điều khoản đang dùng — VD "v2 (Renewal)"), khối "Estimated amounts" (Tiền thuê + Điện/Nước — hiện "no reading yet" vì kỳ tương lai chưa có chỉ số + đơn giá tham khảo, Phí dịch vụ, từng dòng phí định kỳ, tổng "Fixed part total" = tiền thuê + phí dịch vụ + phí định kỳ, KHÔNG gồm điện/nước vì chưa biết usage), khối "Payout account" (đọc từ `tb_house`). Mở từ 1 chip trong dải "Invoice Schedule" ở T-05 (mỗi chip = 1 kỳ sắp tới, T-05 tự tính 6 kỳ kế tiếp).
 - **Trạng thái:** Có dữ liệu (hợp đồng Active).
 - **Hành động & điều hướng:** Chỉ xem — không tạo hoá đơn thật từ màn này (tạo hoá đơn thực hiện ở B-02/B-03).
 - **Dữ liệu hiển thị:** Suy ra từ `contract_version` hiện hành, không truy vấn `tb_invoice` thật.
-- **Edge cases:** Hợp đồng Ended → không hiển thị màn này (ẩn nút ở T-05).
+- **Edge cases:** Hợp đồng Ended → không hiển thị dải chip Invoice Schedule ở T-05 (không có đường vào màn này nữa).
 
 ---
 

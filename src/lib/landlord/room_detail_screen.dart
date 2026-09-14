@@ -18,6 +18,7 @@ import '../shared/app_button.dart';
 import '../shared/confirm_dialog.dart';
 import '../shared/detail_row.dart';
 import '../shared/list_card.dart';
+import '../shared/mini_profile_card.dart';
 import '../shared/section_label.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
@@ -27,7 +28,6 @@ import '../shared/top_bar.dart';
 /// `ListCard` thật thay vì text tóm tắt), nối CRUD thật vào `tb_room` +
 /// lịch sử chỉ số (H-06) — "View reading history" mở bottom sheet chọn
 /// Electricity/Water (1 phòng có 2 chuỗi chỉ số độc lập, xem BR-READ-01/02).
-/// Hợp đồng hiện tại chưa nối (chờ seri T-0x, chưa build).
 class RoomDetailScreen extends ConsumerWidget {
   final String houseId;
   final String roomId;
@@ -150,13 +150,7 @@ class RoomDetailScreen extends ConsumerWidget {
                 context.push('/tenant/contracts/new?roomId=${room.id}'),
           )
         else
-          // TODO: thẻ tóm tắt hợp đồng hiện tại → T-05 (cần thêm lookup
-          // roomId → contractId Active, chưa làm ở đợt T-05/T-06 này).
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Text(AppStrings.t('roomDetail.noActiveContract'),
-                style: const TextStyle(color: AppColors.textSecondary)),
-          ),
+          _CurrentContractCard(roomId: room.id),
       ],
     );
   }
@@ -407,6 +401,72 @@ class _ReadingSummaryCard extends ConsumerWidget {
           body:
               '${latest.previousReading == null ? '—' : formatReadingValue(latest.previousReading!)} → ${formatReadingValue(latest.currentReading)}  ·  ${latest.usageAmount == null ? '—' : formatReadingValue(latest.usageAmount!)} ${utilityType.unit}  ·  ${readingTypeLabel(latest.readingType)}',
           onTap: onTap,
+        );
+      },
+    );
+  }
+}
+
+/// Thẻ tóm tắt hợp đồng Active hiện tại của 1 phòng — khối "Current
+/// contract" ở H-04. Tra `roomId → contractId Active` qua
+/// `roomActiveContractProvider` (nợ lại từ đợt T-05/T-06, vá ở đợt test toàn
+/// luồng 2026-09-14).
+class _CurrentContractCard extends ConsumerWidget {
+  final String roomId;
+
+  const _CurrentContractCard({required this.roomId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
+    final activeAsync = ref.watch(roomActiveContractProvider(roomId));
+    return activeAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, st) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(AppStrings.t('roomDetail.noActiveContract'),
+            style: const TextStyle(color: AppColors.textSecondary)),
+      ),
+      data: (active) {
+        if (active == null) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(AppStrings.t('roomDetail.noActiveContract'),
+                style: const TextStyle(color: AppColors.textSecondary)),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MiniProfileCard(
+              initials: active.tenant.initials,
+              name: active.tenant.fullName,
+              subtitle: active.tenant.phone,
+              onTap: () =>
+                  context.push('/tenant/contracts/${active.contract.id}'),
+            ),
+            const SizedBox(height: 10),
+            DetailBlock(children: [
+              DetailRow(
+                  label: AppStrings.t('contractDetail.monthlyRent'),
+                  value: formatNumber(active.version.monthlyRent)),
+              DetailRow(
+                  label: AppStrings.t('contractDetail.endDate'),
+                  value:
+                      DateFormat('dd/MM/yyyy').format(active.version.endDate),
+                  showDivider: false),
+            ]),
+            const SizedBox(height: 10),
+            AppButton(
+              label: AppStrings.t('roomDetail.viewContract'),
+              style: AppButtonStyle.ghost,
+              onPressed: () =>
+                  context.push('/tenant/contracts/${active.contract.id}'),
+            ),
+          ],
         );
       },
     );

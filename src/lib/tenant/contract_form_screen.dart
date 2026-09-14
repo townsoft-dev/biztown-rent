@@ -409,6 +409,9 @@ class _ContractFormScreenState extends ConsumerState<ContractFormScreen> {
         lateFeeTerms: _lateFeeTermsController.text.trim().isEmpty
             ? null
             : _lateFeeTermsController.text.trim(),
+        specialNote: _specialNoteController.text.trim().isEmpty
+            ? null
+            : _specialNoteController.text.trim(),
         realEstate: (_brokerNameController.text.trim().isEmpty &&
                 _brokerFeeController.text.trim().isEmpty)
             ? null
@@ -455,11 +458,13 @@ class _ContractFormScreenState extends ConsumerState<ContractFormScreen> {
       ref.invalidate(contractListProvider);
       ref.invalidate(tenantListProvider);
       ref.invalidate(roomsProvider(_houseId!));
+      ref.invalidate(roomStatusesByHouseProvider);
       for (final roomId in _roomIds) {
         ref.invalidate(readingHistoryProvider(
             (roomId: roomId, utilityType: UtilityType.electricity)));
         ref.invalidate(readingHistoryProvider(
             (roomId: roomId, utilityType: UtilityType.water)));
+        ref.invalidate(roomActiveContractProvider(roomId));
       }
       if (mounted) context.pushReplacement('/tenant/contracts/${contract.id}');
     } on PostgrestException catch (e) {

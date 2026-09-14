@@ -124,6 +124,56 @@ class ReadingRepository {
     required UtilityType type,
     required DateTime readingDate,
     required num currentReading,
+  }) {
+    return _createMoveInOrOut(
+      readingType: ReadingType.moveIn,
+      roomId: roomId,
+      houseId: houseId,
+      contractId: contractId,
+      type: type,
+      readingDate: readingDate,
+      currentReading: currentReading,
+    );
+  }
+
+  /// Ghi chỉ số trả phòng (MOVE_OUT) — bước chặn bắt buộc trong flow Kết thúc
+  /// hợp đồng (T-09, BR-CTR-10). Khác [createMoveIn] — CÓ "chỉ số cũ" (nối
+  /// tiếp chuỗi từ lần ghi gần nhất của phòng, thường là PERIODIC gần nhất),
+  /// validate current ≥ previous giống [createPeriodic].
+  Future<Reading> createMoveOut({
+    required String roomId,
+    required String houseId,
+    required String contractId,
+    required UtilityType type,
+    required DateTime readingDate,
+    required num currentReading,
+  }) async {
+    final previous = await latestForRoom(roomId, type);
+    if (previous != null && currentReading < previous.currentReading) {
+      throw ReadingOrderException(
+          'Current reading must be ≥ previous reading (${formatReadingValue(previous.currentReading)} ${type.unit}).');
+    }
+    return _createMoveInOrOut(
+      readingType: ReadingType.moveOut,
+      roomId: roomId,
+      houseId: houseId,
+      contractId: contractId,
+      type: type,
+      readingDate: readingDate,
+      currentReading: currentReading,
+      previous: previous,
+    );
+  }
+
+  Future<Reading> _createMoveInOrOut({
+    required ReadingType readingType,
+    required String roomId,
+    required String houseId,
+    required String contractId,
+    required UtilityType type,
+    required DateTime readingDate,
+    required num currentReading,
+    Reading? previous,
   }) async {
     final recordedByPhone = _client.auth.currentUser?.phone ?? '';
     final id = const Uuid().v4();
@@ -134,9 +184,11 @@ class ReadingRepository {
           'room_id': roomId,
           'house_id': houseId,
           'contract_id': contractId,
-          'reading_type': ReadingType.moveIn.dbValue,
+          'reading_type': readingType.dbValue,
           'period_ym': _dateOnly(readingDate),
           'reading_date': _dateOnly(readingDate),
+          'previous_reading_id': previous?.id,
+          'previous_reading': previous?.currentReading,
           'current_reading': currentReading,
           'recorded_by_phone': recordedByPhone,
         })

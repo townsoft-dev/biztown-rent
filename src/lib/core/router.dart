@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/models/contract.dart';
 import '../data/models/reading.dart';
 import '../landlord/change_password_screen.dart';
 import '../landlord/home_screen.dart';
@@ -24,7 +25,11 @@ import '../shared/notification_center_screen.dart';
 import '../shared/signup_screen.dart';
 import '../shared/splash_screen.dart';
 import '../tenant/contract_detail_screen.dart';
+import '../tenant/contract_end_screen.dart';
 import '../tenant/contract_form_screen.dart';
+import '../tenant/contract_history_screen.dart';
+import '../tenant/contract_renew_screen.dart';
+import '../tenant/invoice_schedule_screen.dart';
 import '../tenant/tenant_contract_screen.dart';
 import '../tenant/tenant_detail_screen.dart';
 import '../tenant/tenant_form_screen.dart';
@@ -166,6 +171,40 @@ final appRouter = GoRouter(
                   path: 'contracts/:contractId',
                   builder: (context, state) => ContractDetailScreen(
                       contractId: state.pathParameters['contractId']!),
+                  routes: [
+                    GoRoute(
+                      path: 'renew',
+                      builder: (context, state) => ContractRenewScreen(
+                        contractId: state.pathParameters['contractId']!,
+                        reason: ChangeReason.renewal,
+                      ),
+                    ),
+                    GoRoute(
+                      path: 'amend',
+                      builder: (context, state) => ContractRenewScreen(
+                        contractId: state.pathParameters['contractId']!,
+                        reason: ChangeReason.amendment,
+                      ),
+                    ),
+                    GoRoute(
+                      path: 'history',
+                      builder: (context, state) => ContractHistoryScreen(
+                          contractId: state.pathParameters['contractId']!),
+                    ),
+                    GoRoute(
+                      path: 'end',
+                      builder: (context, state) => ContractEndScreen(
+                          contractId: state.pathParameters['contractId']!),
+                    ),
+                    GoRoute(
+                      path: 'invoice-schedule',
+                      builder: (context, state) => InvoiceScheduleScreen(
+                        contractId: state.pathParameters['contractId']!,
+                        periodStart: DateTime.parse(
+                            state.uri.queryParameters['period']!),
+                      ),
+                    ),
+                  ],
                 ),
                 GoRoute(
                   path: ':tenantId',

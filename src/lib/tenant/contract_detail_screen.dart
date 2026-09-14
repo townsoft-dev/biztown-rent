@@ -5,41 +5,28 @@ import 'package:intl/intl.dart';
 
 import '../core/app_strings.dart';
 import '../core/enum_labels.dart';
+import '../core/invoice_period.dart';
 import '../core/locale_provider.dart';
-import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/contract.dart';
 import '../data/models/reading.dart';
 import '../data/models/room.dart';
 import '../shared/app_button.dart';
-import '../shared/avatar.dart';
-import '../shared/coming_soon_screen.dart';
+import '../shared/contract_terms_detail_block.dart';
 import '../shared/detail_row.dart';
+import '../shared/invoice_schedule_strip.dart';
+import '../shared/mini_profile_card.dart';
 import '../shared/section_label.dart';
-import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
 
 /// T-05 — Contract Detail (node 220:3552, Figma) — trung tâm điều hướng của
 /// mọi thao tác hợp đồng (Renew/Amend → T-07, History → T-08, End contract →
-/// T-09, Invoice schedule → T-10). 4 màn kia chưa code (chỉ mới làm T-05/T-06
-/// đợt này) — tạm điều hướng sang `ComingSoonScreen`, xoá dần khi từng màn có
-/// UI thật.
+/// T-09, dải chip kỳ hoá đơn sắp tới → T-10).
 class ContractDetailScreen extends ConsumerWidget {
   final String contractId;
 
   const ContractDetailScreen({super.key, required this.contractId});
-
-  bool _isEndingSoon(Contract contract, ContractVersion version) =>
-      contract.status == ContractStatus.active &&
-      !version.endDate.isBefore(DateTime.now()) &&
-      version.endDate.difference(DateTime.now()).inDays <= 30;
-
-  void _openStub(BuildContext context, String title) {
-    Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) =>
-            ComingSoonScreen(title: title, icon: Icons.description_rounded)));
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -91,52 +78,22 @@ class ContractDetailScreen extends ConsumerWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final endingSoon = _isEndingSoon(contract, version);
                 final isEnded = contract.status == ContractStatus.ended;
 
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                   children: [
-                    InkWell(
+                    MiniProfileCard(
+                      initials: tenant.initials,
+                      name: tenant.fullName,
+                      subtitle: AppStrings.t('contractDetail.tenantSubtitle', {
+                        'phone': tenant.phone,
+                        'idPhotos': (tenant.idPhotoFront != null &&
+                                tenant.idPhotoBack != null)
+                            ? AppStrings.t('contractDetail.idPhotosSaved')
+                            : AppStrings.t('contractDetail.idPhotosMissing'),
+                      }),
                       onTap: () => context.push('/tenant/${tenant.id}'),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.bgDefault,
-                          border: Border.all(color: AppColors.borderSubtle),
-                          borderRadius: BorderRadius.circular(AppRadii.card),
-                        ),
-                        child: Row(
-                          children: [
-                            Avatar(initials: tenant.initials),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(tenant.fullName,
-                                      style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.textPrimary)),
-                                  Text(tenant.phone,
-                                      style: const TextStyle(
-                                          fontSize: 13,
-                                          color: AppColors.textSecondary)),
-                                ],
-                              ),
-                            ),
-                            StatusPill(
-                              text: contractStatusLabel(contract.status),
-                              style: isEnded
-                                  ? StatusBadgeStyle.ended
-                                  : (endingSoon
-                                      ? StatusBadgeStyle.expiringSoon
-                                      : StatusBadgeStyle.active),
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
                     SectionLabel(AppStrings.t('contractDetail.currentTerms', {
                       'version': '${version.versionNo}',
@@ -144,83 +101,7 @@ class ContractDetailScreen extends ConsumerWidget {
                       'date':
                           DateFormat('dd/MM/yyyy').format(version.createdAt),
                     })),
-                    DetailBlock(children: [
-                      DetailRow(
-                          label: AppStrings.t('contractDetail.startDate'),
-                          value: DateFormat('dd/MM/yyyy')
-                              .format(version.startDate)),
-                      DetailRow(
-                          label: AppStrings.t('contractDetail.endDate'),
-                          value:
-                              DateFormat('dd/MM/yyyy').format(version.endDate)),
-                      DetailRow(
-                          label: AppStrings.t('contractDetail.deposit'),
-                          value: formatNumber(version.depositAmount)),
-                      DetailRow(
-                          label: AppStrings.t('contractDetail.monthlyRent'),
-                          value: formatNumber(version.monthlyRent)),
-                      DetailRow(
-                        label:
-                            '${AppStrings.t('contractDetail.electricity')} · ${utilityBillingMethodLabel(version.electricityBillingMethod)}',
-                        value: version.electricityUnitPrice == null
-                            ? '—'
-                            : AppStrings.t('contractDetail.perUnit', {
-                                'amount':
-                                    formatNumber(version.electricityUnitPrice!),
-                                'unit': UtilityType.electricity.unit,
-                              }),
-                      ),
-                      DetailRow(
-                        label:
-                            '${AppStrings.t('contractDetail.water')} · ${utilityBillingMethodLabel(version.waterBillingMethod)}',
-                        value: version.waterUnitPrice == null
-                            ? '—'
-                            : AppStrings.t('contractDetail.perUnit', {
-                                'amount': formatNumber(version.waterUnitPrice!),
-                                'unit': UtilityType.water.unit,
-                              }),
-                      ),
-                      DetailRow(
-                        label:
-                            '${AppStrings.t('contractDetail.service')} · ${serviceBillingMethodLabel(version.serviceBillingMethod)}',
-                        value: version.serviceFeeAmount == null
-                            ? '—'
-                            : AppStrings.t('contractDetail.perMonth', {
-                                'amount':
-                                    formatNumber(version.serviceFeeAmount!)
-                              }),
-                      ),
-                      DetailRow(
-                          label: AppStrings.t('contractDetail.paymentDue'),
-                          value: AppStrings.t('contractDetail.paymentDueValue',
-                              {'day': '${version.paymentDueDayOfMonth}'})),
-                      DetailRow(
-                        label: AppStrings.t('contractDetail.recurringFees'),
-                        value: version.recurringFees.isEmpty
-                            ? '—'
-                            : version.recurringFees
-                                .map((f) =>
-                                    '${f.name} ${formatNumber(f.amount)}')
-                                .join('\n'),
-                      ),
-                      DetailRow(
-                          label: AppStrings.t('contractDetail.lateFee'),
-                          value: version.lateFeeTerms ?? '—',
-                          showDivider: version.realEstate != null &&
-                              !version.realEstate!.isEmpty),
-                      if (version.realEstate != null &&
-                          !version.realEstate!.isEmpty)
-                        DetailRow(
-                          label: AppStrings.t('contractDetail.broker'),
-                          value: AppStrings.t('contractDetail.brokerValue', {
-                            'name': version.realEstate!.name ?? '—',
-                            'fee': version.realEstate!.fee == null
-                                ? '—'
-                                : formatNumber(version.realEstate!.fee!),
-                          }),
-                          showDivider: false,
-                        ),
-                    ]),
+                    ContractTermsDetailBlock(version: version),
                     SectionLabel(
                         AppStrings.t('contractDetail.sectionMeterReadings')),
                     for (final room in rooms) ...[
@@ -235,10 +116,8 @@ class ContractDetailScreen extends ConsumerWidget {
                           Expanded(
                             child: AppButton(
                               label: AppStrings.t('contractDetail.renew'),
-                              onPressed: () => _openStub(
-                                  context,
-                                  AppStrings.t(
-                                      'comingSoon.contractRenewAmend')),
+                              onPressed: () => context
+                                  .push('/tenant/contracts/$contractId/renew'),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -246,10 +125,8 @@ class ContractDetailScreen extends ConsumerWidget {
                             child: AppButton(
                               label: AppStrings.t('contractDetail.amend'),
                               style: AppButtonStyle.ghost,
-                              onPressed: () => _openStub(
-                                  context,
-                                  AppStrings.t(
-                                      'comingSoon.contractRenewAmend')),
+                              onPressed: () => context
+                                  .push('/tenant/contracts/$contractId/amend'),
                             ),
                           ),
                         ],
@@ -262,8 +139,8 @@ class ContractDetailScreen extends ConsumerWidget {
                           child: AppButton(
                             label: AppStrings.t('contractDetail.history'),
                             style: AppButtonStyle.ghost,
-                            onPressed: () => _openStub(context,
-                                AppStrings.t('comingSoon.contractHistory')),
+                            onPressed: () => context
+                                .push('/tenant/contracts/$contractId/history'),
                           ),
                         ),
                         if (!isEnded) ...[
@@ -272,21 +149,28 @@ class ContractDetailScreen extends ConsumerWidget {
                             child: AppButton(
                               label: AppStrings.t('contractDetail.endContract'),
                               style: AppButtonStyle.danger,
-                              onPressed: () => _openStub(context,
-                                  AppStrings.t('comingSoon.contractEnd')),
+                              onPressed: () => context
+                                  .push('/tenant/contracts/$contractId/end'),
                             ),
                           ),
                         ],
                       ],
                     ),
-                    SectionLabel(
-                        AppStrings.t('contractDetail.sectionInvoiceSchedule')),
-                    AppButton(
-                      label: AppStrings.t('contractDetail.viewInvoiceSchedule'),
-                      style: AppButtonStyle.ghost,
-                      onPressed: () => _openStub(
-                          context, AppStrings.t('comingSoon.invoiceSchedule')),
-                    ),
+                    if (!isEnded) ...[
+                      SectionLabel(AppStrings.t(
+                          'contractDetail.sectionInvoiceSchedule')),
+                      Builder(builder: (context) {
+                        final invoices = ref
+                                .watch(contractInvoicesProvider(contractId))
+                                .valueOrNull ??
+                            const [];
+                        return InvoiceScheduleStrip(
+                          chips: buildInvoiceScheduleChips(version, invoices),
+                          onTapPeriod: (periodStart) => context.push(
+                              '/tenant/contracts/$contractId/invoice-schedule?period=${DateFormat('yyyy-MM-dd').format(periodStart)}'),
+                        );
+                      }),
+                    ],
                   ],
                 );
               },

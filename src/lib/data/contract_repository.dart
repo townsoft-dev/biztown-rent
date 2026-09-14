@@ -111,6 +111,20 @@ class ContractRepository {
     return rows.map((r) => r['room_id'] as String).toSet();
   }
 
+  /// contractId đang Active của 1 phòng cụ thể, null nếu phòng đang Empty —
+  /// H-04 Room Detail khối "Current contract" (BR-CTR-13: mỗi phòng chỉ có
+  /// tối đa 1 hợp đồng Active tại một thời điểm).
+  Future<String?> activeContractIdForRoom(String roomId) async {
+    final rows = await _client
+        .from('tb_contract_room')
+        .select('contract_id')
+        .eq('room_id', roomId)
+        .eq('is_active', true)
+        .limit(1);
+    if (rows.isEmpty) return null;
+    return rows.first['contract_id'] as String;
+  }
+
   /// Tạo hợp đồng mới: 1 dòng `tb_contract`, 1 dòng `tb_contract_version`
   /// (`versionNo=1`, `changeReason=New`), N dòng `tb_contract_room`. Ràng
   /// buộc DB `one_active_contract_per_room` tự chặn (23505) nếu 1 trong các
