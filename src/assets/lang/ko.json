@@ -579,8 +579,7 @@
     "summaryFormula": "보증금 {deposit} − 미수금 {unpaid} − 손상 공제 {damage}",
     "confirmMoveOut": "퇴거 확정",
     "confirmTitle": "계약을 종료하고 퇴거 처리할까요?",
-    "confirmDescriptionOwed": "이 계약을 종료하시겠습니까? 임차인이 아직 {amount}을(를) 미납했습니다.",
-    "confirmDescriptionRefund": "이 계약을 종료하고 임차인에게 {amount}을(를) 환불하시겠습니까?",
+    "confirmDescription": "이 계약을 종료하고 최종 정산금 {amount} VND(으)로 퇴거 처리하시겠습니까?",
     "missingReadings": "{room} 호실의 퇴거 지침을 입력하세요",
     "saveError": "이 계약을 종료할 수 없습니다. 다시 시도해 주세요.",
     "loadError": "이 계약을 불러올 수 없습니다.\n{error}"

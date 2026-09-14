@@ -579,8 +579,7 @@
     "summaryFormula": "{deposit} cọc − {unpaid} chưa thu − {damage} hư hỏng",
     "confirmMoveOut": "Xác nhận trả phòng",
     "confirmTitle": "Kết thúc hợp đồng và trả phòng?",
-    "confirmDescriptionOwed": "Bạn có chắc muốn kết thúc hợp đồng này? Người thuê còn nợ {amount}.",
-    "confirmDescriptionRefund": "Bạn có chắc muốn kết thúc hợp đồng này và hoàn {amount} cho người thuê?",
+    "confirmDescription": "Bạn có chắc muốn kết thúc hợp đồng này và trả phòng với khoản thanh toán cuối cùng là {amount} VND?",
     "missingReadings": "Nhập chỉ số trả phòng cho phòng {room}",
     "saveError": "Không thể kết thúc hợp đồng này. Vui lòng thử lại.",
     "loadError": "Không thể tải hợp đồng này.\n{error}"

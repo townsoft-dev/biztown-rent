@@ -579,8 +579,7 @@
     "summaryFormula": "{deposit} deposit − {unpaid} unpaid − {damage} damage",
     "confirmMoveOut": "Confirm move-out",
     "confirmTitle": "End contract and move-out?",
-    "confirmDescriptionOwed": "Are you sure you want to end this contract? The tenant still owes {amount}.",
-    "confirmDescriptionRefund": "Are you sure you want to end this contract and refund {amount} to the tenant?",
+    "confirmDescription": "Are you sure you want to end this contract and move out with the final payment of {amount} VND?",
     "missingReadings": "Enter move-out readings for room {room}",
     "saveError": "Could not end this contract. Please try again.",
     "loadError": "Could not load this contract.\n{error}"

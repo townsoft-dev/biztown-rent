@@ -108,11 +108,8 @@ class _ContractEndScreenState extends ConsumerState<ContractEndScreen> {
     final confirmed = await ConfirmDialog.show(
       context,
       title: AppStrings.t('contractEnd.confirmTitle'),
-      description: refundAmount < 0
-          ? AppStrings.t('contractEnd.confirmDescriptionOwed',
-              {'amount': formatNumber(-refundAmount)})
-          : AppStrings.t('contractEnd.confirmDescriptionRefund',
-              {'amount': formatNumber(refundAmount)}),
+      description: AppStrings.t('contractEnd.confirmDescription',
+          {'amount': formatNumber(refundAmount.abs())}),
       confirmLabel: AppStrings.t('common.delete'),
     );
     if (!confirmed || !mounted) return;
