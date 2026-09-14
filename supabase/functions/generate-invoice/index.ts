@@ -104,6 +104,31 @@ async function findClosingReading(
   return moveOut ?? null;
 }
 
+/** Ngày sớm nhất ghi nhận MOVE_IN/MOVE_OUT của hợp đồng này trong kỳ (nếu có) —
+ * dò cả 2 bảng điện/nước vì phòng có thể NOT_BILLED ở 1 trong 2 loại. */
+async function findContractEventDate(
+  supabaseAdmin: any,
+  contractId: string,
+  periodYm: string,
+  eventType: "MOVE_IN" | "MOVE_OUT",
+): Promise<string | null> {
+  let earliest: string | null = null;
+  for (const table of ["tb_electricity_reading", "tb_water_reading"]) {
+    const { data } = await supabaseAdmin
+      .from(table)
+      .select("reading_date")
+      .eq("contract_id", contractId)
+      .eq("reading_type", eventType)
+      .eq("period_ym", periodYm)
+      .order("reading_date", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    const date = data?.reading_date ?? null;
+    if (date && (!earliest || date < earliest)) earliest = date;
+  }
+  return earliest;
+}
+
 async function previousReadingValue(supabaseAdmin: any, table: string, previousReadingId: string | null) {
   if (!previousReadingId) return null;
   const { data } = await supabaseAdmin.from(table).select("current_reading").eq("id", previousReadingId).single();
@@ -192,17 +217,23 @@ async function generateSingleInvoice(supabaseAdmin: any, contractId: string, per
     return { skipped: { contractId, reason: missing.join("; ") } };
   }
 
-  // BR-BILL-07/08: tiền nhà chỉ ở đúng chu kỳ, prorate nếu MOVE_IN/MOVE_OUT rơi trong kỳ.
+  // BR-BILL-07/08: tiền nhà chỉ ở đúng chu kỳ, prorate theo ngày ở thực tế nếu
+  // MOVE_IN/MOVE_OUT rơi trong kỳ này (kỳ đầu tính từ ngày MOVE_IN, kỳ cuối tính
+  // đến ngày MOVE_OUT — cả 2 có thể cùng rơi vào 1 kỳ với hợp đồng ngắn hạn).
   let rentAmount = 0;
   if (isRentCyclePeriod(version, periodYm)) {
-    const { start, end, daysInMonth } = periodBounds(periodYm);
-    // TODO: prorate chính xác cần biết ngày MOVE_IN/MOVE_OUT thực tế của contract trong kỳ này
-    // (tra qua tb_electricity_reading/tb_water_reading reading_type=MOVE_IN|MOVE_OUT, reading_date).
-    // Bản này tạm tính trọn tháng — bổ sung prorate khi có UI xác nhận cách làm tròn ngày.
-    rentAmount = version.monthly_rent;
-    void start;
-    void end;
-    void daysInMonth;
+    const { daysInMonth } = periodBounds(periodYm);
+    const moveInDate = await findContractEventDate(supabaseAdmin, contractId, periodYm, "MOVE_IN");
+    const moveOutDate = await findContractEventDate(supabaseAdmin, contractId, periodYm, "MOVE_OUT");
+
+    if (!moveInDate && !moveOutDate) {
+      rentAmount = version.monthly_rent;
+    } else {
+      const startDay = moveInDate ? new Date(moveInDate + "T00:00:00Z").getUTCDate() : 1;
+      const endDay = moveOutDate ? new Date(moveOutDate + "T00:00:00Z").getUTCDate() : daysInMonth;
+      const daysOccupied = Math.max(0, endDay - startDay + 1);
+      rentAmount = Math.round((version.monthly_rent * daysOccupied) / daysInMonth);
+    }
   }
 
   // BR-BILL-08: phí dịch vụ + phí định kỳ tính trọn 100%, không chia ngày, chỉ khi hợp đồng Active.

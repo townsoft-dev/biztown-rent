@@ -266,45 +266,47 @@
 
 ## 2.4 Bills (B-01 → B-05) — Core
 
+> **Sửa lại 2026-09-14** — số màn B-0x trước đây lệch Figma thật (cùng lỗi từng gặp ở T-0x, xem `DECISIONS.md` 2026-09-09 Đợt 6): bản cũ ghi B-02=Batch/B-03=Single/B-04=Send sheet/B-05=Detail, nhưng Figma thật (`220:4166..220:4667`) đánh số **B-02=Single, B-03=Batch, B-04=Invoice Detail, B-05=Send Invoice (bottom sheet)**. Đã đối chiếu ảnh chụp thật từng frame trước khi sửa. Nội dung mô tả giữ nguyên, chỉ đổi lại đúng số + cross-reference.
+
 ### B-01 — Invoice List
 - **Mục đích:** Xem toàn bộ hoá đơn — đây là màn hình trung tâm của chức năng cốt lõi Phase 1.
-- **Thành phần chính:** Filter nhà (dropdown), hợp đồng (dropdown, phụ thuộc nhà đã chọn), trạng thái (Tất cả/Draft/Sent/Collected/Overdue), bộ lọc theo kỳ, tuỳ chọn sắp xếp, **danh sách nhóm theo Nhà → theo Hợp đồng**, mỗi nhóm hiện dải chip các kỳ (kỳ đã phát hành = số tiền + trạng thái; kỳ tương lai = chip "Scheduled" xám, tap vào mở T-10 của hợp đồng đó), nút nổi "+" → mở lựa chọn B-02 (hàng loạt) hoặc B-03 (đơn lẻ).
+- **Thành phần chính:** Filter nhà (dropdown), hợp đồng (dropdown, phụ thuộc nhà đã chọn), trạng thái (Tất cả/Draft/Sent/Collected/Overdue), bộ lọc theo kỳ, tuỳ chọn sắp xếp, **danh sách nhóm theo Nhà → theo Hợp đồng**, mỗi nhóm hiện dải chip các kỳ (kỳ đã phát hành = số tiền + trạng thái; kỳ tương lai = chip "Scheduled" xám, tap vào mở T-10 của hợp đồng đó), nút nổi "+" → mở lựa chọn B-02 (đơn lẻ) hoặc B-03 (hàng loạt).
 - **Trạng thái:** Theo filter đang chọn.
-- **Hành động & điều hướng:** Tap card hoá đơn đã phát hành → B-05. Tap chip "Scheduled" → T-10.
+- **Hành động & điều hướng:** Tap card hoá đơn đã phát hành → B-04. Tap chip "Scheduled" → T-10.
 - **Dữ liệu hiển thị:** Hoá đơn thuộc phạm vi các nhà đang có quyền. Xem nhanh tổng/đã thu/chưa thu/quá hạn qua filter theo trạng thái (thay cho màn Revenue Report riêng — ngoài phạm vi Phase 1).
 - **Edge cases:** Rỗng theo filter → empty state phù hợp ngữ cảnh.
 
-### B-02 — Create Invoice — Batch
-- **Mục đích:** Tạo hoá đơn **hàng loạt** cho mọi hợp đồng Active của 1 Nhà/Dãy trọ trong 1 kỳ.
-- **Thành phần chính:** Chọn Nhà/Dãy trọ, chọn kỳ (tháng/năm), danh sách kết quả sau khi hệ thống đọc lại chỉ số: nhóm "Sẵn sàng tạo" (đủ chỉ số) và nhóm "Thiếu dữ liệu" (liệt kê rõ hợp đồng/phòng còn thiếu chỉ số kỳ này, không cho tạo), bảng preview tổng hợp cho nhóm "Sẵn sàng tạo" (từng hợp đồng: điện/nước theo phòng, tiền nhà nếu đúng chu kỳ — **chia theo ngày ở nếu có MOVE_IN/MOVE_OUT trong kỳ**, phí dịch vụ + phí định kỳ — **tính trọn 100% cho hợp đồng đang Active tại thời điểm tạo hoá đơn, KHÔNG chia theo ngày** (`BR-BILL-08`, cập nhật 09/09/2026), **Tổng cộng**), nút "Tạo & xem trước gửi" → B-04, nút "Lưu nháp tất cả" (Draft).
-- **Trạng thái:** Đang tính → Preview → Đã tạo (Draft) hoặc chuyển sang gửi.
-- **Hành động & điều hướng:** "Tạo & xem trước gửi" → B-04 (Send Invoice Sheet) cho toàn bộ lô vừa tạo.
-- **Dữ liệu hiển thị:** Dữ liệu tính từ chỉ số đã ghi sẵn (H-06) + điều khoản từ `contract_version` hiện hành của từng hợp đồng.
-- **Edge cases:** Hợp đồng thiếu chỉ số → không tạo, không ước lượng thay. Nhà chưa có tài khoản ngân hàng nhận tiền (P-03) → cảnh báo trước khi tạo, không sinh được mã QR.
-
-### B-03 — Create Invoice — Single
+### B-02 — Create Invoice — Single
 - **Mục đích:** Tạo hoá đơn cho **1 hợp đồng cụ thể** (ngoài chu kỳ hàng loạt, hoặc tạo bổ sung).
-- **Thành phần chính:** Chọn hợp đồng Active cần tạo hoá đơn, chọn kỳ, hiện chỉ số đã ghi để đối chiếu (không nhập tay tại đây — khác Version 2), bảng preview (giống B-02 nhưng cho 1 hợp đồng), cho phép sửa/thêm dòng phí phát sinh (`otherFees`), nút "Tạo & xem trước gửi", nút "Lưu nháp".
+- **Thành phần chính:** Chọn hợp đồng Active cần tạo hoá đơn, chọn kỳ, hiện chỉ số đã ghi để đối chiếu (không nhập tay tại đây — khác Version 2), bảng preview (giống B-03 nhưng cho 1 hợp đồng), cho phép sửa/thêm dòng phí phát sinh (`otherFees`), nút "Tạo & xem trước gửi", nút "Lưu nháp".
 - **Trạng thái:** Chọn hợp đồng/kỳ → Preview (Draft) → Đã tạo.
-- **Hành động & điều hướng:** "Tạo & xem trước gửi" → B-04.
+- **Hành động & điều hướng:** "Tạo & xem trước gửi" → B-05.
 - **Dữ liệu hiển thị:** Dữ liệu tính từ chỉ số đã ghi + điều khoản từ `contract_version` hiện hành.
 - **Edge cases:** Hợp đồng thiếu chỉ số kỳ này → chặn, điều hướng sang H-06 để bổ sung trước.
 
-### B-04 — Send Invoice Sheet
-- **Mục đích:** Xem mã QR và chọn kênh gửi — dùng chung cho cả B-02 (hàng loạt) và B-03 (đơn lẻ).
-- **Thành phần chính:** Preview mã QR VietQR/NAPAS-247 (mẫu đại diện nếu hàng loạt), chọn kênh gửi (SMS/Zalo/Cả hai), số lượng hoá đơn sẽ gửi (nếu hàng loạt), nút "Gửi", nút "Chỉ lưu nháp, gửi sau".
-- **Trạng thái:** Xem trước → Đang gửi → Hoàn tất.
-- **Hành động & điều hướng:** "Gửi" → hoá đơn chuyển trạng thái "Sent", hệ thống gửi qua kênh đã chọn → B-01. "Chỉ lưu nháp" → hoá đơn giữ "Draft" → B-01.
-- **Dữ liệu hiển thị:** Số hoá đơn sẽ gửi + tổng tiền.
-- **Edge cases:** Thiếu tài khoản ngân hàng nhận tiền của nhà → không hiện được QR, cảnh báo rõ trước khi cho gửi.
+### B-03 — Create Invoice — Batch
+- **Mục đích:** Tạo hoá đơn **hàng loạt** cho mọi hợp đồng Active của 1 Nhà/Dãy trọ trong 1 kỳ.
+- **Thành phần chính:** Chọn Nhà/Dãy trọ, chọn kỳ (tháng/năm), danh sách kết quả sau khi hệ thống đọc lại chỉ số: nhóm "Sẵn sàng tạo" (đủ chỉ số) và nhóm "Thiếu dữ liệu" (liệt kê rõ hợp đồng/phòng còn thiếu chỉ số kỳ này, không cho tạo), bảng preview tổng hợp cho nhóm "Sẵn sàng tạo" (từng hợp đồng: điện/nước theo phòng, tiền nhà nếu đúng chu kỳ — **chia theo ngày ở nếu có MOVE_IN/MOVE_OUT trong kỳ**, phí dịch vụ + phí định kỳ — **tính trọn 100% cho hợp đồng đang Active tại thời điểm tạo hoá đơn, KHÔNG chia theo ngày** (`BR-BILL-08`, cập nhật 09/09/2026), **Tổng cộng**), nút "Tạo & xem trước gửi" → B-05, nút "Lưu nháp tất cả" (Draft).
+- **Trạng thái:** Đang tính → Preview → Đã tạo (Draft) hoặc chuyển sang gửi.
+- **Hành động & điều hướng:** "Tạo & xem trước gửi" → B-05 (Send Invoice Sheet) cho toàn bộ lô vừa tạo.
+- **Dữ liệu hiển thị:** Dữ liệu tính từ chỉ số đã ghi sẵn (H-06) + điều khoản từ `contract_version` hiện hành của từng hợp đồng.
+- **Edge cases:** Hợp đồng thiếu chỉ số → không tạo, không ước lượng thay. Nhà chưa có tài khoản ngân hàng nhận tiền (P-03) → cảnh báo trước khi tạo, không sinh được mã QR.
 
-### B-05 — Invoice Detail
+### B-04 — Invoice Detail
 - **Mục đích:** Xem chi tiết 1 hoá đơn, đánh dấu đã thu tiền.
 - **Thành phần chính:** Bảng chi tiết hoá đơn (danh sách phòng × điện/nước, tiền nhà, phí dịch vụ, phí định kỳ, phí khác, tổng cộng), mã QR, badge trạng thái (Draft/Sent/Overdue/Collected), nút "Đánh dấu đã thu tiền" (khi Sent/Overdue), nút "Huỷ đánh dấu" (khi Collected), nút "Gửi lại".
 - **Trạng thái:** Draft / Sent / Overdue / Collected.
 - **Hành động & điều hướng:** "Đánh dấu đã thu tiền" → "Collected". "Huỷ đánh dấu" → quay lại "Sent".
 - **Dữ liệu hiển thị:** Chi tiết hoá đơn + lịch sử trạng thái (thời điểm gửi, thời điểm đánh dấu thu tiền).
 - **Edge cases:** Hoá đơn quá hạn → cảnh báo màu đỏ + số ngày trễ.
+
+### B-05 — Send Invoice Sheet
+- **Mục đích:** Xem mã QR và chọn kênh gửi — dùng chung cho cả B-02 (đơn lẻ) và B-03 (hàng loạt).
+- **Thành phần chính:** Preview mã QR VietQR/NAPAS-247 (mẫu đại diện nếu hàng loạt), chọn kênh gửi (SMS/Zalo/Cả hai), số lượng hoá đơn sẽ gửi (nếu hàng loạt), nút "Gửi", nút "Chỉ lưu nháp, gửi sau".
+- **Trạng thái:** Xem trước → Đang gửi → Hoàn tất.
+- **Hành động & điều hướng:** "Gửi" → hoá đơn chuyển trạng thái "Sent", hệ thống gửi qua kênh đã chọn → B-01. "Chỉ lưu nháp" → hoá đơn giữ "Draft" → B-01.
+- **Dữ liệu hiển thị:** Số hoá đơn sẽ gửi + tổng tiền.
+- **Edge cases:** Thiếu tài khoản ngân hàng nhận tiền của nhà → không hiện được QR, cảnh báo rõ trước khi cho gửi.
 
 ---
 

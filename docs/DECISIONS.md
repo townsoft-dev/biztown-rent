@@ -548,3 +548,9 @@ dungtv gửi ảnh trang "DESIGN SYSTEM — V3 · components & tokens" trên Fig
 **Quyết định**: Thêm package `material_symbols_icons` (^4.2960.0) — bundle sẵn cả 3 biến thể font Material Symbols (Outlined/Rounded/Sharp), expose qua class `Symbols` với tên glyph + hậu tố kiểu (VD `Symbols.home_rounded`), không cần khai báo font thủ công trong `pubspec.yaml`. Thay toàn bộ `Icons.xxx` sang `Symbols.xxx_rounded` tương ứng (dùng biến thể Rounded xuyên suốt, khớp đúng tên font Figma dùng). Không tự dựng font/codepoint thủ công vì rủi ro sai codepoint cao hơn, package này là lựa chọn phổ biến/còn bảo trì cho đúng nhu cầu này.
 
 Cập nhật `docs/DESIGN-SYSTEMS.md` mục 5 (Iconography) ghi rõ font chuẩn + tên package dùng trong code, tránh lặp lại nhầm lẫn `Icons.xxx` ở các đợt code sau.
+
+## 2026-09-14 (Đợt 31) — Bắt đầu B-0x: sửa số màn lệch Figma, vá TODO prorate tiền nhà
+
+Trước khi code B-0x, kéo lại Figma thật cho cả 5 frame (`220:4166..220:4667`) — phát hiện `SCREEN-SPEC.md` đánh số sai thứ tự B-02/B-03 (Batch/Single bị đảo) và B-04/B-05 (Send sheet/Invoice Detail bị đảo), cùng lỗi từng gặp ở T-0x trước đây. Đã sửa lại `SCREEN-SPEC.md` khớp đúng Figma: **B-01=Invoice List, B-02=Create Single, B-03=Create Batch, B-04=Invoice Detail, B-05=Send Invoice sheet**.
+
+Phát hiện thêm: Edge Function `generate-invoice`/`generate-payment-qr` đã được viết + deploy từ trước (không thuộc phạm vi code Flutter), xử lý đúng phần lớn BR-BILL-01→11 — quyết định KHÔNG viết lại engine tính tiền bằng Dart, Flutter chỉ gọi 2 function này qua `supabase.functions.invoke(...)` (pattern mới, chưa có tiền lệ trong app — trước giờ chỉ dùng `auth.signInWithOtp`/`verifyOTP` có sẵn của SDK, chưa từng tự gọi Edge Function tuỳ biến). Đã vá 1 TODO còn sót trong `generate-invoice` (prorate tiền nhà theo ngày ở khi MOVE_IN/MOVE_OUT giữa kỳ — dungtv xác nhận vá trước khi làm UI), deploy lại thành công.
