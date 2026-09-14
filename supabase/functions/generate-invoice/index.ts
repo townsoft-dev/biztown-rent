@@ -93,25 +93,35 @@ async function findClosingReading(
     .maybeSingle();
   if (periodic) return periodic;
 
+  // period_ym của MOVE_OUT lưu đúng ngày trả phòng thật (không phải ngày 1
+  // đầu tháng) — lọc theo khoảng ngày của tháng, không `eq` thẳng periodYm.
+  const { start, end } = periodBounds(periodYm);
   const { data: moveOut } = await supabaseAdmin
     .from(table)
     .select("id, current_reading, previous_reading_id")
     .eq("room_id", roomId)
     .eq("contract_id", contractId)
     .eq("reading_type", "MOVE_OUT")
-    .eq("period_ym", periodYm)
+    .gte("reading_date", start)
+    .lte("reading_date", end)
     .maybeSingle();
   return moveOut ?? null;
 }
 
 /** Ngày sớm nhất ghi nhận MOVE_IN/MOVE_OUT của hợp đồng này trong kỳ (nếu có) —
- * dò cả 2 bảng điện/nước vì phòng có thể NOT_BILLED ở 1 trong 2 loại. */
+ * dò cả 2 bảng điện/nước vì phòng có thể NOT_BILLED ở 1 trong 2 loại.
+ * Lọc theo KHOẢNG ngày của tháng (`reading_date`), KHÔNG so `period_ym` bằng
+ * `eq` — `period_ym` của MOVE_IN/MOVE_OUT lưu đúng NGÀY sự kiện thật (xem
+ * `reading_repository.dart` `_createMoveInOrOut`), không phải ngày 1 đầu
+ * tháng như PERIODIC, nên so `eq` với `periodYm` ("YYYY-MM-01") sẽ luôn trật
+ * trừ khi tenant dọn vào/ra đúng ngày 1. */
 async function findContractEventDate(
   supabaseAdmin: any,
   contractId: string,
   periodYm: string,
   eventType: "MOVE_IN" | "MOVE_OUT",
 ): Promise<string | null> {
+  const { start, end } = periodBounds(periodYm);
   let earliest: string | null = null;
   for (const table of ["tb_electricity_reading", "tb_water_reading"]) {
     const { data } = await supabaseAdmin
@@ -119,7 +129,8 @@ async function findContractEventDate(
       .select("reading_date")
       .eq("contract_id", contractId)
       .eq("reading_type", eventType)
-      .eq("period_ym", periodYm)
+      .gte("reading_date", start)
+      .lte("reading_date", end)
       .order("reading_date", { ascending: true })
       .limit(1)
       .maybeSingle();
@@ -305,15 +316,36 @@ async function generateSingleInvoice(supabaseAdmin: any, contractId: string, per
 }
 
 export default {
-  fetch: withSupabase({ auth: ["secret"] }, async (req, ctx) => {
+  // "user": app gọi thật bằng JWT chủ nhà/quản lý (mobile không được nhúng
+  // secret key) — tự kiểm tra quyền qua `ctx.supabase` (RLS-scoped, policy
+  // "Contract visible/manageable via room's house"/"House ... has_house_access"
+  // đã có sẵn) trước khi dùng `ctx.supabaseAdmin` ghi đặc quyền bên dưới.
+  // "secret" giữ lại cho script/test nội bộ (curl bằng service-role key).
+  fetch: withSupabase({ auth: ["user", "secret"] }, async (req, ctx) => {
     const body = await req.json();
 
     if (body.mode === "single") {
+      const { data: allowed } = await ctx.supabase
+        .from("tb_contract")
+        .select("id")
+        .eq("id", body.contractId)
+        .maybeSingle();
+      if (!allowed) {
+        return Response.json({ error: "Forbidden" }, { status: 403 });
+      }
       const result = await generateSingleInvoice(ctx.supabaseAdmin, body.contractId, body.periodYm);
       return Response.json(result);
     }
 
     if (body.mode === "batch") {
+      const { data: allowedHouse } = await ctx.supabase
+        .from("tb_house")
+        .select("id")
+        .eq("id", body.houseId)
+        .maybeSingle();
+      if (!allowedHouse) {
+        return Response.json({ error: "Forbidden" }, { status: 403 });
+      }
       // BR-BILL-11: mọi hợp đồng Active của 1 nhà, trong 1 kỳ.
       const { data: rooms } = await ctx.supabaseAdmin.from("tb_room").select("id").eq("house_id", body.houseId);
       const roomIds: string[] = (rooms ?? []).map((r: any) => r.id);

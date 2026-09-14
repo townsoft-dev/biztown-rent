@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'invoice_period.dart';
 import '../data/auth_repository.dart';
 import '../data/contract_repository.dart';
 import '../data/house_repository.dart';
@@ -396,7 +397,6 @@ final invoiceRepositoryProvider =
     Provider<InvoiceRepository>((ref) => invoiceRepository);
 
 /// Hoá đơn chưa `Collected` của 1 hợp đồng — T-09 "Outstanding invoices".
-/// Bills (B-0x) chưa có UI tạo hoá đơn nên trong thực tế list này luôn rỗng.
 final unpaidInvoicesProvider =
     FutureProvider.family<List<Invoice>, String>((ref, contractId) {
   return ref.watch(invoiceRepositoryProvider).listUnpaidByContract(contractId);
@@ -407,4 +407,103 @@ final unpaidInvoicesProvider =
 final contractInvoicesProvider =
     FutureProvider.family<List<Invoice>, String>((ref, contractId) {
   return ref.watch(invoiceRepositoryProvider).listByContract(contractId);
+});
+
+/// Mọi hoá đơn thuộc phạm vi các nhà đang có quyền — B-01.
+final invoicesProvider = FutureProvider<List<Invoice>>((ref) {
+  return ref.watch(invoiceRepositoryProvider).listAll();
+});
+
+/// 1 dòng hợp đồng hiển thị trên B-01 — hợp đồng Active + dải chip kỳ hoá
+/// đơn (tái dùng đúng `buildInvoiceScheduleChips` của T-05) + hoá đơn kỳ
+/// HIỆN TẠI (nếu có) để hiện badge/subtitle đúng trạng thái.
+class BillsContractRow {
+  final Contract contract;
+  final ContractVersion version;
+  final Tenant tenant;
+  final House house;
+  final String roomNosLabel;
+  final List<InvoiceScheduleChipData> chips;
+  final Invoice? selectedPeriodInvoice;
+
+  const BillsContractRow({
+    required this.contract,
+    required this.version,
+    required this.tenant,
+    required this.house,
+    required this.roomNosLabel,
+    required this.chips,
+    this.selectedPeriodInvoice,
+  });
+}
+
+class BillsHouseGroup {
+  final House house;
+  final List<BillsContractRow> rows;
+  const BillsHouseGroup({required this.house, required this.rows});
+}
+
+/// Nhóm mọi hợp đồng Active theo Nhà — B-01. `periodYm` chỉ dùng để tìm ĐÚNG
+/// hoá đơn của kỳ đang xem (`selectedPeriodInvoice`, cho badge/subtitle) —
+/// dải chip `chips` luôn tính theo hôm nay thật (không đổi theo kỳ đang chọn)
+/// vì ý nghĩa "Current" (167:54) là kỳ đã tới hạn thật, không phải kỳ đang
+/// browse. Không lọc theo trạng thái ở đây (lọc ở tầng UI).
+final billsHouseGroupsProvider =
+    FutureProvider.family<List<BillsHouseGroup>, DateTime>(
+        (ref, periodYm) async {
+  final contractRepo = ref.watch(contractRepositoryProvider);
+  final contracts = await ref.watch(contractsProvider.future);
+  final activeContracts =
+      contracts.where((c) => c.status == ContractStatus.active).toList();
+  if (activeContracts.isEmpty) return const [];
+
+  final versions = await contractRepo.listVersionsByIds(
+      activeContracts.map((c) => c.currentVersionId!).toList());
+  final versionById = {for (final v in versions) v.id: v};
+
+  final roomIdsByContract = await contractRepo
+      .roomIdsByContractIds(activeContracts.map((c) => c.id).toList());
+  final allRoomIds =
+      roomIdsByContract.values.expand((ids) => ids).toSet().toList();
+  final rooms = await ref.watch(roomRepositoryProvider).listByIds(allRoomIds);
+  final roomsById = {for (final r in rooms) r.id: r};
+
+  final houses = await ref.watch(housesProvider.future);
+  final housesById = {for (final h in houses) h.id: h};
+
+  final rowsByHouse = <String, List<BillsContractRow>>{};
+  for (final contract in activeContracts) {
+    final version = versionById[contract.currentVersionId];
+    if (version == null) continue;
+    final tenant = await ref.watch(tenantProvider(contract.tenantId).future);
+    final roomIds = roomIdsByContract[contract.id] ?? const [];
+    final contractRooms =
+        roomIds.map((id) => roomsById[id]).whereType<Room>().toList();
+    if (contractRooms.isEmpty) continue;
+    final house = housesById[contractRooms.first.houseId];
+    if (house == null) continue;
+
+    final invoices =
+        await ref.watch(contractInvoicesProvider(contract.id).future);
+    final chips = buildInvoiceScheduleChips(version, invoices);
+    final targetPeriod = periodStartingAt(version, periodYm);
+    final matchingInvoices =
+        invoices.where((i) => i.periodStart == targetPeriod.start);
+    final selectedInvoice =
+        matchingInvoices.isEmpty ? null : matchingInvoices.first;
+
+    rowsByHouse.putIfAbsent(house.id, () => []).add(BillsContractRow(
+          contract: contract,
+          version: version,
+          tenant: tenant,
+          house: house,
+          roomNosLabel: contractRooms.map((r) => r.roomNo).join(', '),
+          chips: chips,
+          selectedPeriodInvoice: selectedInvoice,
+        ));
+  }
+
+  return rowsByHouse.entries
+      .map((e) => BillsHouseGroup(house: housesById[e.key]!, rows: e.value))
+      .toList();
 });

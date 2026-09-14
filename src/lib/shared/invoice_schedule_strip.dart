@@ -12,12 +12,14 @@ class InvoiceScheduleStrip extends StatelessWidget {
   final List<InvoiceScheduleChipData> chips;
   final int visibleCount;
   final ValueChanged<DateTime> onTapPeriod;
+  final bool showLegend;
 
   const InvoiceScheduleStrip({
     super.key,
     required this.chips,
     required this.onTapPeriod,
     this.visibleCount = 7,
+    this.showLegend = true,
   });
 
   @override
@@ -36,22 +38,24 @@ class InvoiceScheduleStrip extends StatelessWidget {
             if (overflow > 0) _Chip.overflow('+$overflow'),
           ],
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            _LegendDot(AppColors.success,
-                AppStrings.t('contractDetail.legendCollected')),
-            _LegendDot(
-                AppColors.info, AppStrings.t('contractDetail.legendSent')),
-            _LegendDot(
-                AppColors.error, AppStrings.t('contractDetail.legendOverdue')),
-            _LegendDot(AppColors.accentOrange,
-                AppStrings.t('contractDetail.legendCurrent')),
-            _LegendDot(AppColors.neutral200,
-                AppStrings.t('contractDetail.legendPreview'),
-                last: true),
-          ],
-        ),
+        if (showLegend) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _LegendDot(AppColors.success,
+                  AppStrings.t('contractDetail.legendCollected')),
+              _LegendDot(
+                  AppColors.info, AppStrings.t('contractDetail.legendSent')),
+              _LegendDot(AppColors.error,
+                  AppStrings.t('contractDetail.legendOverdue')),
+              _LegendDot(AppColors.accentOrange,
+                  AppStrings.t('contractDetail.legendCurrent')),
+              _LegendDot(AppColors.neutral200,
+                  AppStrings.t('contractDetail.legendPreview'),
+                  last: true),
+            ],
+          ),
+        ],
       ],
     );
   }

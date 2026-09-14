@@ -554,3 +554,13 @@ Cập nhật `docs/DESIGN-SYSTEMS.md` mục 5 (Iconography) ghi rõ font chuẩn
 Trước khi code B-0x, kéo lại Figma thật cho cả 5 frame (`220:4166..220:4667`) — phát hiện `SCREEN-SPEC.md` đánh số sai thứ tự B-02/B-03 (Batch/Single bị đảo) và B-04/B-05 (Send sheet/Invoice Detail bị đảo), cùng lỗi từng gặp ở T-0x trước đây. Đã sửa lại `SCREEN-SPEC.md` khớp đúng Figma: **B-01=Invoice List, B-02=Create Single, B-03=Create Batch, B-04=Invoice Detail, B-05=Send Invoice sheet**.
 
 Phát hiện thêm: Edge Function `generate-invoice`/`generate-payment-qr` đã được viết + deploy từ trước (không thuộc phạm vi code Flutter), xử lý đúng phần lớn BR-BILL-01→11 — quyết định KHÔNG viết lại engine tính tiền bằng Dart, Flutter chỉ gọi 2 function này qua `supabase.functions.invoke(...)` (pattern mới, chưa có tiền lệ trong app — trước giờ chỉ dùng `auth.signInWithOtp`/`verifyOTP` có sẵn của SDK, chưa từng tự gọi Edge Function tuỳ biến). Đã vá 1 TODO còn sót trong `generate-invoice` (prorate tiền nhà theo ngày ở khi MOVE_IN/MOVE_OUT giữa kỳ — dungtv xác nhận vá trước khi làm UI), deploy lại thành công.
+
+## 2026-09-14 (Đợt 32) — B-01/B-02 code xong, vá 3 bug nghiêm trọng phát hiện khi test thật
+
+Test tạo hoá đơn thật đầu tiên (A.201/Nguyen Thi Lan, kỳ 09/2026) lộ ra 3 bug, cả 3 đều đã vá và verify lại:
+
+1. **Edge Function chỉ chấp nhận secret key.** `generate-invoice`/`generate-payment-qr` cấu hình `auth: ["secret"]` — app mobile không thể gọi (không được nhúng service-role key). Sửa `auth: ["user", "secret"]`, thêm bước tự kiểm tra quyền qua `ctx.supabase` (RLS-scoped) trước khi dùng `ctx.supabaseAdmin` để ghi. `secret` giữ lại cho test/script nội bộ.
+2. **`core/invoice_period.dart` tính kỳ hoá đơn sai mô hình.** Đợt 28 tự suy luận (không có `BR-BILL-xx` lúc đó tưởng là chưa quy định) neo kỳ theo ngày ký hợp đồng — nhưng `BR-BILL-07` đã quy định rõ "điện/nước luôn tính theo tháng dương lịch", và Edge Function `generate-invoice` (viết trước, đúng luật) đã dùng đúng tháng dương lịch. Sửa lại `_periodAt()`/`periodStartingAt()` theo tháng dương lịch, verify lại T-05 + T-10 không regression.
+3. **So `period_ym` bằng `eq` sai cho MOVE_IN/MOVE_OUT.** Cột này lưu đúng ngày sự kiện thật (không phải ngày 1 đầu tháng), nên `eq(periodYm)` chỉ đúng khi dọn vào/ra đúng ngày 1 — sai với mọi trường hợp khác. Ảnh hưởng: prorate tiền nhà (mới thêm ở Đợt 31) không kích hoạt, và fallback tìm chỉ số MOVE_OUT có sẵn từ trước cũng bị lỗi tương tự (chưa ai phát hiện vì T-09 End Contract chưa từng thử tạo hoá đơn cuối kỳ qua đường này). Sửa cả 2 chỗ thành lọc theo khoảng ngày của tháng.
+
+Kèm code xong B-01 (Bills List)/B-02 (Create Invoice Single) — xem `changelog/2026-09-14.md` cho chi tiết UI. B-03/B-04/B-05 còn lại.

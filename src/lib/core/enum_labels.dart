@@ -1,4 +1,5 @@
 import '../data/models/contract.dart';
+import '../data/models/invoice.dart';
 import '../data/models/reading.dart';
 import '../data/models/room.dart';
 import '../data/models/tenant.dart';
@@ -54,4 +55,13 @@ String serviceBillingMethodLabel(ServiceBillingMethod method) =>
     switch (method) {
       ServiceBillingMethod.flat => AppStrings.t('status.flat'),
       ServiceBillingMethod.byArea => AppStrings.t('status.byArea'),
+    };
+
+/// `Overdue` KHÔNG có trong [InvoiceStatus] (suy ra từ `dueDate` khi còn
+/// `Sent` — xem `Invoice.isOverdue`), nên hàm này chỉ nhận đúng 3 trạng thái
+/// thật lưu DB; nơi gọi tự kiểm tra `isOverdue` trước để hiện đúng label.
+String invoiceStatusLabel(InvoiceStatus status) => switch (status) {
+      InvoiceStatus.draft => AppStrings.t('status.draft'),
+      InvoiceStatus.sent => AppStrings.t('status.sent'),
+      InvoiceStatus.collected => AppStrings.t('status.collected'),
     };

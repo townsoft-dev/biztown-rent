@@ -2,12 +2,15 @@ import '../data/models/contract.dart';
 import '../data/models/invoice.dart';
 
 /// 1 kỳ hoá đơn suy ra từ điều khoản hợp đồng (KHÔNG phải `tb_invoice` thật)
-/// — dùng cho T-05 (dải chip) và T-10 (Invoice Schedule Preview). Xem
-/// docs/DECISIONS.md Đợt 28 — chưa có `BR-BILL-xx`/`DATABASE.md` nào định
-/// nghĩa chính xác cách chia kỳ, đây là suy luận hợp lý (ngày neo = ngày
-/// trong tháng của `startDate` phiên bản hiện hành, hạn thanh toán rơi vào
-/// tháng của `end`), chỉ dùng để XEM TRƯỚC — không lưu DB nên thay đổi cách
-/// tính sau này không ảnh hưởng dữ liệu cũ.
+/// — dùng cho T-05 (dải chip) và T-10 (Invoice Schedule Preview). LUÔN đúng
+/// 1 THÁNG DƯƠNG LỊCH (`BR-BILL-07`: "điện/nước luôn tính theo tháng dương
+/// lịch") — sửa lại 2026-09-14 sau khi đối chiếu với Edge Function thật
+/// `generate-invoice` (`periodBounds()`, cũng tính trọn tháng dương lịch)
+/// lúc test B-0x, phát hiện bản trước đó (Đợt 28) tự suy luận SAI thành neo
+/// theo ngày ký hợp đồng (VD hợp đồng ký 14/09 thì tính kỳ 14/09→13/10) —
+/// suy luận đó dựa trên giả định BR-BILL chưa quy định rõ, nhưng thực ra
+/// `BR-BILL-07` đã quy định rõ là tháng dương lịch, chỉ là chưa đối chiếu kỹ.
+/// Xem docs/DECISIONS.md.
 class InvoicePeriod {
   final DateTime start;
   final DateTime end;
@@ -24,15 +27,14 @@ DateTime dueDateForMonth(int year, int month, int day) {
   return DateTime(year, month, day > lastDayOfMonth ? lastDayOfMonth : day);
 }
 
-InvoicePeriod _periodAt(ContractVersion version, int cycleIndex) {
-  final anchorDay = version.startDate.day;
+/// Kỳ tháng dương lịch thứ [monthOffset] kể từ đúng tháng chứa `startDate`
+/// của hợp đồng (0 = tháng ký hợp đồng, LUÔN từ ngày 1 tới ngày cuối tháng —
+/// không neo theo ngày ký, khớp `periodBounds()` trong Edge Function).
+InvoicePeriod _periodAt(ContractVersion version, int monthOffset) {
   final start = DateTime(
-      version.startDate.year,
-      version.startDate.month + cycleIndex * version.rentCycleMonths,
-      anchorDay);
-  final end =
-      DateTime(start.year, start.month + version.rentCycleMonths, anchorDay)
-          .subtract(const Duration(days: 1));
+      version.startDate.year, version.startDate.month + monthOffset, 1);
+  final daysInMonth = DateTime(start.year, start.month + 1, 0).day;
+  final end = DateTime(start.year, start.month, daysInMonth);
   final dueDate =
       dueDateForMonth(end.year, end.month, version.paymentDueDayOfMonth);
   return InvoicePeriod(start: start, end: end, dueDate: dueDate);
@@ -55,9 +57,7 @@ class InvoiceScheduleChipData {
 
 /// Dựng dải chip "Invoice schedule" cho T-05 — `totalPeriods` kỳ tính từ kỳ
 /// SỚM NHẤT còn chưa có hoá đơn Collected (thường là kỳ chứa hôm nay, trừ khi
-/// có hoá đơn thật của kỳ trước đó vẫn chưa thu — B-0x chưa xây UI tạo hoá
-/// đơn nên trong thực tế `invoices` luôn rỗng, mọi kỳ tính từ hôm nay trở đi
-/// sẽ là `current` (kỳ đầu) rồi `scheduled` (các kỳ sau)).
+/// có hoá đơn thật của kỳ trước đó vẫn chưa thu).
 List<InvoiceScheduleChipData> buildInvoiceScheduleChips(
   ContractVersion version,
   List<Invoice> invoices, {
@@ -100,15 +100,10 @@ List<InvoiceScheduleChipData> buildInvoiceScheduleChips(
   });
 }
 
-/// Kỳ có `start` khớp đúng ngày `periodStart` — T-10 dựng lại từ tham số route.
+/// Kỳ có `start` khớp đúng tháng/năm của `periodStart` — T-10 dựng lại từ
+/// tham số route, B-01 tìm hoá đơn đúng kỳ đang xem.
 InvoicePeriod periodStartingAt(ContractVersion version, DateTime periodStart) {
-  final anchorDay = version.startDate.day;
-  final monthsFromStart = (periodStart.year - version.startDate.year) * 12 +
+  final monthOffset = (periodStart.year - version.startDate.year) * 12 +
       (periodStart.month - version.startDate.month);
-  final index = (monthsFromStart / version.rentCycleMonths).round();
-  final period = _periodAt(version, index);
-  assert(period.start.year == periodStart.year &&
-      period.start.month == periodStart.month &&
-      period.start.day == anchorDay);
-  return period;
+  return _periodAt(version, monthOffset);
 }

@@ -59,10 +59,10 @@
 | # | Màn hình | Ghi chú |
 |---|---|---|
 | B-01 | Invoice List | Nhóm theo Nhà → theo Hợp đồng; chip "Scheduled" cho kỳ tương lai |
-| B-02 | Create Invoice — Batch | Chọn 1 nhà + 1 kỳ → tạo hàng loạt — mới |
-| B-03 | Create Invoice — Single | Tạo cho 1 hợp đồng cụ thể |
-| B-04 | Send Invoice Sheet | Bottom sheet: xem QR, chọn kênh gửi — dùng chung B-02/B-03 — mới |
-| B-05 | Invoice Detail | Xem chi tiết, đánh dấu Collected |
+| B-02 | Create Invoice — Single | Tạo cho 1 hợp đồng cụ thể |
+| B-03 | Create Invoice — Batch | Chọn 1 nhà + 1 kỳ → tạo hàng loạt — mới |
+| B-04 | Invoice Detail | Xem chi tiết, đánh dấu Collected |
+| B-05 | Send Invoice Sheet | Bottom sheet: xem QR, chọn kênh gửi — dùng chung B-02/B-03 — mới |
 
 ### 1.6 Profile (P) — 7 màn
 
@@ -115,7 +115,7 @@
 - **Mục đích:** Tập trung thông báo (FR-NOTI-01→04).
 - **Thành phần chính:** List thông báo (icon theo loại, tiêu đề, tóm tắt, thời gian tương đối, chấm chưa đọc), tab "Tất cả"/"Chưa đọc".
 - **Trạng thái:** Có thông báo / Rỗng.
-- **Hành động & điều hướng:** Tap → đánh dấu đã đọc + điều hướng: hoá đơn mới/nhắc thanh toán → B-05; hợp đồng sắp hết hạn → T-05; **đến hạn ghi chỉ số định kỳ** (BR-NOTI-05) → H-06 (Reading Entry) đúng nhà liên quan; được mời làm quản lý → P-05.
+- **Hành động & điều hướng:** Tap → đánh dấu đã đọc + điều hướng: hoá đơn mới/nhắc thanh toán → B-04; hợp đồng sắp hết hạn → T-05; **đến hạn ghi chỉ số định kỳ** (BR-NOTI-05) → H-06 (Reading Entry) đúng nhà liên quan; được mời làm quản lý → P-05.
 - **Dữ liệu hiển thị:** Theo BR-NOTI-01→06.
 - **Edge cases:** Thông báo trỏ tới thực thể đã xoá → hiện "Không tìm thấy dữ liệu".
 

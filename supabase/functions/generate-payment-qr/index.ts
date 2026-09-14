@@ -11,8 +11,20 @@ import { withSupabase } from "@supabase/server";
 import { buildVietQrPayload } from "../_shared/vietqr.ts";
 
 export default {
-  fetch: withSupabase({ auth: ["secret"] }, async (req, ctx) => {
+  // "user": app gọi thật bằng JWT chủ nhà/quản lý — kiểm tra quyền qua
+  // `ctx.supabase` (RLS policy "Invoice scoped to house" đã có sẵn) trước
+  // khi dùng `ctx.supabaseAdmin` ghi đặc quyền. "secret" giữ cho test nội bộ.
+  fetch: withSupabase({ auth: ["user", "secret"] }, async (req, ctx) => {
     const { invoiceId } = await req.json();
+
+    const { data: allowed } = await ctx.supabase
+      .from("tb_invoice")
+      .select("id")
+      .eq("id", invoiceId)
+      .maybeSingle();
+    if (!allowed) {
+      return Response.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const { data: invoice, error: invoiceError } = await ctx.supabaseAdmin
       .from("tb_invoice")

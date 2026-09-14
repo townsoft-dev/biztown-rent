@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../bills/bills_list_screen.dart';
+import '../bills/invoice_create_single_screen.dart';
 import '../data/models/contract.dart';
 import '../data/models/reading.dart';
 import '../landlord/change_password_screen.dart';
@@ -19,7 +21,6 @@ import '../landlord/room_detail_screen.dart';
 import '../landlord/room_form_screen.dart';
 import '../landlord/room_list_screen.dart';
 import '../shared/app_shell.dart';
-import '../shared/coming_soon_screen.dart';
 import '../shared/login_screen.dart';
 import '../shared/notification_center_screen.dart';
 import '../shared/signup_screen.dart';
@@ -33,9 +34,7 @@ import '../tenant/invoice_schedule_screen.dart';
 import '../tenant/tenant_contract_screen.dart';
 import '../tenant/tenant_detail_screen.dart';
 import '../tenant/tenant_form_screen.dart';
-import 'app_strings.dart';
 import 'supabase_client.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 /// Chuyển Stream thành Listenable để go_router tự redirect lại mỗi khi auth
 /// state đổi (đăng nhập/đăng xuất) mà không cần rebuild toàn bộ widget tree.
@@ -226,10 +225,16 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-                path: '/bills',
-                builder: (context, state) => ComingSoonScreen(
-                    title: AppStrings.t('comingSoon.bills'),
-                    icon: Symbols.receipt_long_rounded))
+              path: '/bills',
+              builder: (context, state) => const BillsListScreen(),
+              routes: [
+                GoRoute(
+                  path: 'invoices/new',
+                  builder: (context, state) => InvoiceCreateSingleScreen(
+                      contractId: state.uri.queryParameters['contractId']!),
+                ),
+              ],
+            ),
           ],
         ),
         StatefulShellBranch(
