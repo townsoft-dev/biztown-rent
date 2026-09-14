@@ -538,3 +538,13 @@ dungtv yêu cầu test đầy đủ luồng thật (tạo người thuê → t�
 2. **Room Detail (H-04) khối "CURRENT CONTRACT" luôn hiện cứng "No active contract."** dù phòng đang có hợp đồng Active — đây là `// TODO` bỏ ngỏ từ đợt T-05/T-06 (chưa từng nối `roomId → contract Active`), không phải bug mới nhưng lộ ra khi test full luồng lần này. Đã vá: thêm `ContractRepository.activeContractIdForRoom()` (tra bảng nối `tb_contract_room` theo `room_id` + `is_active=true`) + provider `roomActiveContractProvider` (ghép thêm điều khoản hiện hành + Tenant), `room_detail_screen.dart` hiện đúng `MiniProfileCard` (Figma đã có sẵn ý định dùng widget này ở H-04 — ghi trong comment của chính widget đó — nhưng chưa từng nối) + Monthly rent/End date + nút "View contract" (key ngôn ngữ có sẵn từ trước, cũng chưa từng dùng) trỏ sang T-05.
 
 Cả 2 đều thuộc dạng "thiếu invalidate/thiếu nối provider", không phải lỗi logic nghiệp vụ — không cần đổi schema hay quyết định nghiệp vụ mới, chỉ ghi lại vì đúng quy ước "mọi thay đổi ảnh hưởng trạng thái phải ghi lại". Chi tiết đầy đủ xem `changelog/2026-09-14.md`.
+
+## 2026-09-14 (Đợt 30) — Icon toàn app dùng sai font, đổi sang `material_symbols_icons`
+
+dungtv gửi ảnh trang "DESIGN SYSTEM — V3 · components & tokens" trên Figma và nhắc lại rule bắt buộc bám theo design system chung, chỉ ra icon trong app chưa giống thiết kế.
+
+**Phát hiện**: Component "Icon" (node `163:5`) trong Design System V3 ghi rõ dùng font **`Material Symbols Rounded`** (Google Material Symbols, ligature theo tên glyph — VD `home`, `bolt`, `water_drop`, `receipt_long`), khác với font "Material Icons" cổ điển mà Flutter dùng mặc định qua class `Icons` (`uses-material-design: true` trong `pubspec.yaml`). 2 bộ font có nhiều tên glyph trùng nhưng hình dạng thật sự khác nhau (nét, độ bo góc, độ dày) — nên dù code trước đó chọn đúng TÊN icon hợp lý (VD `Icons.bolt_rounded` cho điện, `Icons.water_drop_rounded` cho nước), hình ảnh hiển thị ra vẫn không khớp Figma. Đây là lệch xuyên suốt toàn app (64 chỗ dùng icon, 26 file) chứ không phải lỗi ở 1 màn cụ thể.
+
+**Quyết định**: Thêm package `material_symbols_icons` (^4.2960.0) — bundle sẵn cả 3 biến thể font Material Symbols (Outlined/Rounded/Sharp), expose qua class `Symbols` với tên glyph + hậu tố kiểu (VD `Symbols.home_rounded`), không cần khai báo font thủ công trong `pubspec.yaml`. Thay toàn bộ `Icons.xxx` sang `Symbols.xxx_rounded` tương ứng (dùng biến thể Rounded xuyên suốt, khớp đúng tên font Figma dùng). Không tự dựng font/codepoint thủ công vì rủi ro sai codepoint cao hơn, package này là lựa chọn phổ biến/còn bảo trì cho đúng nhu cầu này.
+
+Cập nhật `docs/DESIGN-SYSTEMS.md` mục 5 (Iconography) ghi rõ font chuẩn + tên package dùng trong code, tránh lặp lại nhầm lẫn `Icons.xxx` ở các đợt code sau.

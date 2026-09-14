@@ -17,6 +17,7 @@ import '../shared/app_text_field.dart';
 import '../shared/meter_card.dart';
 import '../shared/progress_card.dart';
 import '../shared/top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// H-06 — Record Monthly Reading (PERIODIC) · Entry (node 220:3077, Figma).
 /// Ghi chỉ số PERIODIC thật cho mọi phòng của 1 nhà, theo BR-READ-02/03/07 —
@@ -243,8 +244,8 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                     for (final entry in entries) ...[
                       MeterCard(
                         icon: entry.utilityType == UtilityType.electricity
-                            ? Icons.bolt_rounded
-                            : Icons.water_drop_rounded,
+                            ? Symbols.bolt_rounded
+                            : Symbols.water_drop_rounded,
                         iconColor: entry.utilityType == UtilityType.electricity
                             ? AppColors.accentOrange
                             : AppColors.info,

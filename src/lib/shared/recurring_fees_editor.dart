@@ -7,6 +7,7 @@ import '../core/number_format.dart';
 import '../data/recurring_fees_controller.dart';
 import 'app_button.dart';
 import 'app_text_field.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Danh sách dòng phí định kỳ có thể thêm/xoá (H-02 & H-05 "Default recurring
 /// fees") — cùng 1 widget dùng chung cho cả House và Room form thay vì lặp lại
@@ -46,7 +47,7 @@ class RecurringFeesEditor extends ConsumerWidget {
                     const SizedBox(width: 4),
                     IconButton(
                       onPressed: () => controller.removeRow(i),
-                      icon: const Icon(Icons.close_rounded),
+                      icon: const Icon(Symbols.close_rounded),
                       visualDensity: VisualDensity.compact,
                     ),
                   ],

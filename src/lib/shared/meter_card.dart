@@ -7,6 +7,7 @@ import '../core/locale_provider.dart';
 import '../core/number_format.dart';
 import '../core/theme.dart';
 import 'status_pill.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// "Meter card" (171:160 trên Figma) — 1 thẻ / 1 đồng hồ (không phải / phòng)
 /// ở H-06 Entry. `previous` luôn readonly (chỉ số kỳ trước); `current` cho
@@ -98,7 +99,7 @@ class MeterCard extends ConsumerWidget {
                         : StatusBadgeStyle.expiringSoon),
                 if (onViewHistory != null) ...[
                   const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right_rounded,
+                  const Icon(Symbols.chevron_right_rounded,
                       color: AppColors.neutral200, size: 20),
                 ],
               ],

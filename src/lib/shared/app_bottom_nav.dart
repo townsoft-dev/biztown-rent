@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/app_strings.dart';
 import '../core/locale_provider.dart';
 import '../core/theme.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// "Bottom navigation" (166:103 trên Figma) — 4 tab cố định (Home/Tenant &
 /// Contract/Bills/Profile), giống hệt nhau ở mọi role. Dùng bên trong
@@ -23,13 +24,13 @@ class AppBottomNav extends ConsumerWidget {
     // bộ nhớ) nên không cần tối ưu thêm.
     ref.watch(languageProvider);
     final tabs = [
-      (icon: Icons.home_rounded, label: AppStrings.t('bottomNav.home')),
-      (icon: Icons.group_rounded, label: AppStrings.t('bottomNav.tenant')),
+      (icon: Symbols.home_rounded, label: AppStrings.t('bottomNav.home')),
+      (icon: Symbols.group_rounded, label: AppStrings.t('bottomNav.tenant')),
       (
-        icon: Icons.receipt_long_rounded,
+        icon: Symbols.receipt_long_rounded,
         label: AppStrings.t('bottomNav.bills')
       ),
-      (icon: Icons.person_rounded, label: AppStrings.t('bottomNav.profile')),
+      (icon: Symbols.person_rounded, label: AppStrings.t('bottomNav.profile')),
     ];
     return Container(
       decoration: const BoxDecoration(

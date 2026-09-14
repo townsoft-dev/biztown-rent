@@ -22,6 +22,7 @@ import '../shared/mini_profile_card.dart';
 import '../shared/section_label.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// H-04 — Room Detail (View) (node 220:2714, lấy lại qua Figma MCP 10/09/2026
 /// sau khi Dream cập nhật: ảnh dạng slider nhiều ảnh, lịch sử chỉ số hiện 2
@@ -164,14 +165,14 @@ class RoomDetailScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading:
-                  const Icon(Icons.bolt_rounded, color: AppColors.accentOrange),
+              leading: const Icon(Symbols.bolt_rounded,
+                  color: AppColors.accentOrange),
               title: Text(utilityTypeLabel(UtilityType.electricity)),
               onTap: () => Navigator.of(context).pop(UtilityType.electricity),
             ),
             ListTile(
               leading:
-                  const Icon(Icons.water_drop_rounded, color: AppColors.info),
+                  const Icon(Symbols.water_drop_rounded, color: AppColors.info),
               title: Text(utilityTypeLabel(UtilityType.water)),
               onTap: () => Navigator.of(context).pop(UtilityType.water),
             ),
@@ -249,7 +250,7 @@ class _RoomPhotoState extends ConsumerState<_RoomPhoto> {
           children: [
             photos.isEmpty
                 ? const Center(
-                    child: Icon(Icons.image_rounded,
+                    child: Icon(Symbols.image_rounded,
                         color: AppColors.neutral200, size: 36),
                   )
                 : FutureBuilder<String>(
@@ -289,7 +290,7 @@ class _RoomPhotoState extends ConsumerState<_RoomPhoto> {
               bottom: 0,
               child: Center(
                 child: _SliderArrow(
-                    icon: Icons.chevron_left_rounded,
+                    icon: Symbols.chevron_left_rounded,
                     overPhoto: photos.isNotEmpty,
                     onTap: photos.length > 1 ? () => _step(-1) : null),
               ),
@@ -300,7 +301,7 @@ class _RoomPhotoState extends ConsumerState<_RoomPhoto> {
               bottom: 0,
               child: Center(
                 child: _SliderArrow(
-                    icon: Icons.chevron_right_rounded,
+                    icon: Symbols.chevron_right_rounded,
                     overPhoto: photos.isNotEmpty,
                     onTap: photos.length > 1 ? () => _step(1) : null),
               ),
@@ -366,8 +367,8 @@ class _ReadingSummaryCard extends ConsumerWidget {
         ? AppColors.accentOrange
         : AppColors.info;
     final icon = utilityType == UtilityType.electricity
-        ? Icons.bolt_rounded
-        : Icons.water_drop_rounded;
+        ? Symbols.bolt_rounded
+        : Symbols.water_drop_rounded;
     final utilityLabel = utilityTypeLabel(utilityType);
 
     return historyAsync.when(

@@ -15,6 +15,7 @@ import '../shared/list_card.dart';
 import '../shared/section_label.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// P-03 — Payout Bank Account (node 220:4878, Figma) — sửa tài khoản nhận
 /// tiền (in trên hoá đơn/sinh mã QR VietQR) cho từng Nhà tôi SỞ HỮU, gộp
@@ -218,7 +219,7 @@ class _PayoutBankAccountScreenState
                           for (final house in houses) ...[
                             ListCard(
                               thumbColor: AppColors.primary,
-                              icon: Icons.account_balance_rounded,
+                              icon: Symbols.account_balance_rounded,
                               title: house.name,
                               trailing: StatusPill(
                                 text: _hasAccount(house)

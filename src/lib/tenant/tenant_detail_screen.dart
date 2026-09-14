@@ -19,6 +19,7 @@ import '../shared/list_card.dart';
 import '../shared/section_label.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// T-03 — Tenant Detail (View) (node 220:3381, Figma).
 class TenantDetailScreen extends ConsumerWidget {
@@ -245,7 +246,7 @@ class _IdPhotoTile extends StatelessWidget {
             ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.badge_rounded,
+                  const Icon(Symbols.badge_rounded,
                       color: AppColors.textTertiary, size: 22),
                   const SizedBox(height: 4),
                   Text(label,
@@ -291,7 +292,7 @@ class _ContractRow extends ConsumerWidget {
         : houses.where((h) => h.id == rooms.first.houseId).firstOrNull;
 
     return ListCard(
-      icon: Icons.description_rounded,
+      icon: Symbols.description_rounded,
       thumbColor: contract.status == ContractStatus.ended
           ? AppColors.secondary
           : AppColors.primary,

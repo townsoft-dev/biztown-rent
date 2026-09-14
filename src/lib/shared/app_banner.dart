@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// "Banner" (173:101 trên Figma) — cảnh báo/ghi chú inline. `tone: info`
 /// (mặc định, xanh — VD ghi chú trung tính ở H-02/T-07) hoặc `tone: warning`
@@ -31,9 +32,9 @@ class AppBanner extends StatelessWidget {
       AppBannerTone.preview => AppColors.bgMuted,
     };
     final icon = switch (tone) {
-      AppBannerTone.info => Icons.info_outline_rounded,
-      AppBannerTone.warning => Icons.warning_amber_rounded,
-      AppBannerTone.preview => Icons.visibility_outlined,
+      AppBannerTone.info => Symbols.info_rounded,
+      AppBannerTone.warning => Symbols.warning_amber_rounded,
+      AppBannerTone.preview => Symbols.visibility_rounded,
     };
 
     return Container(

@@ -18,6 +18,7 @@ import '../shared/search_field.dart';
 import '../shared/segmented_control.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// T-01/T-02 — Tenant & Contract (node 220:3194/220:3283, Figma) — 1 màn với
 /// Segmented control 2 state (Tenants/Contracts), giống cách H-03 gộp "House
@@ -295,7 +296,7 @@ class _TenantContractScreenState extends ConsumerState<TenantContractScreen> {
                     ),
                   for (final item in filtered) ...[
                     ListCard(
-                      icon: Icons.description_rounded,
+                      icon: Symbols.description_rounded,
                       thumbColor: item.contract.status == ContractStatus.ended
                           ? AppColors.secondary
                           : (item.isEndingSoon

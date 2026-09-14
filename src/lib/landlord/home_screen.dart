@@ -13,6 +13,7 @@ import '../shared/section_label.dart';
 import '../shared/stat_card.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// H-01 — Home / House List (node 220:2347, lấy qua Figma MCP 10/09/2026),
 /// nối CRUD thật vào `tb_house`/`tb_room` (10/09/2026, xem
@@ -90,7 +91,7 @@ class HomeScreen extends ConsumerWidget {
                             .length;
                         return ListCard(
                           thumbColor: AppColors.primary,
-                          icon: Icons.home_work_rounded,
+                          icon: Symbols.home_work_rounded,
                           title: house.name,
                           trailing: StatusPill(
                             text: '$occupied/${houseStatuses.length}',

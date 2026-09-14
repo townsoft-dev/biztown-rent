@@ -9,6 +9,7 @@ import 'list_card.dart';
 import 'segmented_control.dart';
 import 'status_pill.dart';
 import 'top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// S-03 — Notification Center (node 220:2270, lấy qua Figma MCP 09/09/2026).
 class NotificationCenterScreen extends ConsumerStatefulWidget {
@@ -26,7 +27,7 @@ class _NotificationCenterScreenState
   static const _items = [
     _NotificationData(
       thumbColor: AppColors.accentCoral,
-      icon: Icons.receipt_long,
+      icon: Symbols.receipt_long_rounded,
       title: 'New invoice sent',
       badge: StatusBadgeStyle.sent,
       body: 'P.101 · period 09/2026 · 4,180,000 VND',
@@ -34,7 +35,7 @@ class _NotificationCenterScreenState
     ),
     _NotificationData(
       thumbColor: AppColors.accentOrange,
-      icon: Icons.speed,
+      icon: Symbols.speed_rounded,
       title: 'Time to record readings',
       badge: StatusBadgeStyle.expiringSoon,
       body: 'Nha tro Binh An  ·  8 rooms',
@@ -42,7 +43,7 @@ class _NotificationCenterScreenState
     ),
     _NotificationData(
       thumbColor: AppColors.primary,
-      icon: Icons.event_repeat,
+      icon: Symbols.event_repeat_rounded,
       title: 'Time to create invoices',
       badge: StatusBadgeStyle.draft,
       body: 'Period 09/2026 · 18 active contracts',
@@ -50,7 +51,7 @@ class _NotificationCenterScreenState
     ),
     _NotificationData(
       thumbColor: AppColors.error,
-      icon: Icons.warning,
+      icon: Symbols.warning_rounded,
       title: 'Invoice overdue',
       badge: StatusBadgeStyle.overdue,
       body: 'P.06 · Hoang Gia Huy · 6 days late',
@@ -58,7 +59,7 @@ class _NotificationCenterScreenState
     ),
     _NotificationData(
       thumbColor: AppColors.info,
-      icon: Icons.description,
+      icon: Symbols.description_rounded,
       title: 'Contract ending soon',
       badge: StatusBadgeStyle.expiringSoon,
       body: 'P.204 · Pham Van Duc · 13 days left',

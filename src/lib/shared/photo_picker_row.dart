@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../core/app_strings.dart';
 import '../core/theme.dart';
 import '../data/photo_picker_controller.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Hàng chọn ảnh (H-02 House info / H-05 Photos trên Figma) — ảnh đã có sẵn
 /// (tải qua `resolveExistingUrl`) + ảnh mới vừa chọn (preview từ máy) + 1 ô
@@ -26,12 +27,12 @@ class PhotoPickerRow extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_camera_rounded),
+              leading: const Icon(Symbols.photo_camera_rounded),
               title: Text(AppStrings.t('common.takePhoto')),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_rounded),
+              leading: const Icon(Symbols.photo_library_rounded),
               title: Text(AppStrings.t('common.chooseFromGallery')),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
@@ -92,7 +93,7 @@ class PhotoPickerRow extends StatelessWidget {
               _PhotoTile(
                 dashed: true,
                 onTap: () => _pickPhoto(context),
-                child: const Icon(Icons.add_a_photo_rounded,
+                child: const Icon(Symbols.add_a_photo_rounded,
                     color: AppColors.textTertiary, size: 22),
               ),
             ],
@@ -145,7 +146,8 @@ class _PhotoTile extends StatelessWidget {
               child: const CircleAvatar(
                 radius: 10,
                 backgroundColor: AppColors.error,
-                child: Icon(Icons.close_rounded, color: Colors.white, size: 14),
+                child:
+                    Icon(Symbols.close_rounded, color: Colors.white, size: 14),
               ),
             ),
           ),

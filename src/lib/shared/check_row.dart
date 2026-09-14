@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// "check row" (Figma, node 220:5117 nhóm "House access" ở P-06) — dòng
 /// checkbox dạng thẻ bo góc, khác hẳn `Checkbox` Material mặc định. Checked =
@@ -46,8 +47,8 @@ class CheckRow extends StatelessWidget {
           children: [
             Icon(
               checked
-                  ? Icons.check_box_rounded
-                  : Icons.check_box_outline_blank_rounded,
+                  ? Symbols.check_box_rounded
+                  : Symbols.check_box_outline_blank_rounded,
               size: 20,
               color: disabled
                   ? AppColors.neutral200

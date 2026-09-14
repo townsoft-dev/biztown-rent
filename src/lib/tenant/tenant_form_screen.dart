@@ -17,6 +17,7 @@ import '../shared/app_text_field.dart';
 import '../shared/avatar.dart';
 import '../shared/section_label.dart';
 import '../shared/top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// T-04 — Tenant Create/Edit (node 220:3476, Figma). `tenantId == null` →
 /// tạo mới; ngược lại → sửa, nạp dữ liệu thật qua `tenantProvider`.
@@ -115,12 +116,12 @@ class _TenantFormScreenState extends ConsumerState<TenantFormScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_camera_rounded),
+              leading: const Icon(Symbols.photo_camera_rounded),
               title: Text(AppStrings.t('common.takePhoto')),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_rounded),
+              leading: const Icon(Symbols.photo_library_rounded),
               title: Text(AppStrings.t('common.chooseFromGallery')),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
@@ -533,7 +534,7 @@ class _IdPhotoPickerTile extends ConsumerWidget {
       child = Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.badge_rounded,
+          const Icon(Symbols.badge_rounded,
               color: AppColors.textTertiary, size: 22),
           const SizedBox(height: 4),
           Text(label,

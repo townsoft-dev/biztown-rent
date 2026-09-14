@@ -7,6 +7,7 @@ import '../core/number_format.dart';
 import '../data/contract_recurring_fees_controller.dart';
 import 'app_button.dart';
 import 'app_text_field.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Danh sách dòng phí định kỳ ở T-06 (Create Contract) — 3 field/dòng (Fee
 /// name, Billing method Flat/None, Amount), khác `RecurringFeesEditor`
@@ -82,7 +83,7 @@ class ContractRecurringFeesEditor extends ConsumerWidget {
                     const SizedBox(width: 4),
                     IconButton(
                       onPressed: () => controller.removeRow(i),
-                      icon: const Icon(Icons.close_rounded),
+                      icon: const Icon(Symbols.close_rounded),
                       visualDensity: VisualDensity.compact,
                     ),
                   ],

@@ -14,6 +14,7 @@ import '../shared/menu_row.dart';
 import '../shared/section_label.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// P-01 — Profile & Settings (node 220:4706, lấy qua Figma MCP 10/09/2026).
 /// Hub điều hướng sang toàn bộ seri P-0x — không tự CRUD gì ở đây.
@@ -85,19 +86,19 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 6),
                 SectionLabel(AppStrings.t('profile.sectionAccount')),
                 MenuRow(
-                  icon: Icons.badge_rounded,
+                  icon: Symbols.badge_rounded,
                   label: AppStrings.t('profile.personalProfile'),
                   onTap: () => context.push('/profile/personal'),
                 ),
                 const SizedBox(height: 8),
                 MenuRow(
-                  icon: Icons.account_balance_rounded,
+                  icon: Symbols.account_balance_rounded,
                   label: AppStrings.t('profile.payoutBankAccount'),
                   onTap: () => context.push('/profile/bank-account'),
                 ),
                 const SizedBox(height: 8),
                 MenuRow(
-                  icon: Icons.lock_rounded,
+                  icon: Symbols.lock_rounded,
                   label: AppStrings.t('profile.changePassword'),
                   onTap: () => context.push('/profile/password'),
                 ),
@@ -105,7 +106,7 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 6),
                   SectionLabel(AppStrings.t('profile.sectionManagement')),
                   MenuRow(
-                    icon: Icons.manage_accounts_rounded,
+                    icon: Symbols.manage_accounts_rounded,
                     label: AppStrings.t('profile.managerAccounts'),
                     badgeText: managersAsync.valueOrNull?.length.toString(),
                     onTap: () => context.push('/profile/managers'),
@@ -114,13 +115,13 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 6),
                 SectionLabel(AppStrings.t('profile.sectionOther')),
                 MenuRow(
-                  icon: Icons.notifications_rounded,
+                  icon: Symbols.notifications_rounded,
                   label: AppStrings.t('profile.notificationCenter'),
                   onTap: () => context.push('/notifications'),
                 ),
                 const SizedBox(height: 8),
                 MenuRow(
-                  icon: Icons.language_rounded,
+                  icon: Symbols.language_rounded,
                   label: AppStrings.t('profile.language'),
                   trailingWidget: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -153,7 +154,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 MenuRow(
-                  icon: Icons.logout_rounded,
+                  icon: Symbols.logout_rounded,
                   label: AppStrings.t('profile.logOut'),
                   type: MenuRowType.danger,
                   onTap: () => _confirmLogout(context, ref),

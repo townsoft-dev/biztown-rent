@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// "search" (220:3199 trên Figma, T-01/T-02) — ô tìm kiếm dùng chung, nền
 /// trắng + viền, icon kính lúp bên trái. Khác `AppTextField` (không có nhãn
@@ -28,7 +29,7 @@ class SearchField extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.search_rounded,
+          const Icon(Symbols.search_rounded,
               color: AppColors.textTertiary, size: 20),
           const SizedBox(width: 8),
           Expanded(

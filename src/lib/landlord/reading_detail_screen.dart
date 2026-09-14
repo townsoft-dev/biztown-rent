@@ -16,6 +16,7 @@ import '../shared/detail_row.dart';
 import '../shared/section_label.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// H-06 — Record Monthly Reading (PERIODIC) · Detail/Edit (node 220:2905,
 /// Figma). Lịch sử đầy đủ 1 phòng + 1 tiện ích, sửa tại chỗ bản ghi mới nhất
@@ -160,8 +161,8 @@ class _ReadingDetailScreenState extends ConsumerState<ReadingDetailScreen> {
                                       BorderRadius.circular(AppRadii.button)),
                               child: Icon(
                                   widget.utilityType == UtilityType.electricity
-                                      ? Icons.bolt_rounded
-                                      : Icons.water_drop_rounded,
+                                      ? Symbols.bolt_rounded
+                                      : Symbols.water_drop_rounded,
                                   color: Colors.white,
                                   size: 24),
                             ),

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../core/app_strings.dart';
 import '../core/theme.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// "Top bar" — component dùng chung (166:34 trên Figma), 3 variant: Title,
 /// Title+Action, Home (greeting + tên + dòng tổng quan + chuông — dùng
@@ -67,7 +68,7 @@ class TopBar extends StatelessWidget {
                 children: [
                   if (onBack != null) ...[
                     _TopBarCircleButton(
-                        icon: Icons.arrow_back_rounded,
+                        icon: Symbols.arrow_back_rounded,
                         size: 26,
                         iconSize: 16,
                         bgOpacity: 0.14,
@@ -110,7 +111,7 @@ class TopBarMoreButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _TopBarCircleButton(
-        icon: Icons.more_vert_rounded,
+        icon: Symbols.more_vert_rounded,
         size: 30,
         iconSize: 18,
         bgOpacity: 0.12,
@@ -125,7 +126,7 @@ class TopBarBellButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _TopBarCircleButton(
-        icon: Icons.notifications_rounded,
+        icon: Symbols.notifications_rounded,
         size: 30,
         iconSize: 18,
         bgOpacity: 0.12,
@@ -196,7 +197,7 @@ class TopBarActionMenuButton extends StatelessWidget {
         ),
       ],
       child: const _TopBarCircleIcon(
-          icon: Icons.more_vert_rounded,
+          icon: Symbols.more_vert_rounded,
           size: 30,
           iconSize: 18,
           bgOpacity: 0.12),

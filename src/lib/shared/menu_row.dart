@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme.dart';
 import 'status_pill.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// "Menu row" (171:55 trên Figma) — dòng menu ở P-01 Profile & Settings:
 /// icon + nhãn [+ badge pill số liệu] + chevron. `danger` dùng cho "Log out".
@@ -59,7 +60,7 @@ class MenuRow extends StatelessWidget {
             if (trailingWidget != null)
               trailingWidget!
             else
-              const Icon(Icons.chevron_right_rounded,
+              const Icon(Symbols.chevron_right_rounded,
                   size: 20, color: AppColors.neutral200),
           ],
         ),

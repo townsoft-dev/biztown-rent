@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/app_strings.dart';
 import '../core/theme.dart';
 import '../data/models/house.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Pill "All houses ▾" (T-02 trên Figma) — lọc list theo 1 Nhà cụ thể hoặc
 /// "Tất cả". Dùng lại ở T-01/T-06 và về sau ở B-0x (Invoice List cũng lọc
@@ -35,7 +36,7 @@ class HouseFilterChip extends StatelessWidget {
                     height: 14 / 11,
                     color: Colors.white)),
             const SizedBox(width: 2),
-            const Icon(Icons.expand_more_rounded,
+            const Icon(Symbols.expand_more_rounded,
                 color: Colors.white, size: 16),
           ],
         ),
@@ -59,7 +60,7 @@ class HouseFilterChip extends StatelessWidget {
             ListTile(
               title: Text(AppStrings.t('common.allHouses')),
               trailing: selectedHouseId == null
-                  ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                  ? const Icon(Symbols.check_rounded, color: AppColors.primary)
                   : null,
               onTap: () => Navigator.of(context).pop(),
             ),
@@ -67,7 +68,8 @@ class HouseFilterChip extends StatelessWidget {
               ListTile(
                 title: Text(house.name),
                 trailing: selectedHouseId == house.id
-                    ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                    ? const Icon(Symbols.check_rounded,
+                        color: AppColors.primary)
                     : null,
                 onTap: () => Navigator.of(context).pop(house.id),
               ),

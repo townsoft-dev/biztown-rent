@@ -111,8 +111,8 @@ Giữ hệ **8px grid**, nhưng bo góc và khoảng cách quan sát được tr
 ## 5. Iconography
 
 - Icon glyph thương hiệu (Rent, Invoice) theo phong cách: **flat, đơn giản, dạng cột biểu đồ (bar chart)**, bo góc mềm, nền navy đặc trưng — dùng cho icon app/marketing, không dùng làm icon hành động trong UI.
-- Icon hành động/UI trong Figma: **Material 3 Design Kit** (đã add vào file Figma) cho icon chuẩn (search, notifications, back, add, location_on, person, check, delete, photo, groups, schedule...); pictogram tự dựng cho icon miền nghiệp vụ mà bộ này thiếu (home, receipt, điện/nước, sửa chữa) — xem `claude/design.md` (project) mục 5 để biết danh sách đầy đủ.
-- Mockup dùng **emoji làm placeholder icon** (🏠 🔌 💧 🧾 👤...) — chỉ để dựng nhanh, **không dùng emoji trong Figma/production**, phải thay bằng icon thật từ Material 3 Design Kit hoặc pictogram tương ứng khi build màn chính thức.
+- Icon hành động/UI trong Figma: **chốt qua Design System V3** (section `194:93` trên Figma, component "Icon" node `163:5`) — font **`Material Symbols Rounded`** (Google, ligature theo tên glyph: `home`, `bolt`, `water_drop`, `receipt_long`, `person`, `group`...), **KHÔNG phải** font "Material Icons" cổ điển mặc định của Flutter (`Icons.xxx`) — 2 bộ có nhiều tên glyph trùng nhau nhưng hình dạng khác nhau (nét dày/mảnh, góc/bo tròn khác). Code Flutter dùng package `material_symbols_icons` (`Symbols.xxx_rounded`), xem `docs/DECISIONS.md` Đợt 29.
+- Mockup dùng **emoji làm placeholder icon** (🏠 🔌 💧 🧾 👤...) — chỉ để dựng nhanh, **không dùng emoji trong Figma/production**, phải thay bằng icon Material Symbols Rounded thật khi build màn chính thức.
 
 ---
 

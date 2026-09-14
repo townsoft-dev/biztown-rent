@@ -22,6 +22,7 @@ import '../shared/section_label.dart';
 import '../shared/segmented_control.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// H-03 — Room List (theo 1 House) (node 220:2424 "Rooms" + 312:2069 "House
 /// detail", lấy qua Figma MCP 10/09/2026) — 1 màn, 2 state qua Segmented
@@ -295,7 +296,7 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
                 RoomStatus.empty => AppColors.secondaryLight,
                 RoomStatus.underRepair => AppColors.accentCoral,
               },
-              icon: Icons.bed_rounded,
+              icon: Symbols.bed_rounded,
               title: room.roomNo,
               trailing: StatusPill(
                 text: roomStatusLabel(room.status),
@@ -345,7 +346,7 @@ class _HousePhoto extends ConsumerWidget {
         width: double.infinity,
         alignment: Alignment.center,
         decoration: decoration,
-        child: const Icon(Icons.image_rounded,
+        child: const Icon(Symbols.image_rounded,
             color: AppColors.neutral200, size: 36),
       );
     }

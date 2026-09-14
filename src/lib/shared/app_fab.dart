@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// "FAB" (168:61 trên Figma) — nút tròn nổi màu cam, dùng cho hành động thêm
 /// mới (Nhà ở H-01, Phòng ở H-03, Tenant ở T-01...). Dùng qua
@@ -9,7 +10,8 @@ class AppFab extends StatelessWidget {
   final VoidCallback onPressed;
   final IconData icon;
 
-  const AppFab({super.key, required this.onPressed, this.icon = Icons.add});
+  const AppFab(
+      {super.key, required this.onPressed, this.icon = Symbols.add_rounded});
 
   @override
   Widget build(BuildContext context) {

@@ -35,6 +35,7 @@ import '../tenant/tenant_detail_screen.dart';
 import '../tenant/tenant_form_screen.dart';
 import 'app_strings.dart';
 import 'supabase_client.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Chuyển Stream thành Listenable để go_router tự redirect lại mỗi khi auth
 /// state đổi (đăng nhập/đăng xuất) mà không cần rebuild toàn bộ widget tree.
@@ -228,7 +229,7 @@ final appRouter = GoRouter(
                 path: '/bills',
                 builder: (context, state) => ComingSoonScreen(
                     title: AppStrings.t('comingSoon.bills'),
-                    icon: Icons.receipt_long_rounded))
+                    icon: Symbols.receipt_long_rounded))
           ],
         ),
         StatefulShellBranch(

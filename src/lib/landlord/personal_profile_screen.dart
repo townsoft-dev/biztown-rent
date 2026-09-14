@@ -16,6 +16,7 @@ import '../shared/app_button.dart';
 import '../shared/app_text_field.dart';
 import '../shared/avatar.dart';
 import '../shared/top_bar.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// P-02 — Personal Profile (View/Edit) (node 220:4805, Figma) — 1 màn luôn ở
 /// trạng thái sửa được (không có state View riêng), Full name/ID number sửa
@@ -57,12 +58,12 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_camera_rounded),
+              leading: const Icon(Symbols.photo_camera_rounded),
               title: Text(AppStrings.t('common.takePhoto')),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_rounded),
+              leading: const Icon(Symbols.photo_library_rounded),
               title: Text(AppStrings.t('common.chooseFromGallery')),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),

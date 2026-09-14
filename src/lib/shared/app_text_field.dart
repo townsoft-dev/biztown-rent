@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// "Input field" (165:60 trên Figma) — label 11px phía trên + ô nhập. Text
 /// dùng theme `inputDecorationTheme` có sẵn (viền/focus đã đúng token).
@@ -71,11 +72,11 @@ class AppTextField extends StatelessWidget {
     final suffixIcon = suffixWidget ??
         switch (trailing) {
           AppTextFieldTrailingIcon.select => const Icon(
-              Icons.expand_more_rounded,
+              Symbols.expand_more_rounded,
               color: AppColors.textTertiary,
               size: 20),
           AppTextFieldTrailingIcon.date => const Icon(
-              Icons.calendar_today_rounded,
+              Symbols.calendar_today_rounded,
               color: AppColors.textTertiary,
               size: 18),
           AppTextFieldTrailingIcon.none => null,
