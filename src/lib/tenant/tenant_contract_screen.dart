@@ -228,7 +228,10 @@ class _TenantContractScreenState extends ConsumerState<TenantContractScreen> {
                 orElse: () => houses.first)
             .name;
     return [
-      HouseFilterChip(label: selectedHouseName, onTap: _pickHouse),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: HouseFilterChip(label: selectedHouseName, onTap: _pickHouse),
+      ),
       const SizedBox(height: 8),
       ref.watch(contractListProvider).when(
             data: (items) {

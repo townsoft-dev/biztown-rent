@@ -351,6 +351,7 @@ class _ContractEndScreenState extends ConsumerState<ContractEndScreen> {
                       maxLines: 3,
                       textarea: true,
                     ),
+                    const SizedBox(height: 10),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
