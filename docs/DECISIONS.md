@@ -712,3 +712,15 @@ dungtv hỏi tiếp: hiện tại có thông báo mới có phải load lại ap
 **Verify thật** (không phải suy đoán): mở app, đứng yên ở Home (không đụng gì) → dùng Management API chèn thẳng 1 dòng `tb_notification` giả lập "hệ thống/người khác vừa tạo thông báo" (không qua app) → chấm đỏ tự hiện ngay trên chuông, không cần chạm màn hình/chuyển tab/tắt mở lại. Mở Notification Center, nội dung hiện đúng payload vừa chèn, "Just now". Bấm vào → tự đánh dấu đã đọc, "0 unread" cập nhật ngay (UPDATE cũng qua đúng kênh Realtime, không cần invalidate tay).
 
 Lưu ý: đây vẫn là Realtime (chỉ hoạt động khi app đang MỞ và có mạng), không phải push hệ thống ra ngoài màn khoá máy — phần đó vẫn chờ FCM (Android, khi có Apple Dev sẽ làm cả iOS cùng lúc theo yêu cầu dungtv) + Zalo ZNS (chờ Template ID).
+
+## 2026-09-15 (Đợt 44) — Vá lỗi hiệu năng thật: Bills List (B-01) tải rất chậm ở quy mô lớn
+
+dungtv phản hồi trực tiếp: "sao load cái bill mà chậm thế nhỉ xoay mãi". Rà lại `billsHouseGroupsProvider` (đứng sau B-01) phát hiện đúng lỗi **N+1 query** kinh điển: với MỖI hợp đồng Active (dữ liệu test hiện có ~67 hợp đồng), code gọi RIÊNG 2 lượt API tuần tự bên trong vòng lặp — `tenantProvider(contract.tenantId)` (lấy 1 tenant) và `contractInvoicesProvider(contract.id)` (lấy hoá đơn của 1 hợp đồng) — tức tới 134 lượt gọi mạng nối tiếp nhau chỉ để tải 1 màn hình, dù phần còn lại của cùng hàm này (version/room/house) đã làm ĐÚNG theo lối gộp lại 1 lượt gọi (`listVersionsByIds`, `roomIdsByContractIds`, `listByIds`...) — chỉ 2 chỗ tenant/invoice bị sót lại kiểu cũ.
+
+**Đã sửa**: bỏ hẳn 2 lượt gọi trong vòng lặp — thay bằng dùng lại đúng 2 provider gộp sẵn có (`tenantsProvider`, `invoicesProvider`, đã tồn tại và dùng ở nơi khác), tự nhóm theo `tenantId`/`contractId` trong bộ nhớ. `buildInvoiceScheduleChips()` không phụ thuộc thứ tự input (tự dựng `Map<DateTime, Invoice>` theo `periodStart`) nên gộp dữ liệu không ảnh hưởng kết quả.
+
+**Nhân tiện rà thêm 1 chỗ cùng họ lỗi** (nhẹ hơn, đã tự chạy song song bằng `Future.wait` nên không quá chậm nhưng vẫn N lượt gọi): `contractListProvider` (đứng sau tab Tenant & Contract, T-02) gọi `getById()` riêng cho từng tenantId duy nhất. Đổi sang dùng lại `tenantsProvider` cho nhất quán — giảm còn đúng 1 lượt gọi.
+
+**Verify thật bằng đo thời gian** (chụp màn hình liên tiếp mỗi 0.5s ngay sau khi bấm tab Bills, đối chiếu timestamp): tải xong hoàn toàn trong khoảng ~2 giây — trước đó cùng màn hình này từng phải đợi 5-10+ giây (đã tự trải nghiệm nhiều lần trong lúc test suốt phiên làm việc). `flutter analyze` sạch.
+
+**Bài học**: khi 1 hàm cần dữ liệu PHỤ (tenant, hoá đơn...) cho một tập hợp N bản ghi, luôn gộp lại thành 1 lượt gọi "lấy tất cả trong phạm vi" rồi tự nhóm trong bộ nhớ (dùng `Map` theo khoá) — không gọi lại provider/repository theo từng phần tử bên trong vòng lặp, kể cả khi đã dùng `Future.wait` để chạy song song (vẫn tốn N lượt round-trip mạng, chỉ đỡ chậm hơn gọi tuần tự chứ không giải quyết gốc vấn đề).

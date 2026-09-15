@@ -360,9 +360,11 @@ final contractListProvider =
   final versions = await contractRepo.listVersionsByIds(versionIds);
   final versionsById = {for (final v in versions) v.id: v};
 
-  final tenantIds = contracts.map((c) => c.tenantId).toSet().toList();
-  final tenants = await Future.wait(
-      tenantIds.map((id) => ref.watch(tenantRepositoryProvider).getById(id)));
+  // Trước đây gọi riêng `getById()` cho từng tenantId (dù đã chạy song song
+  // qua `Future.wait`, vẫn là N lượt gọi mạng) — dùng lại `tenantsProvider`
+  // (đã fetch sẵn toàn bộ tenant trong phạm vi quyền truy cập, 1 lượt gọi
+  // duy nhất) cho nhất quán với cách đã sửa ở `billsHouseGroupsProvider`.
+  final tenants = await ref.watch(tenantsProvider.future);
   final tenantsById = {for (final t in tenants) t.id: t};
 
   final roomIdsByContract = await contractRepo
@@ -498,11 +500,27 @@ final billsHouseGroupsProvider =
   final houses = await ref.watch(housesProvider.future);
   final housesById = {for (final h in houses) h.id: h};
 
+  // Trước đây gọi RIÊNG `tenantProvider`/`contractInvoicesProvider` cho TỪNG
+  // hợp đồng bên trong vòng lặp — với N hợp đồng Active là N+N lượt gọi
+  // mạng tuần tự (N+1 query), rất chậm ở quy mô lớn (dungtv phản hồi Bills
+  // List load "xoay mãi" ở ~67 hợp đồng, 2026-09-15). Gộp lại thành đúng 2
+  // lượt gọi (tenant/invoice của TOÀN BỘ phạm vi quyền truy cập), tự nhóm
+  // lại trong bộ nhớ — cùng cách đã làm cho version/room/house ở trên.
+  final tenants = await ref.watch(tenantsProvider.future);
+  final tenantsById = {for (final t in tenants) t.id: t};
+
+  final allInvoices = await ref.watch(invoicesProvider.future);
+  final invoicesByContract = <String, List<Invoice>>{};
+  for (final invoice in allInvoices) {
+    invoicesByContract.putIfAbsent(invoice.contractId, () => []).add(invoice);
+  }
+
   final rowsByHouse = <String, List<BillsContractRow>>{};
   for (final contract in activeContracts) {
     final version = versionById[contract.currentVersionId];
     if (version == null) continue;
-    final tenant = await ref.watch(tenantProvider(contract.tenantId).future);
+    final tenant = tenantsById[contract.tenantId];
+    if (tenant == null) continue;
     final roomIds = roomIdsByContract[contract.id] ?? const [];
     final contractRooms =
         roomIds.map((id) => roomsById[id]).whereType<Room>().toList();
@@ -510,8 +528,7 @@ final billsHouseGroupsProvider =
     final house = housesById[contractRooms.first.houseId];
     if (house == null) continue;
 
-    final invoices =
-        await ref.watch(contractInvoicesProvider(contract.id).future);
+    final invoices = invoicesByContract[contract.id] ?? const [];
     final chips = buildInvoiceScheduleChips(version, invoices);
     final targetPeriod = periodStartingAt(version, periodYm);
     final matchingInvoices =
