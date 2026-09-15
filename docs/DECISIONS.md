@@ -743,3 +743,42 @@ dungtv, sau khi thấy vá Bills List (Đợt 44), hỏi tiếp: sửa vậy có
 - H-06 Record Monthly Reading (nhà 33 phòng, chỗ vừa sửa): ~2s — kiểm tra thêm ĐÚNG dữ liệu hiển thị (không chỉ nhanh mà còn phải đúng): "20/33 rooms recorded", Previous/Current/Usage của từng phòng khớp đúng chuỗi chỉ số cũ (VD phòng 333: Previous 246 → Current 267 → Usage 21 kWh) — xác nhận việc gộp query không làm sai lệch dữ liệu.
 
 **Kết luận cho dungtv**: nguyên nhân chậm 100% là lỗi N+1 ở tầng code Flutter (không phải thiếu index database) — đã tìm và vá hết 3 chỗ tìm được trong toàn app, verify sống từng màn sau khi sửa đều nhanh (~1.5-2s) và dữ liệu vẫn đúng.
+
+## 2026-09-15 (Đợt 46) — Luồng gửi tin Zalo OA cho Tenant: chốt tham số Mẫu 1 (đã duyệt, ID 636121), ghi lại vướng mắc + phương án đang cân nhắc cho Mẫu 2
+
+Dream cung cấp thông tin Template ZBS Mẫu 1 ("Chào mừng hợp đồng") đã được Zalo duyệt (ID 636121, chụp màn hình chi tiết mẫu + bảng tham số từ account.zalo.cloud/Business Suite), yêu cầu viết tài liệu mô tả luồng gửi kèm khớp đúng tên tham số/kiểu dữ liệu đã duyệt với field thực tế trong database (không dùng lại tên tham số nháp cũ trong `zns-hoa-don-template.md`, vốn được soạn trước khi mẫu được duyệt nên lệch ở vài chỗ). Đồng thời Dream trình bày hiện trạng vướng mắc của Mẫu 2 (hoá đơn hàng tháng) — template ZBS cấm/không hỗ trợ QR động, ràng buộc quyền sở hữu tài sản đích của nút CTA, tin tư vấn bị khoá bởi cửa sổ tương tác 7 ngày trong khi chu kỳ hoá đơn là 1 tháng, các mẫu thử đều bị từ chối duyệt — và 4 phương án đang cân nhắc, **chưa chốt phương án nào**.
+
+**Đã làm:** tạo `docs/ZALO-MESSAGING.md` (mới) — gộp 2 luồng:
+
+- **Luồng A (Mẫu 1, đã duyệt):** ghi lại đúng nội dung/tham số đã duyệt (8 tham số, 1 nút CTA duy nhất — khác bản nháp cũ có 2 nút và tên tham số `ngay_thanh_toan`), map từng tham số với field DB thực tế theo schema Version 3 (`tb_tenant`, `tb_contract`, `tb_contract_version`, `tb_room`, `tb_house`). Phát hiện 2 gap thật cần chốt trước khi code: (1) `<ma_hop_dong>` không có field tương ứng — `tb_contract` chỉ có `id` (uuid), cần quyết định thêm cột mã hiển thị hay dùng tạm uuid rút gọn; (2) 1 hợp đồng có thể có nhiều phòng (`tb_contract_room` N-N) nhưng mẫu chỉ có 1 ô `<ten_phong>` — chưa có quy tắc ghép/chọn phòng nào hiển thị. Cũng phát hiện `sendZns()` (`_shared/zalo.ts`) khai báo `templateData: Record<string, string>` trong khi mẫu có 2 tham số kiểu `number` — cần verify lại đúng kiểu dữ liệu Zalo yêu cầu trước khi gọi thật. Ghi lại luôn: DB hiện **không có chỗ lưu UID/thời điểm tương tác OA của Tenant** — là điều kiện tiên quyết để tối ưu chi phí Mẫu 2 sau này (mục đích Dream nêu "quan tâm xong thì đổi SĐT→UID cho rẻ hơn"), cần bổ sung field mới (`tb_tenant.zalo_uid`, `zalo_followed_at`) — chưa quyết, cần Dream/dungtv chốt.
+- **Luồng B (Mẫu 2, chưa chốt):** ghi lại nguyên văn 4 vướng mắc + 4 phương án Dream đề xuất, bổ sung đối chiếu với research trước đó (`zalo-feasibility-review.md` trong Project brainstorm của Dream, không nằm trong repo) cho từng phương án — đặc biệt lưu ý Phương án 1 (tách 2 bước, tin tư vấn kích hoạt bởi tương tác) có rủi ro kỹ thuật CHƯA XÁC NHẬN (bấm nút ZBS có mở lại cửa sổ 7 ngày hay không) ngoài rủi ro Dream đã nêu (Tenant không bấm thì không nhận QR). Đánh dấu rõ **CHƯA CODE luồng này** tới khi có quyết định.
+
+**Việc cần làm tiếp** (xem chi tiết trong `docs/ZALO-MESSAGING.md` mục 1.7/2.4): chốt cách lấy `<ma_hop_dong>` và xử lý hợp đồng nhiều phòng cho Luồng A trước khi code; chốt 1 trong 4 phương án (hoặc phương án khác) cho Luồng B rồi mới code; sau khi chốt, cập nhật `BUSINESS-RULES.md` (`BR-NOTI-01` hiện ghi "SMS/Zalo kèm mã QR" — đã lỗi thời so với vướng mắc thật, cần rà lại theo phương án được chọn).
+
+## 2026-09-15 (Đợt 47) — Luồng OTP xác thực tài khoản: chuyển từ eSMS sang ZBS (template đã duyệt, ID 636478) để giảm chi phí
+
+Dream cung cấp Template ZBS "Mẫu OTP" đã được Zalo duyệt (ID 636478, chụp màn hình chi tiết mẫu + tham số), yêu cầu bổ sung thêm 1 luồng nữa (Luồng C) vào `docs/ZALO-MESSAGING.md`: đổi luồng gửi OTP khi đăng ký tài khoản/quên mật khẩu — hiện đang dùng eSMS (`send-otp-sms/index.ts`, Đợt 14) — sang ZBS, mục tiêu giảm chi phí, và lưu ý nội dung/tính năng liên quan đã phát triển trước đó cần rà lại cho khớp.
+
+**Đã làm:** cập nhật `docs/ZALO-MESSAGING.md` (Version 2) — thêm mục 3 (Luồng C):
+
+- Ghi lại đúng nội dung/tham số mẫu 636478 (chỉ 1 tham số `<otp>`, kiểu string — không có mismatch kiểu dữ liệu như Luồng A).
+- Xác nhận Send SMS Hook của Supabase Auth không ràng buộc kênh gửi thật (chỉ cần đúng contract webhook) — đổi nhà cung cấp chỉ cần sửa phần thân `send-otp-sms/index.ts`, không cần đổi cấu hình hook trên Supabase Dashboard.
+- Ghi lại lý do đổi hợp lý ngoài giá tiền: hiện đang dùng Brandname demo dùng chung "Baotrixemay" của eSMS (không nhắc gì tới BizTown, không dùng được cho user thật) — chuyển sang ZBS loại bỏ luôn phụ thuộc vào việc đăng ký/chờ duyệt Brandname CSKH thật của eSMS, một quy trình riêng chưa có mốc trong repo. Chi phí Brandname CSKH thật của eSMS chưa được ghi lại trong repo — cần Dream xác nhận số thật nếu muốn so sánh chính xác.
+- Gắn cờ 1 điểm kỹ thuật dễ sai: định dạng số điện thoại khác nhau giữa eSMS (`toLocalVnPhone()` ra dạng `0xxxxxxxxx`) và Zalo (`sendZns()` cần dạng `84xxxxxxxxx`, chỉ cắt dấu `+` chứ không cắt `+84`) — nhắc rõ không copy nhầm hàm cũ.
+- Liệt kê danh sách "nội dung đã phát triển cần rà lại" theo đúng yêu cầu Dream: copy UI S-02/S-04 có thể đang giả định cứng kênh "SMS"; `REQUIREMENTS.md` INT-02/INT-03 và `ARCHITECTURE.md` đang mô tả cụ thể eSMS; cảnh báo Brandname demo trong comment đầu file code sẽ không còn đúng nếu bỏ hẳn eSMS.
+- Ghi rõ luồng này **không** phải trọng tâm tối ưu UID (khác Luồng A/B) — App user gửi OTP lần đầu chưa kịp follow OA, nên phần lớn vẫn đi qua kênh SĐT.
+- Chưa sửa code thật (`send-otp-sms/index.ts` vẫn dùng eSMS) — chỉ tài liệu, đánh dấu rõ các việc cần làm trước khi bật thật ở mục 3.7.
+
+**Chưa quyết, cần Dream/dungtv chốt:** giữ eSMS làm fallback khi Zalo lỗi hay bỏ hẳn.
+
+## 2026-09-15 (Đợt 48) — Sửa `ZALO-MESSAGING.md` theo phản hồi Dream: bỏ so sánh với bản nháp cũ, làm rõ quy tắc OTP đã chốt
+
+Dream phản hồi 2 điểm về `docs/ZALO-MESSAGING.md`: (1) không muốn tài liệu nhắc/so sánh với bản nháp cũ (`zns-hoa-don-template.md`) nữa — chỉ ghi nhận đúng bản template đã được phê duyệt; (2) không thấy tài liệu nêu rõ **quy tắc gửi OTP đã đổi từ eSMS sang ZBS** — mục 3 (Luồng C) viết ở Đợt 47 mô tả kỹ thuật nhưng không có phát biểu dứt khoát "đây là quyết định đã chốt".
+
+**Phát hiện thêm khi rà lại để sửa:** file `docs/ZALO-MESSAGING.md` trên máy Dream lúc kiểm tra lại **đang ở đúng bản Version 1** (2 luồng, chưa có Luồng C) dù Đợt 47 đã ghi log là "đã cập nhật lên Version 2" và lệnh ghi file trả về thành công — tức bản Version 2 (thêm Luồng C) đã KHÔNG được giữ lại trên máy Dream vì lý do nào đó ngoài tầm kiểm soát của phiên làm việc này (khả năng cao: file đang mở sẵn trong 1 trình soạn thảo/IDE nào đó trên máy và bị ghi đè ngược lại bởi buffer cũ — **Dream nên kiểm tra xem `docs/ZALO-MESSAGING.md` có đang mở ở VS Code/editor nào không, đóng lại (không lưu) trước khi mở lại file để tránh bị ghi đè lần nữa**). Đã ghi lại toàn bộ nội dung Version 2 (cả Luồng A/B/C) lại từ đầu, không chỉ vá riêng Luồng C.
+
+**Đã sửa trong `docs/ZALO-MESSAGING.md`:**
+- Bỏ toàn bộ đoạn so sánh/nhắc tới bản nháp cũ `zns-hoa-don-template.md` (khối cảnh báo "Khác với bản nháp cũ" ở mục 1.3, các ghi chú "bản nháp cũ ghi..." trong bảng tham số mục 1.4) — chỉ còn nội dung/tham số của bản đã duyệt, không so sánh lịch sử.
+- Mục 3 (Luồng C) nay mở đầu bằng câu chốt rõ ràng: "✅ QUY TẮC ĐÃ CHỐT: kênh gửi OTP xác thực tài khoản đổi từ eSMS sang Zalo ZBS (template 636478 đã duyệt)" — tách bạch với 1 chi tiết triển khai vẫn còn mở (có giữ eSMS làm fallback hay không), để không đọc nhầm cả luồng là "chưa chốt".
+
+**Đã cập nhật thêm `docs/REQUIREMENTS.md`** — INT-03 (OTP) nay ghi rõ "ĐÃ CHỐT: đổi kênh gửi từ eSMS sang Zalo ZBS", trỏ tới `ZALO-MESSAGING.md` mục 3; tách rõ khỏi INT-02 (SMS Brandname qua eSMS — vẫn dùng cho thông báo/hoá đơn gửi Tenant qua `send-notification`, không liên quan OTP nữa).

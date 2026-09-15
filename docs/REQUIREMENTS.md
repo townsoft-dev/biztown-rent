@@ -135,8 +135,8 @@
 | ID | Tích hợp | Trạng thái |
 |---|---|---|
 | INT-01 | Zalo ZNS (Zalo Notification Service) hoặc Zalo OA để gửi hoá đơn/thông báo kèm mã QR cho Tenant | đang tiến hành tạo và chờ phê duyệt tài khoản OA |
-| INT-02 | SMS Brandname (qua eSMS.vn) | Đã chọn **eSMS**, tích hợp xong (09/09/2026) — đang dùng Brandname demo "Baotrixemay" để test, cần đăng ký Brandname thật trước production |
-| INT-03 | OTP xác thực đăng ký/đăng nhập (mọi tài khoản) | dùng chung với INT-02, qua Supabase Auth Send SMS Hook |
+| INT-02 | SMS Brandname (qua eSMS.vn) — dùng cho thông báo/hoá đơn gửi Tenant (`send-notification`) | Đã chọn **eSMS**, tích hợp xong (09/09/2026) — đang dùng SmsType tin thường (không cần Brandname riêng), xem [DECISIONS.md](DECISIONS.md) Đợt 14/37. Không còn dùng cho OTP (xem INT-03) |
+| INT-03 | OTP xác thực đăng ký/quên mật khẩu (mọi tài khoản), qua Supabase Auth Send SMS Hook | **ĐÃ CHỐT (2026-09-15, xem [DECISIONS.md](DECISIONS.md) Đợt 47/48):** đổi kênh gửi từ eSMS sang **Zalo ZBS** (template OTP đã duyệt, ID 636478) — mục tiêu giảm chi phí + bỏ phụ thuộc đăng ký Brandname CSKH riêng của eSMS. Chi tiết mapping/việc cần code xem [ZALO-MESSAGING.md](ZALO-MESSAGING.md) mục 3. **Chưa code xong** — `send-otp-sms/index.ts` hiện tại vẫn gọi eSMS, cần sửa theo checklist trong tài liệu trên trước khi coi INT-03 là hoàn tất |
 | INT-04 | Push notification (Firebase Cloud Messaging / APNs) | Xác nhận lại ở [ARCHITECTURE](ARCHITECTURE.md) |
 | INT-05 | Cổng thanh toán online (VNPay/Momo/ZaloPay) | Ngoài phạm vi Phase 1 — Phase 1 chỉ sinh mã QR chuyển khoản tĩnh (VietQR/NAPAS-247), không xử lý thanh toán trong app |
 | INT-06 | Lưu trữ ảnh (hồ sơ, CCCD, ảnh phòng, ảnh công tơ) — Cloud storage (Supabase Storage) | |
