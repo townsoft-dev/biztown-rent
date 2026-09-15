@@ -189,4 +189,13 @@ class StatusBadgeStyle {
   // dùng ở P-05 "Disabled" (Manager account) / P-03 "Missing" (chưa có tài
   // khoản nhận tiền), tránh đọc code thấy `overdue` ở nơi không liên quan hoá đơn.
   static const disabled = StatusBadgeStyle(AppColors.errorBg, AppColors.error);
+
+  // B-03 (Create Invoice — Batch) — 3 trạng thái xem trước 1 hợp đồng, cùng
+  // tone màu với các badge trên nhưng đặt tên riêng cho đúng ngữ cảnh preview
+  // hàng loạt (không tạo hoá đơn thật, xem docs/DECISIONS.md).
+  static const ready = StatusBadgeStyle(AppColors.successBg, AppColors.success);
+  static const noReading =
+      StatusBadgeStyle(AppColors.warningBg, AppColors.warning);
+  static const alreadyCreated =
+      StatusBadgeStyle(AppColors.borderSubtle, AppColors.secondary);
 }

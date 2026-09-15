@@ -15,30 +15,35 @@ import 'send_otp_chip.dart';
 import 'signup_stepper.dart';
 import 'top_bar.dart';
 
-/// S-02 — Sign Up. Trên Figma đây là 2 trang điều hướng riêng (Step 1: SĐT +
-/// OTP chung 1 trang; Step 2: đặt mật khẩu) + 1 bottom sheet thành công khi
-/// tạo tài khoản xong (node 220:2214, 347:2941, 347:3087 — lấy qua Figma MCP
-/// 09/09/2026, không phải suy đoán từ ảnh chụp nữa).
-class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+/// S-04 — Forgot password (node `386:2282`/`388:2375`/`388:2386`, Figma) — 3
+/// bước RIÊNG khỏi Sign up (Step 1: SĐT + OTP chung 1 trang; Step 2: đặt lại
+/// mật khẩu, KHÔNG có field Full name; Step 3: bottom sheet "Well Done!").
+/// Trước 2026-09-14 màn "Forgot password?" ở Login tái dùng thẳng `/signup`
+/// (hỏi cả Full name, nút "Create account") vì lúc code màn đó Figma CHƯA có
+/// frame S-04 riêng — phát hiện bug UI khi test thật, tách hẳn màn riêng theo
+/// đúng Figma hiện tại. Tái dùng `authRepository.sendOtp/verifyOtp/setPassword`
+/// (đã có comment sẵn ghi rõ dùng chung cho cả 2 luồng) — KHÔNG gọi
+/// `ensureUserProfile()` (sẽ ghi đè nhầm `full_name`/`phone` của tài khoản đã
+/// có sẵn, chỉ hợp lý cho tài khoản MỚI ở Sign up).
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-enum _SignupPage { verifyPhone, setPassword }
+enum _FpPage { verifyPhone, resetPassword }
 
-class _SignupScreenState extends State<SignupScreen> {
-  _SignupPage _page = _SignupPage.verifyPhone;
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  _FpPage _page = _FpPage.verifyPhone;
   final _phoneController = TextEditingController();
-  final _fullNameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   String _otp = '';
   bool _otpSent = false;
   bool _otpVerified = false;
   bool _isLoading = false;
-  bool _accountCreated = false;
+  bool _passwordReset = false;
   String? _errorText;
   String? _confirmPasswordError;
 
@@ -48,7 +53,6 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   void dispose() {
     _phoneController.dispose();
-    _fullNameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _resendTimer?.cancel();
@@ -102,9 +106,6 @@ class _SignupScreenState extends State<SignupScreen> {
           phone: _phoneController.text.trim(), token: _otp);
       setState(() => _otpVerified = true);
     } on AuthApiException catch (e) {
-      // GoTrue trả error_code "otp_expired" riêng cho trường hợp hết hạn (không phải
-      // sai mã) — các lỗi khác (sai mã, đã dùng...) gộp chung 1 thông báo vì GoTrue
-      // không tách rõ hơn được nữa. Xem SCREEN-SPEC.md edge case S-02.
       setState(() => _errorText = e.code == 'otp_expired'
           ? AppStrings.t('signup.otpExpired')
           : AppStrings.t('signup.otpIncorrect'));
@@ -124,7 +125,7 @@ class _SignupScreenState extends State<SignupScreen> {
     });
   }
 
-  Future<void> _createAccount() async {
+  Future<void> _savePassword() async {
     if (_passwordController.text.length < 6) {
       setState(() => _errorText = AppStrings.t('signup.passwordTooShort'));
       return;
@@ -140,18 +141,11 @@ class _SignupScreenState extends State<SignupScreen> {
     });
     try {
       await authRepository.setPassword(_passwordController.text);
-      await authRepository.ensureUserProfile(
-        phone: _phoneController.text.trim(),
-        fullName: _fullNameController.text.trim().isEmpty
-            ? null
-            : _fullNameController.text.trim(),
-      );
       if (!mounted) return;
-      setState(() => _accountCreated = true);
+      setState(() => _passwordReset = true);
       await _showSuccessSheet();
-      // go_router redirect tự chuyển sang /home khi có session (đã có từ lúc verifyOtp).
     } catch (e) {
-      setState(() => _errorText = AppStrings.t('signup.accountCreationFailed'));
+      setState(() => _errorText = AppStrings.t('forgotPassword.resetFailed'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -165,10 +159,18 @@ class _SignupScreenState extends State<SignupScreen> {
       backgroundColor: AppColors.bgDefault,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => _SignupSuccessSheet(
-        onGetStarted: () {
-          Navigator.of(context).pop();
-          context.go('/home');
+      builder: (sheetContext) => _ForgotPasswordSuccessSheet(
+        onGoToLogin: () async {
+          Navigator.of(sheetContext).pop();
+          // Đổi mật khẩu xong bắt đăng nhập lại từ đầu bằng mật khẩu mới
+          // (đúng Figma "Go to login") — khác Sign up "Get started" đi thẳng
+          // /home, vì verifyOTP ở luồng này đã tạo session TẠM cho tài khoản
+          // CŨ, không phải phiên đăng nhập thật người dùng chủ động bắt đầu.
+          await authRepository.signOut();
+          // `context` ở đây là context của State (ForgotPasswordScreen), KHÔNG
+          // phải context của bottom sheet đã pop ở trên — cố tình không đặt
+          // tên trùng `context` để tránh nhầm 2 context như lint cảnh báo.
+          if (mounted) context.go('/login');
         },
       ),
     );
@@ -176,7 +178,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final onStep1 = _page == _SignupPage.verifyPhone;
+    final onStep1 = _page == _FpPage.verifyPhone;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -188,18 +190,20 @@ class _SignupScreenState extends State<SignupScreen> {
         body: Column(
           children: [
             TopBar(
-              title: AppStrings.t('signup.topBarTitle'),
-              opacity: _accountCreated ? 0.3 : 1,
+              title: AppStrings.t(onStep1
+                  ? 'forgotPassword.topBarTitleStep1'
+                  : 'forgotPassword.topBarTitleStep2'),
+              opacity: _passwordReset ? 0.3 : 1,
               onBack: () => _handleBack(context),
             ),
             Expanded(
               child: Opacity(
-                opacity: _accountCreated ? 0.3 : 1,
+                opacity: _passwordReset ? 0.3 : 1,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
                   child: onStep1
                       ? _buildVerifyPhonePage()
-                      : _buildSetPasswordPage(),
+                      : _buildResetPasswordPage(),
                 ),
               ),
             ),
@@ -210,14 +214,14 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _handleBack(BuildContext context) {
-    if (_page == _SignupPage.verifyPhone) {
+    if (_page == _FpPage.verifyPhone) {
       if (context.canPop()) {
         context.pop();
       } else {
         context.go('/login');
       }
     } else {
-      setState(() => _page = _SignupPage.verifyPhone);
+      setState(() => _page = _FpPage.verifyPhone);
     }
   }
 
@@ -227,7 +231,7 @@ class _SignupScreenState extends State<SignupScreen> {
       children: [
         const SignupStepper(current: 1),
         const SizedBox(height: 12),
-        Text(AppStrings.t('signup.step1Title'),
+        Text(AppStrings.t('forgotPassword.step1Title'),
             style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -315,35 +319,29 @@ class _SignupScreenState extends State<SignupScreen> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: _otpVerified
-                ? () => setState(() => _page = _SignupPage.setPassword)
+                ? () => setState(() => _page = _FpPage.resetPassword)
                 : null,
-            child: Text(AppStrings.t('signup.nextSetPassword')),
+            child: Text(AppStrings.t('forgotPassword.nextResetPassword')),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSetPasswordPage() {
+  Widget _buildResetPasswordPage() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SignupStepper(current: 2),
         const SizedBox(height: 12),
-        Text(AppStrings.t('signup.step2Title').toUpperCase(),
+        Text(AppStrings.t('forgotPassword.step2Title').toUpperCase(),
             style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 height: 26 / 20,
                 color: AppColors.textPrimary)),
         const SizedBox(height: 12),
-        FieldLabel(AppStrings.t('signup.fullName')),
-        TextFormField(
-            controller: _fullNameController,
-            style:
-                GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary)),
-        const SizedBox(height: 12),
-        FieldLabel(AppStrings.t('signup.password')),
+        FieldLabel(AppStrings.t('forgotPassword.newPassword')),
         TextFormField(
           controller: _passwordController,
           obscureText: true,
@@ -352,7 +350,7 @@ class _SignupScreenState extends State<SignupScreen> {
               _onConfirmPasswordChanged(_confirmPasswordController.text),
         ),
         const SizedBox(height: 12),
-        FieldLabel(AppStrings.t('signup.confirmPassword')),
+        FieldLabel(AppStrings.t('forgotPassword.confirmNewPassword')),
         TextFormField(
           controller: _confirmPasswordController,
           obscureText: true,
@@ -385,14 +383,14 @@ class _SignupScreenState extends State<SignupScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _isLoading ? null : _createAccount,
+            onPressed: _isLoading ? null : _savePassword,
             child: _isLoading
                 ? const SizedBox(
                     height: 18,
                     width: 18,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
-                : Text(AppStrings.t('signup.createAccount')),
+                : Text(AppStrings.t('forgotPassword.save')),
           ),
         ),
       ],
@@ -400,11 +398,13 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 }
 
-/// Bottom sheet thành công (S-02 — Sign Up - Step 3, node 347:3087) hiện sau
-/// khi tạo tài khoản xong, đè lên trang Set Password (đang mờ 30% phía sau).
-class _SignupSuccessSheet extends StatelessWidget {
-  final VoidCallback onGetStarted;
-  const _SignupSuccessSheet({required this.onGetStarted});
+/// Bottom sheet thành công (S-04 — Forgot password - Step 3, node `388:2386`)
+/// hiện sau khi đặt lại mật khẩu xong, đè lên trang Reset password (đang mờ
+/// 30% phía sau) — dùng lại đúng asset success icon của Sign up (component
+/// chung, không có bản riêng cho S-04 trên Figma).
+class _ForgotPasswordSuccessSheet extends StatelessWidget {
+  final VoidCallback onGoToLogin;
+  const _ForgotPasswordSuccessSheet({required this.onGoToLogin});
 
   @override
   Widget build(BuildContext context) {
@@ -426,7 +426,7 @@ class _SignupSuccessSheet extends StatelessWidget {
                 width: 123, height: 123),
             const SizedBox(height: 30),
             Text(
-              AppStrings.t('signup.successTitle'),
+              AppStrings.t('forgotPassword.successTitle'),
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                   fontSize: 14,
@@ -436,7 +436,7 @@ class _SignupSuccessSheet extends StatelessWidget {
             ),
             const SizedBox(height: 15),
             Text(
-              AppStrings.t('signup.successBody'),
+              AppStrings.t('forgotPassword.successBody'),
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                   fontSize: 13,
@@ -447,8 +447,8 @@ class _SignupSuccessSheet extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                  onPressed: onGetStarted,
-                  child: Text(AppStrings.t('signup.getStarted'))),
+                  onPressed: onGoToLogin,
+                  child: Text(AppStrings.t('forgotPassword.goToLogin'))),
             ),
           ],
         ),

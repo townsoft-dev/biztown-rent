@@ -23,6 +23,9 @@ src/ios/Flutter/Flutter.podspec
 .env
 .env.local
 
+# Local-only notes (test account credentials etc — NEVER commit)
+.local-*.md
+
 # OS
 .DS_Store
 

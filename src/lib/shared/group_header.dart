@@ -10,13 +10,15 @@ class GroupHeader extends StatelessWidget {
   final String label;
   final String counterLabel;
 
-  const GroupHeader({super.key, required this.label, required this.counterLabel});
+  const GroupHeader(
+      {super.key, required this.label, required this.counterLabel});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Symbols.home_work_rounded, color: AppColors.primary, size: 20),
+        const Icon(Symbols.home_work_rounded,
+            color: AppColors.primary, size: 20),
         const SizedBox(width: 8),
         Text(label,
             style: GoogleFonts.inter(

@@ -19,8 +19,9 @@ extension InvoiceStatusX on InvoiceStatus {
 enum InvoiceUtilityType { electricity, water }
 
 extension InvoiceUtilityTypeX on InvoiceUtilityType {
-  static InvoiceUtilityType fromDb(String value) =>
-      value == 'water' ? InvoiceUtilityType.water : InvoiceUtilityType.electricity;
+  static InvoiceUtilityType fromDb(String value) => value == 'water'
+      ? InvoiceUtilityType.water
+      : InvoiceUtilityType.electricity;
 
   String get dbValue => switch (this) {
         InvoiceUtilityType.electricity => 'electricity',

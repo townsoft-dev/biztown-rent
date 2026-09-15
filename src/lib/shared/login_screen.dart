@@ -127,11 +127,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    // Dùng lại luồng OTP của SignupScreen (Verify phone → Set password) —
-                    // verifyOTP tạo session hợp lệ cho SĐT đã tồn tại, setPassword đổi
-                    // đúng mật khẩu của tài khoản đó. Không có màn Forgot Password riêng
-                    // trong Figma — đây là cách tái dùng đã ghi trong TODO trước đó.
-                    onPressed: () => context.push('/signup'),
+                    // S-04 — Forgot password (màn riêng trên Figma, node `386:2282` —
+                    // phát hiện 2026-09-14 khi test thật là trước đó bị nhầm trỏ sang
+                    // `/signup`, hỏi cả Full name/nút "Create account" sai hoàn toàn).
+                    onPressed: () => context.push('/forgot-password'),
                     style: TextButton.styleFrom(
                         padding: EdgeInsets.zero, minimumSize: Size.zero),
                     child: Text(AppStrings.t('login.forgotPassword'),

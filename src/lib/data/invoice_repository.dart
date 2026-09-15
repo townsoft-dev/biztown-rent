@@ -13,6 +13,44 @@ class BatchInvoiceResult {
   const BatchInvoiceResult({required this.created, required this.skipped});
 }
 
+/// Kết quả `InvoiceRepository.batchCreateAndSend()` — B-03, chạy hẳn phía
+/// backend trong 1 lần gọi (xem docs/DECISIONS.md).
+class BatchSendResult {
+  final int created;
+  final int sent;
+  final List<({String contractId, String reason})> errors;
+
+  const BatchSendResult(
+      {required this.created, required this.sent, required this.errors});
+}
+
+/// Trạng thái 1 hợp đồng khi xem trước B-03 — khớp `StatusBadge` trong Figma:
+/// `ready` (xanh, có thể chọn), `missingReading`/`alreadyCreated` (xám/cam,
+/// dòng mờ 60%, không cho chọn).
+enum BatchPreviewStatus { ready, missingReading, alreadyCreated }
+
+/// 1 dòng trong danh sách xem trước B-03 (`mode: "previewBatch"`) — tính thử
+/// số tiền, KHÔNG tạo hoá đơn thật. Người dùng tick chọn trong số các dòng
+/// `ready`, bấm tạo thì app tự gọi lại `generateSingle` cho từng hợp đồng đã
+/// chọn (xem docs/DECISIONS.md).
+class BatchPreviewItem {
+  final String contractId;
+  final List<String> roomNos;
+  final String tenantName;
+  final num totalAmount;
+  final BatchPreviewStatus status;
+  final String? reason;
+
+  const BatchPreviewItem({
+    required this.contractId,
+    required this.roomNos,
+    required this.tenantName,
+    required this.totalAmount,
+    required this.status,
+    this.reason,
+  });
+}
+
 /// `tb_invoice` — đọc qua Postgrest như mọi repository khác; TẠO hoá đơn (đơn
 /// lẻ/hàng loạt) và sinh lại mã QR gọi thẳng Edge Function `generate-invoice`/
 /// `generate-payment-qr` (engine tính tiền theo BR-BILL-01..13 đã viết sẵn ở
@@ -100,6 +138,95 @@ class InvoiceRepository {
     return BatchInvoiceResult(created: created, skipped: skipped);
   }
 
+  /// Xem trước (KHÔNG tạo thật) trạng thái + số tiền ước tính từng hợp đồng
+  /// Active của 1 Nhà trong 1 kỳ — B-03 mở màn hiện danh sách checkbox trước
+  /// khi người dùng chọn tạo.
+  Future<List<BatchPreviewItem>> previewBatch({
+    required String houseId,
+    required DateTime periodYm,
+  }) async {
+    final res = await _client.functions.invoke('generate-invoice', body: {
+      'mode': 'previewBatch',
+      'houseId': houseId,
+      'periodYm': _ymString(periodYm),
+    });
+    final data = res.data as Map<String, dynamic>;
+    return (data['items'] as List).map((e) {
+      final map = e as Map<String, dynamic>;
+      final status = switch (map['status'] as String) {
+        'ready' => BatchPreviewStatus.ready,
+        'already_created' => BatchPreviewStatus.alreadyCreated,
+        _ => BatchPreviewStatus.missingReading,
+      };
+      return BatchPreviewItem(
+        contractId: map['contractId'] as String,
+        roomNos:
+            (map['roomNos'] as List? ?? []).map((r) => r as String).toList(),
+        tenantName: map['tenantName'] as String? ?? '',
+        totalAmount: (map['totalAmount'] as num?) ?? 0,
+        status: status,
+        reason: map['reason'] as String?,
+      );
+    }).toList();
+  }
+
+  /// Tạo hoá đơn cho ĐÚNG danh sách hợp đồng đã chọn (B-03, checkbox) — rồi
+  /// nếu `send=true` gửi SMS thật luôn trong CÙNG 1 lần gọi. Chạy HẲN phía
+  /// backend (Edge Function tự lặp + gửi, không phải app tự lặp gọi từng
+  /// hợp đồng) — tránh rủi ro tiến trình bị hệ điều hành tạm dừng giữa chừng
+  /// nếu người dùng khoá màn hình/chuyển app trong lúc app đang tự lặp gọi
+  /// (dungtv xác nhận 2026-09-14, xem docs/DECISIONS.md).
+  Future<BatchSendResult> batchCreateAndSend({
+    required String houseId,
+    required DateTime periodYm,
+    required List<String> contractIds,
+    required bool send,
+  }) async {
+    final res = await _client.functions.invoke('generate-invoice', body: {
+      'mode': 'batchSend',
+      'houseId': houseId,
+      'periodYm': _ymString(periodYm),
+      'contractIds': contractIds,
+      'send': send,
+    });
+    final data = res.data as Map<String, dynamic>;
+    return BatchSendResult(
+      created: data['created'] as int? ?? 0,
+      sent: data['sent'] as int? ?? 0,
+      errors: (data['errors'] as List? ?? [])
+          .map((e) => (
+                contractId: (e as Map<String, dynamic>)['contractId'] as String,
+                reason: e['reason'] as String,
+              ))
+          .toList(),
+    );
+  }
+
+  /// Gửi SMS hoá đơn tới Tenant qua `send-notification` (kênh `tenant`, eSMS
+  /// SmsType "1" — chưa có Brandname CSKH, xem docs/DECISIONS.md) rồi cập
+  /// nhật `status → Sent` — B-05. KHÔNG bật push (`push: false`, Firebase
+  /// chưa cấu hình, ngoài phạm vi B-05).
+  Future<void> sendSms({
+    required String invoiceId,
+    required String houseId,
+    required String phone,
+    required String message,
+  }) async {
+    final res = await _client.functions.invoke('send-notification', body: {
+      'houseId': houseId,
+      'event': 'invoice_created',
+      'title': 'Hoá đơn mới',
+      'body': message,
+      'push': false,
+      'tenant': {'phone': phone, 'message': message},
+    });
+    final data = res.data as Map<String, dynamic>?;
+    if (data?['error'] != null) {
+      throw Exception(data!['error'] as String);
+    }
+    await updateStatus(invoiceId, InvoiceStatus.sent);
+  }
+
   /// Sinh lại mã QR cho 1 hoá đơn đã có — dùng khi "Gửi lại" (B-04) mà không
   /// cần tính lại toàn bộ hoá đơn.
   Future<String> regeneratePaymentQr(String invoiceId) async {
@@ -143,6 +270,21 @@ class InvoiceRepository {
       'status': InvoiceStatus.sent.dbValue,
       'collected_at': null
     }).eq('id', invoiceId);
+  }
+
+  /// Xoá hẳn 1 hoá đơn còn Draft (B-04 "Delete draft") — chỉ hợp lý khi còn
+  /// Draft, màn gọi tự đảm bảo. Phải gỡ `invoice_id` khỏi mọi chỉ số điện/
+  /// nước đã đóng vai trò "to" cho hoá đơn này TRƯỚC khi xoá (khoá ngoại
+  /// `tb_electricity_reading/tb_water_reading.invoice_id` chặn xoá thẳng nếu
+  /// còn tham chiếu) — mở khoá lại các chỉ số đó (`isLocked` derived về false).
+  Future<void> deleteDraft(String invoiceId) async {
+    await _client
+        .from('tb_electricity_reading')
+        .update({'invoice_id': null}).eq('invoice_id', invoiceId);
+    await _client
+        .from('tb_water_reading')
+        .update({'invoice_id': null}).eq('invoice_id', invoiceId);
+    await _client.from('tb_invoice').delete().eq('id', invoiceId);
   }
 
   String _ymString(DateTime ym) =>

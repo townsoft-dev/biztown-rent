@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../bills/bills_list_screen.dart';
+import '../bills/invoice_create_batch_screen.dart';
 import '../bills/invoice_create_single_screen.dart';
+import '../bills/invoice_detail_screen.dart';
 import '../data/models/contract.dart';
 import '../data/models/reading.dart';
 import '../landlord/change_password_screen.dart';
@@ -21,6 +23,7 @@ import '../landlord/room_detail_screen.dart';
 import '../landlord/room_form_screen.dart';
 import '../landlord/room_list_screen.dart';
 import '../shared/app_shell.dart';
+import '../shared/forgot_password_screen.dart';
 import '../shared/login_screen.dart';
 import '../shared/notification_center_screen.dart';
 import '../shared/signup_screen.dart';
@@ -61,11 +64,16 @@ final appRouter = GoRouter(
     final atSplash = state.matchedLocation == '/splash';
     final atLogin = state.matchedLocation == '/login';
     final atSignup = state.matchedLocation == '/signup';
+    final atForgotPassword = state.matchedLocation == '/forgot-password';
 
     if (atSplash) {
       return null; // S-00 tự quyết định điều hướng, xem splash_screen.dart
     }
-    if (!loggedIn && !atLogin && !atSignup) return '/login';
+    // atForgotPassword: cùng lý do atSignup bên dưới — verifyOTP ở S-04 cũng
+    // tạo session TẠM trước khi đặt lại mật khẩu xong.
+    if (!loggedIn && !atLogin && !atSignup && !atForgotPassword) {
+      return '/login';
+    }
     // KHÔNG tự redirect sang /home khi loggedIn (kể cả lúc đang ở /login) — chỉ dùng
     // redirect này để CHẶN truy cập khi chưa đăng nhập. Lý do: SignupScreen dùng
     // context.push('/signup') (để nút Back hoạt động đúng — xem Đợt 09/09 16:00), mà
@@ -82,6 +90,9 @@ final appRouter = GoRouter(
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
+    GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen()),
     GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationCenterScreen()),
@@ -232,6 +243,16 @@ final appRouter = GoRouter(
                   path: 'invoices/new',
                   builder: (context, state) => InvoiceCreateSingleScreen(
                       contractId: state.uri.queryParameters['contractId']!),
+                ),
+                GoRoute(
+                  path: 'invoices/new-batch',
+                  builder: (context, state) => InvoiceCreateBatchScreen(
+                      houseId: state.uri.queryParameters['houseId']!),
+                ),
+                GoRoute(
+                  path: 'invoices/:invoiceId',
+                  builder: (context, state) => InvoiceDetailScreen(
+                      invoiceId: state.pathParameters['invoiceId']!),
                 ),
               ],
             ),
