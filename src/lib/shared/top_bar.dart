@@ -121,16 +121,40 @@ class TopBarMoreButton extends StatelessWidget {
 
 class TopBarBellButton extends StatelessWidget {
   final VoidCallback onTap;
-  const TopBarBellButton({super.key, required this.onTap});
+  // Số thông báo chưa đọc — hiện chấm đỏ nếu > 0. Mặc định 0 (không chấm)
+  // để không ảnh hưởng chỗ dùng cũ.
+  final int unreadCount;
+  const TopBarBellButton(
+      {super.key, required this.onTap, this.unreadCount = 0});
 
   @override
   Widget build(BuildContext context) {
-    return _TopBarCircleButton(
-        icon: Symbols.notifications_rounded,
-        size: 30,
-        iconSize: 18,
-        bgOpacity: 0.12,
-        onTap: onTap);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _TopBarCircleButton(
+            icon: Symbols.notifications_rounded,
+            size: 30,
+            iconSize: 18,
+            bgOpacity: 0.12,
+            onTap: onTap),
+        if (unreadCount > 0)
+          Positioned(
+            top: -2,
+            right: -2,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                color: AppColors.error,
+                shape: BoxShape.circle,
+                border: Border.fromBorderSide(
+                    BorderSide(color: AppColors.primary, width: 1.5)),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }
 

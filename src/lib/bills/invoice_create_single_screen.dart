@@ -18,6 +18,7 @@ import '../shared/app_text_field.dart';
 import '../shared/detail_row.dart';
 import '../shared/section_label.dart';
 import '../shared/top_bar.dart';
+import 'send_invoice_sheet.dart';
 
 /// B-02 — Create Invoice (Single) (node 220:4331, Figma) — Figma vẽ như 1
 /// màn "xem trước" nhưng Edge Function `generate-invoice` (nguồn tính tiền
@@ -66,6 +67,8 @@ class _InvoiceCreateSingleScreenState
       final invoice = await ref
           .read(invoiceRepositoryProvider)
           .generateSingle(contractId: widget.contractId, periodYm: periodYm);
+      // BR-NOTI-01 — backend vừa ghi thông báo "invoice_sent"; chuông ở Home
+      // tự cập nhật qua Realtime (`notificationsProvider`), không cần invalidate.
       if (!mounted) return;
       setState(() {
         _invoice = invoice;
@@ -147,8 +150,9 @@ class _InvoiceCreateSingleScreenState
 
   Future<void> _sendInvoice() async {
     if (_invoice == null) return;
+    await showSendInvoiceSheet(context, ref, _invoice!.id);
     _invalidateAfterSave();
-    context.pushReplacement('/bills/invoices/${_invoice!.id}/send');
+    if (mounted) context.pop();
   }
 
   @override

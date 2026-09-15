@@ -27,6 +27,7 @@ class HomeScreen extends ConsumerWidget {
     final housesAsync = ref.watch(housesProvider);
     final statusesAsync = ref.watch(roomStatusesByHouseProvider);
     final nameAsync = ref.watch(currentUserNameProvider);
+    final unreadCount = ref.watch(unreadNotificationCountProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bgSubtle,
@@ -41,8 +42,9 @@ class HomeScreen extends ConsumerWidget {
                 ? _overviewLine(
                     housesAsync.requireValue.length, statusesAsync.requireValue)
                 : '',
-            trailing:
-                TopBarBellButton(onTap: () => context.push('/notifications')),
+            trailing: TopBarBellButton(
+                onTap: () => context.push('/notifications'),
+                unreadCount: unreadCount),
           ),
           Expanded(
             child: housesAsync.when(

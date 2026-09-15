@@ -6,12 +6,24 @@
 // Request:
 //   { mode: "single", contractId: string, periodYm: string ("YYYY-MM-01") }
 //   { mode: "batch", houseId: string, periodYm: string }
+//   { mode: "previewBatch", houseId: string, periodYm: string } — B-03: tính thử
+//     số tiền + trạng thái từng hợp đồng, KHÔNG ghi DB (xem `generateSingleInvoice`).
+//   { mode: "batchSend", houseId, periodYm, contractIds: string[], send: boolean }
+//     — B-03 "Save all as draft"/"Create & send all": tạo hoá đơn cho ĐÚNG danh
+//     sách hợp đồng đã chọn (không phải toàn bộ nhà như "batch"), rồi nếu
+//     `send=true` gửi SMS thật + cập nhật status→Sent — chạy HẲN phía backend
+//     (dungtv xác nhận 2026-09-14: không để frontend giữ vòng lặp, vì app có
+//     thể bị hệ điều hành tạm dừng giữa chừng nếu người dùng khoá màn hình/
+//     chuyển app lúc đang chạy — xem docs/DECISIONS.md).
 //
 // BR-BILL-11: hàng loạt bỏ qua hoàn toàn hợp đồng thiếu chỉ số kỳ đó, không ước lượng.
 
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
 import { buildVietQrPayload } from "../_shared/vietqr.ts";
+import { sendSmsViaEsms } from "../_shared/esms.ts";
+import { buildInvoiceSmsMessage } from "../_shared/invoice_message.ts";
+import { fanOutNotification } from "../_shared/notifications.ts";
 
 type BillingMethod = "BY_READING" | "FLAT" | "NOT_BILLED";
 
@@ -146,11 +158,21 @@ async function previousReadingValue(supabaseAdmin: any, table: string, previousR
   return data?.current_reading ?? null;
 }
 
-/** Sinh 1 hoá đơn cho 1 hợp đồng + 1 kỳ. Trả về { invoice } hoặc { skipped: reason }. */
-async function generateSingleInvoice(supabaseAdmin: any, contractId: string, periodYm: string) {
+/** Sinh 1 hoá đơn cho 1 hợp đồng + 1 kỳ.
+ * Trả về `{ invoice }` (tạo thật), `{ invoice, alreadyExisted: true }` (kỳ này
+ * đã có hoá đơn từ trước — KHÔNG tạo trùng), `{ skipped: reason }` (thiếu chỉ
+ * số/hợp đồng không hợp lệ), hoặc — khi `opts.dryRun` — `{ preview }` (tính
+ * thử số tiền, KHÔNG ghi DB, dùng cho B-03 xem trước trước khi chọn tạo).
+ */
+async function generateSingleInvoice(
+  supabaseAdmin: any,
+  contractId: string,
+  periodYm: string,
+  opts: { dryRun?: boolean } = {},
+) {
   const { data: contract } = await supabaseAdmin
     .from("tb_contract")
-    .select("id, current_version_id, status")
+    .select("id, current_version_id, status, tenant_id")
     .eq("id", contractId)
     .single();
   if (!contract || contract.status !== "Active") {
@@ -170,6 +192,27 @@ async function generateSingleInvoice(supabaseAdmin: any, contractId: string, per
     .eq("contract_id", contractId);
   if (!contractRooms || contractRooms.length === 0) {
     return { skipped: { contractId, reason: "Hợp đồng không có phòng nào" } };
+  }
+  const roomNos = contractRooms.map((cr: any) => cr.tb_room.room_no);
+
+  const { data: tenant } = await supabaseAdmin
+    .from("tb_tenant")
+    .select("full_name")
+    .eq("id", contract.tenant_id)
+    .single();
+  const tenantName = tenant?.full_name ?? "";
+
+  // Kỳ này đã có hoá đơn rồi (bất kể trạng thái) -> không tạo trùng, trả về
+  // hoá đơn đã có luôn (B-02 mở lại màn cho kỳ đã tạo cũng đi qua nhánh này).
+  const { start, end } = periodBounds(periodYm);
+  const { data: existingInvoice } = await supabaseAdmin
+    .from("tb_invoice")
+    .select()
+    .eq("contract_id", contractId)
+    .eq("period_start", start)
+    .maybeSingle();
+  if (existingInvoice) {
+    return { invoice: existingInvoice, alreadyExisted: true };
   }
 
   const utilityLines: UtilityLine[] = [];
@@ -225,7 +268,7 @@ async function generateSingleInvoice(supabaseAdmin: any, contractId: string, per
 
   // BR-BILL-11: thiếu bất kỳ chỉ số nào của hợp đồng này -> bỏ qua toàn bộ, không tạo.
   if (missing.length > 0) {
-    return { skipped: { contractId, reason: missing.join("; ") } };
+    return { skipped: { contractId, reason: missing.join("; "), roomNos, tenantName } };
   }
 
   // BR-BILL-07/08: tiền nhà chỉ ở đúng chu kỳ, prorate theo ngày ở thực tế nếu
@@ -253,22 +296,18 @@ async function generateSingleInvoice(supabaseAdmin: any, contractId: string, per
   const utilityTotal = utilityLines.reduce((sum, l) => sum + l.totalAmount, 0);
   const totalAmount = rentAmount + utilityTotal + serviceFeeAmount + recurringFeesTotal;
 
-  const { start, end } = periodBounds(periodYm);
+  // B-03 preview: chỉ cần số tiền ước tính, KHÔNG ghi DB (không tính QR/due
+  // date/nhà — những thứ đó chỉ cần khi tạo thật).
+  if (opts.dryRun) {
+    return { preview: { contractId, roomNos, tenantName, totalAmount } };
+  }
+
   const dueDate = dueDateForPeriod(periodYm, version.payment_due_day_of_month);
 
   const { data: house } = await supabaseAdmin
     .from("tb_house")
     .select("id, name, bank_bin, bank_account_number, bank_account_name")
     .eq("id", contractRooms[0].tb_room.house_id)
-    .single();
-
-  const { data: tenant } = await supabaseAdmin
-    .from("tb_tenant")
-    .select("full_name")
-    .eq(
-      "id",
-      (await supabaseAdmin.from("tb_contract").select("tenant_id").eq("id", contractId).single()).data.tenant_id,
-    )
     .single();
 
   const paymentQrPayload = house?.bank_bin && house?.bank_account_number
@@ -288,8 +327,8 @@ async function generateSingleInvoice(supabaseAdmin: any, contractId: string, per
       contract_version_id: version.id,
       house_id: house.id,
       house_name: house.name,
-      room_nos: contractRooms.map((cr: any) => cr.tb_room.room_no),
-      tenant_name: tenant?.full_name ?? "",
+      room_nos: roomNos,
+      tenant_name: tenantName,
       period_start: start,
       period_end: end,
       due_date: dueDate,
@@ -312,7 +351,28 @@ async function generateSingleInvoice(supabaseAdmin: any, contractId: string, per
     await supabaseAdmin.from(u.table).update({ invoice_id: invoice.id }).eq("id", u.id);
   }
 
+  // BR-NOTI-01: báo cho mọi người có quyền trên nhà đó biết hoá đơn mới vừa
+  // tạo (không phụ thuộc việc có gửi SMS cho Tenant hay không).
+  await fanOutNotification(supabaseAdmin, {
+    houseId: house.id,
+    type: "invoice_sent",
+    payload: { roomNos, tenantName, amount: totalAmount },
+    targetInvoiceId: invoice.id,
+  });
+
   return { invoice };
+}
+
+/** Mọi hợp đồng Active của 1 Nhà — dùng chung cho `mode: "batch"`/`"previewBatch"`. */
+async function activeContractIdsForHouse(supabaseAdmin: any, houseId: string): Promise<string[]> {
+  const { data: rooms } = await supabaseAdmin.from("tb_room").select("id").eq("house_id", houseId);
+  const roomIds: string[] = (rooms ?? []).map((r: any) => r.id);
+  const { data: contractRoomRows } = await supabaseAdmin
+    .from("tb_contract_room")
+    .select("contract_id")
+    .in("room_id", roomIds)
+    .eq("is_active", true);
+  return [...new Set((contractRoomRows ?? []).map((cr: any) => cr.contract_id))] as string[];
 }
 
 export default {
@@ -347,14 +407,7 @@ export default {
         return Response.json({ error: "Forbidden" }, { status: 403 });
       }
       // BR-BILL-11: mọi hợp đồng Active của 1 nhà, trong 1 kỳ.
-      const { data: rooms } = await ctx.supabaseAdmin.from("tb_room").select("id").eq("house_id", body.houseId);
-      const roomIds: string[] = (rooms ?? []).map((r: any) => r.id);
-      const { data: contractRoomRows } = await ctx.supabaseAdmin
-        .from("tb_contract_room")
-        .select("contract_id")
-        .in("room_id", roomIds)
-        .eq("is_active", true);
-      const contractIds = [...new Set((contractRoomRows ?? []).map((cr: any) => cr.contract_id))];
+      const contractIds = await activeContractIdsForHouse(ctx.supabaseAdmin, body.houseId);
 
       const created = [];
       const skipped = [];
@@ -366,6 +419,129 @@ export default {
       return Response.json({ created, skipped });
     }
 
-    return Response.json({ error: "mode phải là 'single' hoặc 'batch'" }, { status: 400 });
+    // B-03: xem trước số tiền ước tính + trạng thái từng hợp đồng Active của 1
+    // Nhà trong 1 kỳ (Ready/No reading/Already created) TRƯỚC khi tạo thật —
+    // KHÔNG ghi DB. Người dùng chọn (checkbox) trong số các hợp đồng "ready"
+    // rồi app gọi lại `mode: "single"` cho từng hợp đồng đã chọn để tạo thật.
+    if (body.mode === "previewBatch") {
+      const { data: allowedHouse } = await ctx.supabase
+        .from("tb_house")
+        .select("id")
+        .eq("id", body.houseId)
+        .maybeSingle();
+      if (!allowedHouse) {
+        return Response.json({ error: "Forbidden" }, { status: 403 });
+      }
+      const contractIds = await activeContractIdsForHouse(ctx.supabaseAdmin, body.houseId);
+
+      // Chạy song song theo LÔ NHỎ (không phải tuần tự từng cái, không phải tất
+      // cả cùng lúc) — nhà càng nhiều phòng thì chạy tuần tự càng dễ vượt quá
+      // thời gian cho phép của 1 lần gọi Edge Function (test thật 28 hợp đồng
+      // tuần tự mất ~40s — nhà 50-100 phòng có nguy cơ timeout giữa chừng, lỗi
+      // trắng cả preview). Song song theo lô giữ đúng kết quả, chỉ nhanh hơn.
+      const CONCURRENCY = 6;
+      const items = [];
+      for (let i = 0; i < contractIds.length; i += CONCURRENCY) {
+        const chunk = contractIds.slice(i, i + CONCURRENCY);
+        const results = await Promise.all(
+          chunk.map((contractId) =>
+            generateSingleInvoice(ctx.supabaseAdmin, contractId, body.periodYm, { dryRun: true })
+          ),
+        );
+        for (let j = 0; j < chunk.length; j++) {
+          const contractId = chunk[j];
+          const result = results[j];
+          if ("preview" in result) {
+            items.push({ contractId, status: "ready", ...result.preview });
+          } else if ("invoice" in result) {
+            items.push({
+              contractId,
+              status: "already_created",
+              roomNos: result.invoice.room_nos,
+              tenantName: result.invoice.tenant_name,
+              totalAmount: result.invoice.total_amount,
+            });
+          } else {
+            items.push({
+              contractId,
+              status: "missing_reading",
+              roomNos: result.skipped.roomNos ?? [],
+              tenantName: result.skipped.tenantName ?? "",
+              reason: result.skipped.reason,
+            });
+          }
+        }
+      }
+      return Response.json({ items });
+    }
+
+    // B-03 "Save all as draft"/"Create & send all" — tạo hoá đơn cho ĐÚNG danh
+    // sách hợp đồng người dùng đã tick chọn (không phải toàn bộ nhà), rồi nếu
+    // `send=true` gửi SMS thật ngay trong cùng request. Chạy HẲN phía backend
+    // (không phải frontend tự lặp gọi từng hợp đồng) — xem comment đầu file.
+    if (body.mode === "batchSend") {
+      const { data: allowedHouse } = await ctx.supabase
+        .from("tb_house")
+        .select("id")
+        .eq("id", body.houseId)
+        .maybeSingle();
+      if (!allowedHouse) {
+        return Response.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      const contractIds: string[] = Array.isArray(body.contractIds) ? body.contractIds : [];
+      const shouldSend = body.send === true;
+
+      const { data: house } = await ctx.supabaseAdmin
+        .from("tb_house")
+        .select("bank_bin, bank_account_number, bank_account_name")
+        .eq("id", body.houseId)
+        .single();
+
+      const CONCURRENCY = 6;
+      let createdCount = 0;
+      let sentCount = 0;
+      const errors: { contractId: string; reason: string }[] = [];
+
+      for (let i = 0; i < contractIds.length; i += CONCURRENCY) {
+        const chunk = contractIds.slice(i, i + CONCURRENCY);
+        await Promise.all(
+          chunk.map(async (contractId) => {
+            const result = await generateSingleInvoice(ctx.supabaseAdmin, contractId, body.periodYm);
+            if (!("invoice" in result)) {
+              errors.push({ contractId, reason: result.skipped.reason });
+              return;
+            }
+            createdCount++;
+            if (!shouldSend) return;
+            try {
+              const { data: contract } = await ctx.supabaseAdmin
+                .from("tb_contract")
+                .select("tenant_id")
+                .eq("id", contractId)
+                .single();
+              const { data: tenant } = await ctx.supabaseAdmin
+                .from("tb_tenant")
+                .select("phone")
+                .eq("id", contract.tenant_id)
+                .single();
+              const message = buildInvoiceSmsMessage(result.invoice, house);
+              await sendSmsViaEsms(tenant.phone, message);
+              await ctx.supabaseAdmin
+                .from("tb_invoice")
+                .update({ status: "Sent", sent_at: new Date().toISOString() })
+                .eq("id", result.invoice.id);
+              sentCount++;
+            } catch (e) {
+              errors.push({ contractId, reason: `Gửi SMS thất bại: ${e}` });
+            }
+          }),
+        );
+      }
+
+      return Response.json({ created: createdCount, sent: sentCount, errors });
+    }
+
+    return Response.json({ error: "mode phải là 'single', 'batch', 'previewBatch', hoặc 'batchSend'" }, { status: 400 });
   }),
 };

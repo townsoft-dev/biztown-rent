@@ -209,6 +209,12 @@ class UserRepository {
         'is_active': isActive,
         'granted_by_phone': _myPhone,
       });
+      // BR-NOTI-06 — báo cho người vừa được mời biết đã có quyền trên nhà này.
+      await _client.functions.invoke('create-notification', body: {
+        'type': 'manager_invited',
+        'houseId': houseId,
+        'recipientPhone': phone,
+      });
     }
     for (final houseId in toKeep) {
       await _client

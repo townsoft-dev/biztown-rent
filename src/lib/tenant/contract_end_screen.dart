@@ -110,6 +110,11 @@ class _ContractEndScreenState extends ConsumerState<ContractEndScreen> {
       title: AppStrings.t('contractEnd.confirmTitle'),
       description: AppStrings.t('contractEnd.confirmDescription',
           {'amount': formatNumber(refundAmount.abs())}),
+      // Đúng theo Figma node `400:2783` (dungtv xác nhận bằng ảnh chụp thật,
+      // 2026-09-14) — nút xác nhận BÊN TRONG dialog này ghi "Delete" (dùng
+      // chung style destructive), khác với nút "Confirm move-out" ở màn
+      // chính bên ngoài mở ra dialog. KHÔNG đổi lại thành "Confirm move-out"
+      // nếu chưa có ảnh Figma mới xác nhận ngược lại.
       confirmLabel: AppStrings.t('common.delete'),
     );
     if (!confirmed || !mounted) return;

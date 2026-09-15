@@ -6,6 +6,7 @@ import '../data/auth_repository.dart';
 import '../data/contract_repository.dart';
 import '../data/house_repository.dart';
 import '../data/invoice_repository.dart';
+import '../data/models/app_notification.dart';
 import '../data/models/contract.dart';
 import '../data/models/house.dart';
 import '../data/models/invoice.dart';
@@ -14,6 +15,7 @@ import '../data/models/reading.dart';
 import '../data/models/room.dart';
 import '../data/models/tenant.dart';
 import '../data/models/user_profile.dart';
+import '../data/notification_repository.dart';
 import '../data/reading_repository.dart';
 import '../data/room_repository.dart';
 import '../data/tenant_repository.dart';
@@ -396,6 +398,25 @@ final contractListProvider =
 final invoiceRepositoryProvider =
     Provider<InvoiceRepository>((ref) => invoiceRepository);
 
+final notificationRepositoryProvider =
+    Provider<NotificationRepository>((ref) => notificationRepository);
+
+/// S-03 — danh sách thông báo của người đang đăng nhập (RLS tự giới hạn đúng
+/// `recipient_phone`). Dùng Realtime (`StreamProvider`, không phải
+/// `FutureProvider`) để chuông/danh sách tự cập nhật ngay cả khi thông báo
+/// mới đến từ người khác (quản lý khác, hoặc backend) trong lúc app đang mở
+/// sẵn — không chỉ khi chính người dùng vừa thao tác xong (dungtv yêu cầu
+/// 2026-09-15, xem docs/DECISIONS.md).
+final notificationsProvider = StreamProvider<List<AppNotification>>((ref) {
+  return ref.watch(notificationRepositoryProvider).watch();
+});
+
+/// Số thông báo chưa đọc — hiện chấm đỏ trên chuông ở Home.
+final unreadNotificationCountProvider = Provider<int>((ref) {
+  final items = ref.watch(notificationsProvider).valueOrNull ?? const [];
+  return items.where((n) => n.isUnread).length;
+});
+
 /// Hoá đơn chưa `Collected` của 1 hợp đồng — T-09 "Outstanding invoices".
 final unpaidInvoicesProvider =
     FutureProvider.family<List<Invoice>, String>((ref, contractId) {
@@ -412,6 +433,12 @@ final contractInvoicesProvider =
 /// Mọi hoá đơn thuộc phạm vi các nhà đang có quyền — B-01.
 final invoicesProvider = FutureProvider<List<Invoice>>((ref) {
   return ref.watch(invoiceRepositoryProvider).listAll();
+});
+
+/// 1 hoá đơn cụ thể — B-04.
+final invoiceProvider =
+    FutureProvider.family<Invoice, String>((ref, invoiceId) {
+  return ref.watch(invoiceRepositoryProvider).getById(invoiceId);
 });
 
 /// 1 dòng hợp đồng hiển thị trên B-01 — hợp đồng Active + dải chip kỳ hoá
@@ -506,4 +533,17 @@ final billsHouseGroupsProvider =
   return rowsByHouse.entries
       .map((e) => BillsHouseGroup(house: housesById[e.key]!, rows: e.value))
       .toList();
+});
+
+/// Key cho [batchPreviewProvider] — 1 Nhà + 1 kỳ.
+typedef BatchPreviewArgs = ({String houseId, DateTime periodYm});
+
+/// Xem trước danh sách hợp đồng + số tiền ước tính cho B-03 (KHÔNG tạo hoá
+/// đơn thật) — gọi Edge Function `mode: "previewBatch"`.
+final batchPreviewProvider =
+    FutureProvider.family<List<BatchPreviewItem>, BatchPreviewArgs>(
+        (ref, args) {
+  return ref
+      .watch(invoiceRepositoryProvider)
+      .previewBatch(houseId: args.houseId, periodYm: args.periodYm);
 });
