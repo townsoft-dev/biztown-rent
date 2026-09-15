@@ -155,20 +155,41 @@ final houseMeterEntriesProvider =
   final rooms =
       await ref.watch(roomRepositoryProvider).listByHouse(key.houseId);
   final repo = ref.watch(readingRepositoryProvider);
+  final roomIds = rooms.map((r) => r.id).toList();
+
   final entries = <RoomMeterEntry>[];
-  for (final room in rooms) {
-    for (final type in UtilityType.values) {
-      final thisPeriod =
-          await repo.periodicForPeriod(room.id, type, key.periodYm);
+  // Trước đây gọi RIÊNG periodicForPeriod/byId/latestForRoom cho TỪNG phòng
+  // × TỪNG loại tiện ích trong vòng lặp — với N phòng là tới 4×N lượt gọi
+  // mạng tuần tự (N+1 query, cùng họ lỗi đã vá ở billsHouseGroupsProvider,
+  // xem docs/DECISIONS.md 2026-09-15). Gộp lại: 1 lượt gọi lấy TOÀN BỘ lịch
+  // sử chỉ số của cả nhà cho mỗi loại tiện ích (2 lượt gọi tổng cộng, không
+  // phụ thuộc số phòng), tự khớp lại trong bộ nhớ.
+  for (final type in UtilityType.values) {
+    final allReadings = await repo.historyForRooms(roomIds, type);
+    final readingById = {for (final r in allReadings) r.id: r};
+    final readingsByRoom = <String, List<Reading>>{};
+    for (final r in allReadings) {
+      readingsByRoom.putIfAbsent(r.roomId, () => []).add(r);
+    }
+
+    for (final room in rooms) {
+      // `allReadings` đã sắp xếp mới nhất trước (reading_date, created_at)
+      // nên list con theo phòng cũng giữ đúng thứ tự đó.
+      final roomReadings = readingsByRoom[room.id] ?? const [];
+      final thisPeriod = roomReadings
+          .where((r) =>
+              r.readingType == ReadingType.periodic &&
+              r.periodYm.year == key.periodYm.year &&
+              r.periodYm.month == key.periodYm.month)
+          .firstOrNull;
       // "Previous" luôn là chỉ số TRƯỚC kỳ đang xem — nếu kỳ này đã ghi rồi,
-      // không được dùng `latestForRoom` (nó sẽ trả về chính bản ghi của kỳ
-      // này, vì đó luôn là bản ghi mới nhất) mà phải lần theo
-      // `previousReadingId` của chính bản ghi kỳ này.
+      // không được dùng bản ghi mới nhất của phòng (đó chính là kỳ này) mà
+      // phải lần theo `previousReadingId` của chính bản ghi kỳ này.
       final previous = thisPeriod != null
           ? (thisPeriod.previousReadingId == null
               ? null
-              : await repo.byId(thisPeriod.previousReadingId!, type))
-          : await repo.latestForRoom(room.id, type);
+              : readingById[thisPeriod.previousReadingId!])
+          : roomReadings.firstOrNull;
       entries.add(RoomMeterEntry(
           room: room,
           utilityType: type,

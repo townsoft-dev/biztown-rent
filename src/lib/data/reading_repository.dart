@@ -72,6 +72,22 @@ class ReadingRepository {
     return rows.map((row) => Reading.fromMap(row, type)).toList();
   }
 
+  /// Toàn bộ lịch sử chỉ số của NHIỀU phòng cùng lúc (mới nhất trước, theo
+  /// đúng phòng) — dùng để tính `houseMeterEntriesProvider` (H-06 Entry) 1
+  /// lượt gọi cho cả nhà thay vì gọi riêng từng phòng × từng loại trong vòng
+  /// lặp (N+1 query, xem docs/DECISIONS.md 2026-09-15).
+  Future<List<Reading>> historyForRooms(
+      List<String> roomIds, UtilityType type) async {
+    if (roomIds.isEmpty) return const [];
+    final rows = await _client
+        .from(type.table)
+        .select()
+        .inFilter('room_id', roomIds)
+        .order('reading_date', ascending: false)
+        .order('created_at', ascending: false);
+    return rows.map((row) => Reading.fromMap(row, type)).toList();
+  }
+
   /// Ghi 1 bản ghi PERIODIC mới cho 1 phòng — tự tìm chỉ số gần nhất làm
   /// "cũ", validate current ≥ previous trước khi gọi DB (constraint DB chỉ là
   /// lưới chặn cuối, không phải chỗ báo lỗi chính cho người dùng).

@@ -724,3 +724,22 @@ dungtv phản hồi trực tiếp: "sao load cái bill mà chậm thế nhỉ xo
 **Verify thật bằng đo thời gian** (chụp màn hình liên tiếp mỗi 0.5s ngay sau khi bấm tab Bills, đối chiếu timestamp): tải xong hoàn toàn trong khoảng ~2 giây — trước đó cùng màn hình này từng phải đợi 5-10+ giây (đã tự trải nghiệm nhiều lần trong lúc test suốt phiên làm việc). `flutter analyze` sạch.
 
 **Bài học**: khi 1 hàm cần dữ liệu PHỤ (tenant, hoá đơn...) cho một tập hợp N bản ghi, luôn gộp lại thành 1 lượt gọi "lấy tất cả trong phạm vi" rồi tự nhóm trong bộ nhớ (dùng `Map` theo khoá) — không gọi lại provider/repository theo từng phần tử bên trong vòng lặp, kể cả khi đã dùng `Future.wait` để chạy song song (vẫn tốn N lượt round-trip mạng, chỉ đỡ chậm hơn gọi tuần tự chứ không giải quyết gốc vấn đề).
+
+## 2026-09-15 (Đợt 45) — Rà toàn bộ app tìm N+1 query khác + kiểm tra index database + verify sống từng màn
+
+dungtv, sau khi thấy vá Bills List (Đợt 44), hỏi tiếp: sửa vậy có ảnh hưởng gì không (nhắc phải test lại mỗi lần sửa), màn Tenant cũng có vẻ chậm, cần rà toàn bộ app, và kiểm tra database có đánh index hợp lý chưa — "app này không phải quá lớn mà dữ liệu chậm thì trải nghiệm cực kỳ tệ".
+
+**Rà toàn bộ `providers.dart`** (đọc hết từng provider, không chỉ chỗ dungtv chỉ ra) — phát hiện thêm đúng 1 chỗ N+1 nghiêm trọng khác:
+
+- **`houseMeterEntriesProvider`** (H-06 Record Monthly Reading) — với MỖI phòng × MỖI loại tiện ích (điện/nước), gọi RIÊNG tới 3 lượt API tuần tự (`periodicForPeriod` + `byId`/`latestForRoom`) — nhà 33 phòng = tới ~132 lượt gọi mạng nối tiếp, cùng họ lỗi hệt Bills List. Sửa: thêm `ReadingRepository.historyForRooms()` (lấy TOÀN BỘ lịch sử chỉ số của CẢ NHÀ cho 1 loại tiện ích trong 1 lượt gọi), tự khớp lại "kỳ này đã ghi chưa"/"chỉ số trước" trong bộ nhớ — giảm còn đúng 2 lượt gọi (1 điện + 1 nước) bất kể nhà có bao nhiêu phòng.
+- Rà thêm mọi repository khác (`room_repository`, `contract_repository`, `house_repository`, `user_repository`, `invoice_repository`, `tenant_repository`) tìm vòng lặp có `await` bên trong — không phát hiện thêm chỗ nào khác ngoài 3 chỗ đã sửa (Bills List, Contract list, Meter Entries) và 1 chỗ chấp nhận được (`UserRepository.saveManager()` lặp theo số nhà được TICK trong 1 lần submit form — quy mô nhỏ, do người dùng chọn tay, không phải danh sách toàn hệ thống).
+
+**Kiểm tra index database thật** (không chỉ đọc migration mà còn `pg_indexes` trực tiếp trên Supabase): mọi cột khoá ngoại đang thực sự dùng trong `.eq()`/`.inFilter()` ở code (house_id, contract_id, tenant_id, room_id, phone, recipient_phone) đều ĐÃ có index — kể cả 1 trường hợp tinh tế: `tb_contract_room` tưởng thiếu index `room_id`, nhưng thực ra có UNIQUE PARTIAL INDEX `one_active_contract_per_room (room_id) WHERE is_active` — vừa là ràng buộc nghiệp vụ (1 phòng chỉ 1 hợp đồng Active) vừa tự đóng vai trò index cho đúng truy vấn `activeContractIdForRoom()` đang dùng (luôn kèm `is_active = true`). Không cần thêm index nào — root cause của hiện tượng chậm 100% nằm ở tầng ứng dụng (N+1 query trong Dart), không phải thiếu index. Kiểm tra thêm `pg_stat_user_tables`: bảng lớn nhất hiện chỉ ~405 dòng (readings) — ở quy mô này Postgres tự chọn seq scan cho nhiều truy vấn dù có index (nhanh hơn với bảng nhỏ), nên index hiện có mang tính "đúng đắn khi dữ liệu lớn lên" chứ chưa phải yếu tố quyết định tốc độ ở quy mô test hiện tại.
+
+**Verify sống từng màn sau khi build lại APK** (đo bằng chụp màn hình liên tiếp 0.5s + timestamp, đúng yêu cầu "test lại mỗi lần sửa"):
+- Bills List: ~2s (giữ nguyên từ Đợt 44).
+- Tenant tab — sub-tab "Tenants": ~1.4s. Sub-tab "Contracts": ~2s.
+- Home tab: gần như tức thời.
+- H-06 Record Monthly Reading (nhà 33 phòng, chỗ vừa sửa): ~2s — kiểm tra thêm ĐÚNG dữ liệu hiển thị (không chỉ nhanh mà còn phải đúng): "20/33 rooms recorded", Previous/Current/Usage của từng phòng khớp đúng chuỗi chỉ số cũ (VD phòng 333: Previous 246 → Current 267 → Usage 21 kWh) — xác nhận việc gộp query không làm sai lệch dữ liệu.
+
+**Kết luận cho dungtv**: nguyên nhân chậm 100% là lỗi N+1 ở tầng code Flutter (không phải thiếu index database) — đã tìm và vá hết 3 chỗ tìm được trong toàn app, verify sống từng màn sau khi sửa đều nhanh (~1.5-2s) và dữ liệu vẫn đúng.
