@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../core/theme.dart';
 
@@ -22,6 +23,22 @@ class Avatar extends StatelessWidget {
     this.imageUrl,
   });
 
+  /// Chữ cái đầu khi đã có tên, còn chưa có tên thì hiện icon người.
+  ///
+  /// Trước 16/09/2026 hiện dấu "?" — dungtv báo nhìn như lỗi hệ thống chứ
+  /// không giống chỗ chờ điền tên (màn Thêm người thuê, lúc chưa gõ gì).
+  Widget _content() {
+    if (initials.trim().isEmpty || initials == '?') {
+      return Icon(Symbols.person_rounded,
+          size: size * 0.55, color: Colors.white);
+    }
+    return Text(initials,
+        style: GoogleFonts.inter(
+            fontSize: size * 0.29,
+            fontWeight: FontWeight.w700,
+            color: Colors.white));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -38,17 +55,9 @@ class Avatar extends StatelessWidget {
               fit: BoxFit.cover,
               // Ảnh vừa đổi có thể chưa sẵn sàng/URL tạm hết hạn — rơi về
               // chữ cái đầu thay vì hiện icon vỡ ảnh mặc định của Flutter.
-              errorBuilder: (context, error, stackTrace) => Text(initials,
-                  style: GoogleFonts.inter(
-                      fontSize: size * 0.29,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white)),
+              errorBuilder: (context, error, stackTrace) => _content(),
             )
-          : Text(initials,
-              style: GoogleFonts.inter(
-                  fontSize: size * 0.29,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white)),
+          : _content(),
     );
   }
 }

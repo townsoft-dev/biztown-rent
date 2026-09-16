@@ -32,6 +32,9 @@ enum _SignupPage { verifyPhone, setPassword }
 class _SignupScreenState extends State<SignupScreen> {
   _SignupPage _page = _SignupPage.verifyPhone;
   final _phoneController = TextEditingController();
+  // Theo dõi focus để KHUNG NGOÀI đổi sang viền cam, thay vì để TextField bên
+  // trong tự vẽ viền cam rồi bị cắt.
+  final _phoneFocus = FocusNode();
   final _fullNameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -47,8 +50,21 @@ class _SignupScreenState extends State<SignupScreen> {
   int _resendSecondsLeft = 0;
 
   @override
+  void initState() {
+    super.initState();
+    // Vẽ lại khung khi đổi focus để viền đổi màu (cam khi đang nhập).
+    _phoneFocus.addListener(_onFocusChanged);
+  }
+
+  void _onFocusChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _phoneFocus.removeListener(_onFocusChanged);
     _phoneController.dispose();
+    _phoneFocus.dispose();
     _fullNameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -246,7 +262,11 @@ class _SignupScreenState extends State<SignupScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
           decoration: BoxDecoration(
             color: AppColors.bgDefault,
-            border: Border.all(color: AppColors.neutral200, width: 1.5),
+            border: Border.all(
+                color: _phoneFocus.hasFocus
+                    ? AppColors.accentOrange
+                    : AppColors.neutral200,
+                width: 1.5),
             borderRadius: BorderRadius.circular(AppRadii.inputField),
           ),
           child: Row(
@@ -254,12 +274,30 @@ class _SignupScreenState extends State<SignupScreen> {
               Expanded(
                 child: TextField(
                   controller: _phoneController,
+                  focusNode: _phoneFocus,
                   enabled: !_otpSent,
                   keyboardType: TextInputType.phone,
                   inputFormatters: const [VnPhoneInputFormatter()],
                   style: GoogleFonts.inter(
                       fontSize: 14, color: AppColors.textPrimary),
-                  decoration: const InputDecoration.collapsed(hintText: ''),
+                  decoration: const InputDecoration(
+                    // Phải tắt TẤT CẢ biến thể viền, không chỉ `border`:
+                    // `InputDecoration.collapsed` vẫn để lọt `focusedBorder`
+                    // màu cam của theme, vẽ thêm một viền BÊN TRONG khung
+                    // ngoài rồi bị padding cắt mất một phần — đúng lỗi dungtv
+                    // chụp lại 16/09/2026. Viền của ô này do Container bên
+                    // ngoài vẽ, đổi màu theo trạng thái focus.
+                    isCollapsed: true,
+                    hintText: '',
+                    filled: false,
+                    contentPadding: EdgeInsets.zero,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
