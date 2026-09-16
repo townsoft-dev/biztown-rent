@@ -1,5 +1,13 @@
 # ZALO-MESSAGING.md — Gửi tin nhắn Zalo OA (Tenant + xác thực tài khoản)
 
+> ## ⏸️⏸️ TOÀN BỘ TÀI LIỆU NÀY TẠM NGƯNG SỬ DỤNG CHO PHASE 1 (16/09/2026, Đợt 51)
+> Dream chốt **bỏ hẳn Zalo OA cho Phase 1** — cơ chế vận hành (đăng ký + xác thực doanh nghiệp, tạo/chờ duyệt từng mẫu ZNS/ZBS 2-3 ngày làm việc, quản lý cửa sổ tương tác 7 ngày cho tin tư vấn, chính sách cấm QR trong khối hình ảnh của mẫu...) phức tạp hơn mức cần thiết. Cả 3 luồng dưới đây (A/B/C) **đều tạm ngưng**, không code theo bất kỳ nội dung nào trong tài liệu này cho tới khi có quyết định khác:
+> - **Hoá đơn hàng tháng gửi Tenant** (thay cho Luồng B): chuyển hẳn sang **SMS qua eSMS + link ảnh chi tiết kèm QR** — xem `docs/SMS-HOA-DON.md` (tài liệu mới, đang dùng thật cho Phase 1).
+> - **OTP xác thực tài khoản** (Luồng C): tiếp tục dùng eSMS như hiện tại — xem `REQUIREMENTS.md` INT-03.
+> - **Tin chào mừng hợp đồng mới** (Luồng A): **đã chốt (16/09/2026, Đợt 52)** — chuyển sang **SMS qua eSMS**, gửi cùng 1 luồng hội thoại/cùng đầu số với hoá đơn hàng tháng ở trên (Dream tự sửa trực tiếp trong Figma, gộp 2 mockup thành 1 khung hội thoại) — xem `docs/SMS-HOA-DON.md` mục 2.1 và `docs/DECISIONS.md` Đợt 52.
+>
+> Toàn bộ nội dung kỹ thuật bên dưới (template đã duyệt, tham số, mapping, checklist...) **được giữ nguyên làm tài liệu tham khảo, không xoá** — để tái sử dụng nếu Phase 2 trở đi quyết định quay lại dùng Zalo OA. Xem `docs/DECISIONS.md` Đợt 51 để biết đầy đủ lý do và phạm vi thay đổi.
+
 > **Trạng thái tài liệu:** Version 3 — **Last updated:** 2026-09-16 (Dream, qua Claude/Cowork)
 > Tài liệu này gộp 3 luồng dùng chung hạ tầng Zalo OA (`_shared/zalo.ts`, `tb_zalo_token`):
 > - **Luồng A (chào mừng hợp đồng, gửi Tenant)** — template đã duyệt, có thể code. Vẫn phụ thuộc câu hỏi rộng hơn "có tiếp tục dùng Zalo OA hay không" — xem ghi chú Luồng C.
