@@ -85,7 +85,7 @@
 | FR-BILL-06 | Xem danh sách hoá đơn **nhóm theo Nhà/Dãy trọ → theo Hợp đồng**, lọc/sắp xếp theo trạng thái (Draft/Sent/Collected/Overdue) và theo kỳ | Must | Thay đổi so với danh sách phẳng của Version 2 |
 | FR-BILL-07 | Hiển thị kỳ tương lai dưới dạng chip "Scheduled" kèm bản xem trước dựng tạm, không tạo hoá đơn thật trước | Should | Xem BR-BILL-12 |
 | FR-BILL-08 | Đánh dấu hoá đơn "Đã thu tiền" (Collected) thủ công, có thể huỷ đánh dấu | Must | Không có bước Tenant tự đánh dấu — kế thừa Version 2 |
-| FR-BILL-09 | Tự động nhắc thanh toán trước/đúng/sau hạn qua SMS/Zalo cho Tenant + Push cho người có quyền trên nhà đó | Must | Lịch nhắc — xem BR-PAY-04 |
+| FR-BILL-09 | Tự động nhắc thanh toán trước/đúng/sau hạn qua SMS/Zalo cho Tenant + Push cho người có quyền trên nhà đó | Could | Hạ từ Must (16/09/2026, Đợt 49) — không bắt buộc trong phase này. Lịch nhắc — xem BR-PAY-04 |
 | FR-BILL-10 | Tính phí phạt trễ hạn tự động | Could | Theo `lateFeeTerms` |
 | ~~FR-BILL cũ (V2)~~ | ~~Nhập chỉ số điện/nước trực tiếp lúc tạo hoá đơn~~ | Removed | Thay bằng nghiệp vụ ghi chỉ số riêng — xem mục 2.3 |
 
@@ -101,7 +101,7 @@
 | ID | Requirement | Priority | Ghi chú |
 |---|---|---|---|
 | FR-NOTI-01 | Push notification cho người có quyền trên Nhà/Dãy trọ liên quan (hoá đơn mới tạo, đến hạn ghi chỉ số định kỳ, hợp đồng sắp hết hạn) | Must | "Đến hạn ghi chỉ số" điều hướng đúng tới màn Ghi chỉ số (không phải màn Tạo hoá đơn) — xem BR-NOTI-05 |
-| FR-NOTI-02 | Gửi SMS/Zalo cho Tenant khi có hoá đơn mới (kèm QR) và khi nhắc thanh toán | Must | Kênh duy nhất tiếp cận Tenant. **Nội dung cố định tiếng Việt ở Phase 1** (không song ngữ Anh+Việt — tránh tăng độ dài tin nhắn, đội chi phí gửi tin) — không theo ngôn ngữ hiển thị của người tạo hoá đơn (sửa lại 09/09/2026 đợt 5, xem `BR-NOTI-07`) |
+| FR-NOTI-02 | Gửi SMS (qua eSMS) cho Tenant khi có hoá đơn mới (kèm link ảnh chi tiết + QR) và khi nhắc thanh toán | Must (phần "hoá đơn mới"); Could (phần "nhắc thanh toán" — hạ 16/09/2026 Đợt 49, xem FR-BILL-09/BR-PAY-04) | Kênh duy nhất tiếp cận Tenant. Đổi từ "SMS/Zalo" sang chỉ **SMS qua eSMS** (16/09/2026, Đợt 51 — bỏ Zalo OA cho Phase 1 vì cơ chế vận hành phức tạp hơn cần thiết), xem `docs/SMS-HOA-DON.md` cho mẫu nội dung + thiết kế ảnh chi tiết. **Nội dung cố định tiếng Việt ở Phase 1** (không song ngữ Anh+Việt — tránh tăng độ dài tin nhắn, đội chi phí gửi tin) — không theo ngôn ngữ hiển thị của người tạo hoá đơn (sửa lại 09/09/2026 đợt 5, xem `BR-NOTI-07`) |
 | FR-NOTI-03 | Trung tâm thông báo (notification inbox) trong app | Must | |
 | FR-NOTI-04 | Thông báo khi được mời làm quản lý 1 Nhà/Dãy trọ | Should | Xem BR-NOTI-06 |
 
@@ -134,9 +134,9 @@
 ## 4. Integration Requirements
 | ID | Tích hợp | Trạng thái |
 |---|---|---|
-| INT-01 | Zalo ZNS (Zalo Notification Service) hoặc Zalo OA để gửi hoá đơn/thông báo kèm mã QR cho Tenant | đang tiến hành tạo và chờ phê duyệt tài khoản OA |
-| INT-02 | SMS Brandname (qua eSMS.vn) | Đã chọn **eSMS**, tích hợp xong (09/09/2026) — đang dùng Brandname demo "Baotrixemay" để test, cần đăng ký Brandname thật trước production |
-| INT-03 | OTP xác thực đăng ký/đăng nhập (mọi tài khoản) | dùng chung với INT-02, qua Supabase Auth Send SMS Hook |
+| INT-01 | Zalo ZNS (Zalo Notification Service) hoặc Zalo OA để gửi hoá đơn/thông báo kèm mã QR cho Tenant | **⏸️ TẠM NGƯNG cho Phase 1 (16/09/2026, Đợt 51).** Dream chốt bỏ hẳn Zalo OA cho Phase 1 — cơ chế vận hành (đăng ký/xác thực doanh nghiệp, chờ duyệt mẫu 2-3 ngày/mẫu, cửa sổ tương tác 7 ngày, chính sách cấm QR trong khối hình ảnh mẫu...) phức tạp hơn cần thiết. Hoá đơn hàng tháng chuyển hẳn sang INT-02 (eSMS) + link ảnh chi tiết, xem `docs/SMS-HOA-DON.md`. Hạ tầng Zalo hiện có (`_shared/zalo.ts`, `tb_zalo_token`, secrets) giữ nguyên, không xoá — có thể dùng lại nếu Phase 2 đổi hướng. Chi tiết xem [DECISIONS.md](DECISIONS.md) Đợt 51 |
+| INT-02 | SMS Brandname (qua eSMS.vn) — dùng cho thông báo/hoá đơn gửi Tenant (`send-notification`) | Đã chọn **eSMS**, tích hợp xong (09/09/2026) — đang dùng SmsType tin thường (không cần Brandname riêng), xem [DECISIONS.md](DECISIONS.md) Đợt 14/37. Không còn dùng cho OTP (xem INT-03). **Kể từ 16/09/2026 (Đợt 51): là kênh DUY NHẤT gửi hoá đơn/nhắc thanh toán cho Tenant** (Zalo tạm ngưng, xem INT-01) — nội dung SMS + thiết kế ảnh chi tiết kèm QR xem `docs/SMS-HOA-DON.md` |
+| INT-03 | OTP xác thực đăng ký/quên mật khẩu (mọi tài khoản), qua Supabase Auth Send SMS Hook | **Tạm hoãn quyết định đổi sang ZBS (16/09/2026, Đợt 50 — đảo lại "ĐÃ CHỐT" ghi ngày 2026-09-15, Đợt 47/48).** ZBS (template 636478 đã duyệt) rẻ hơn eSMS, nhưng đang cân nhắc lại có tiếp tục dùng Zalo OA cho hệ thống hay không — chưa chốt. **Cho tới khi có quyết định về OA: tiếp tục ưu tiên gửi SMS qua eSMS** như hiện tại cho cả tạo tài khoản và quên mật khẩu. Không đổi code — `send-otp-sms/index.ts` chưa từng thực sự gọi ZBS. Chi tiết xem [ZALO-MESSAGING.md](ZALO-MESSAGING.md) mục 3. **Cập nhật 16/09/2026 (Đợt 51):** Zalo OA nay đã bỏ hẳn cho Phase 1 (xem INT-01) — SMS qua eSMS cho OTP không còn là "tạm" nữa mà là kênh chính thức cho cả Phase 1 |
 | INT-04 | Push notification (Firebase Cloud Messaging / APNs) | Xác nhận lại ở [ARCHITECTURE](ARCHITECTURE.md) |
 | INT-05 | Cổng thanh toán online (VNPay/Momo/ZaloPay) | Ngoài phạm vi Phase 1 — Phase 1 chỉ sinh mã QR chuyển khoản tĩnh (VietQR/NAPAS-247), không xử lý thanh toán trong app |
 | INT-06 | Lưu trữ ảnh (hồ sơ, CCCD, ảnh phòng, ảnh công tơ) — Cloud storage (Supabase Storage) | |

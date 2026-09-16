@@ -34,7 +34,7 @@
 | BR-PAY-01 | Hạn thanh toán = ngày cố định trong tháng ghi trên hợp đồng (`paymentDueDayOfMonth`) — xem BR-BILL-09 | **Thay thế** quy tắc "N ngày sau khi gửi hoá đơn" của Version 2 |
 | BR-PAY-02 | Tenant chuyển khoản/tiền mặt **ngoài app** (không có bước xác nhận nào trong app từ phía Tenant) → Landlord/Manager tự đánh dấu hoá đơn "Đã thu tiền" (`Collected`) khi xác nhận đã nhận được tiền | Kế thừa Version 2 |
 | BR-PAY-03 | Trạng thái hoá đơn (`invoice.status`): `Draft` (đang soạn, chưa gửi) → `Sent` (đã gửi cho Tenant qua SMS/Zalo, chưa thu tiền) → `Collected` (đã xác nhận thu tiền); nếu quá `dueDate` mà vẫn `Sent` → hiển thị thêm cờ/derive trạng thái `Overdue` (không lưu trong DB) | Kế thừa Version 2 |
-| BR-PAY-04 | Lịch nhắc tự động: 3 ngày trước hạn, 1 ngày trước hạn, đúng hạn, 1 ngày sau hạn, 3 ngày sau hạn — gửi SMS/Zalo cho Tenant + Push cho người có quyền trên nhà đó khi hoá đơn còn `Sent` (chưa `Collected`) sau các mốc trên | Kế thừa Version 2 — xem [USER-FLOWS](USER-FLOWS.md) Flow C |
+| BR-PAY-04 | Lịch nhắc tự động: 3 ngày trước hạn, 1 ngày trước hạn, đúng hạn, 1 ngày sau hạn, 3 ngày sau hạn — gửi SMS/Zalo cho Tenant + Push cho người có quyền trên nhà đó khi hoá đơn còn `Sent` (chưa `Collected`) sau các mốc trên | **Hạ xuống Could (16/09/2026, Đợt 49)** — không bắt buộc trong phase này, đảo lại "Must — kế thừa Version 2" ghi trước đó. Xem [USER-FLOWS](USER-FLOWS.md) Flow C — lịch nhắc cụ thể ở trên chỉ áp dụng nếu sau này làm lại. |
 | BR-PAY-05 | Phí phạt trễ hạn (nếu có): công thức tính theo **điều khoản ghi trong phiên bản hợp đồng đang hiệu lực** (`contract_version.lateFeeTerms`, free text), không phải công thức cố định toàn hệ thống | Kế thừa Version 2 |
 | BR-PAY-06 | Có thể **sửa lại trạng thái đã thu tiền** (VD: đánh dấu nhầm) — chuyển ngược từ `Collected` về `Sent` | Kế thừa Version 2 |
 
@@ -108,13 +108,13 @@
 
 | ID | Sự kiện | Kênh | Trạng thái |
 |---|---|---|---|
-| BR-NOTI-01 | Hoá đơn mới được tạo & gửi (đơn lẻ hoặc hàng loạt) | Push (người có quyền trên nhà đó) + SMS/Zalo (Tenant, kèm mã QR) | Must |
-| BR-NOTI-02 | Nhắc thanh toán (trước/đúng/sau hạn) | Push + SMS/Zalo | Must — xem BR-PAY-04 |
+| BR-NOTI-01 | Hoá đơn mới được tạo & gửi (đơn lẻ hoặc hàng loạt) | Push (người có quyền trên nhà đó) + SMS qua eSMS (Tenant, kèm link ảnh chi tiết + mã QR) — đổi từ "SMS/Zalo (kèm mã QR)" (16/09/2026, Đợt 51: bỏ Zalo OA cho Phase 1), xem `docs/SMS-HOA-DON.md` | Must |
+| BR-NOTI-02 | Nhắc thanh toán (trước/đúng/sau hạn) | Push + SMS qua eSMS — đổi từ "SMS/Zalo" (Đợt 51) | Could — hạ từ Must (16/09/2026, Đợt 49), xem BR-PAY-04 |
 | BR-NOTI-03 | Đánh dấu đã thu tiền | Push nội bộ (cho người khác cùng quyền trên nhà đó, nếu có) | Should |
-| BR-NOTI-04 | Hợp đồng sắp hết hạn (nhắc gia hạn) | Push + có thể kèm SMS/Zalo | Could |
+| BR-NOTI-04 | Hợp đồng sắp hết hạn (nhắc gia hạn) | Push + có thể kèm SMS qua eSMS — đổi từ "SMS/Zalo" (Đợt 51) | Could |
 | BR-NOTI-05 | **Đến hạn ghi chỉ số điện/nước định kỳ hàng tháng** của 1 Nhà/Dãy trọ | Push (người có quyền trên nhà đó) | Must — điều hướng tới màn **Ghi chỉ số** (Home tab), không phải màn Tạo hoá đơn như cách hiểu tạm thời ở Version 2 (xem mục 6) |
 | BR-NOTI-06 | Được mời làm quản lý 1 Nhà/Dãy trọ | Push (nếu đã có tài khoản); nếu chưa có tài khoản thì thông báo hiện khi đăng nhập lần đầu sau khi đăng ký | Should |
-| BR-NOTI-07 | **Ngôn ngữ nội dung** SMS/Zalo gửi cho Tenant (hoá đơn, nhắc thanh toán) | Cố định **tiếng Việt** ở Phase 1, áp dụng chung cho cả SMS và Zalo — **không dùng song ngữ Anh+Việt trong cùng 1 tin nhắn** vì làm tăng độ dài tin nhắn, đội chi phí gửi tin (đặc biệt SMS tính phí theo đoạn ký tự) — **độc lập hoàn toàn** với ngôn ngữ hiển thị (English/Tiếng Việt/한국어) mà chủ nhà/quản lý đang chọn ở P-01 (`FR-MGR-05`); Tenant không có tài khoản/app nên không có lựa chọn ngôn ngữ riêng | Mới, 09/09/2026 (đợt 4) — **sửa lại đợt 5: tiếng Anh → tiếng Việt** |
+| BR-NOTI-07 | **Ngôn ngữ nội dung** SMS gửi cho Tenant (hoá đơn, nhắc thanh toán) | Cố định **tiếng Việt** ở Phase 1 — **không dùng song ngữ Anh+Việt trong cùng 1 tin nhắn** vì làm tăng độ dài tin nhắn, đội chi phí gửi tin (SMS tính phí theo đoạn ký tự) — **độc lập hoàn toàn** với ngôn ngữ hiển thị (English/Tiếng Việt/한국어) mà chủ nhà/quản lý đang chọn ở P-01 (`FR-MGR-05`); Tenant không có tài khoản/app nên không có lựa chọn ngôn ngữ riêng | Mới, 09/09/2026 (đợt 4) — sửa lại đợt 5: tiếng Anh → tiếng Việt; bỏ nhắc "Zalo" (16/09/2026, Đợt 51 — chỉ còn kênh SMS cho Phase 1) |
 
 ---
 

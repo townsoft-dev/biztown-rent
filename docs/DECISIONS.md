@@ -865,3 +865,101 @@ Quyết định: ZNS đi thẳng API Zalo; gặp vướng thì xử lý ở phí
 - **Câu hỏi mấu chốt cần test mới trả lời được**: khi người thuê bấm "Chi tiết", webhook Zalo gửi về những gì? Zalo chỉ định danh người dùng bằng **UID**, còn BizTown gửi ZNS theo **số điện thoại** — nếu webhook không kèm `msg_id` hay mã tham chiếu nào thì không biết UID đó ứng với hoá đơn nào. Có 2 hướng dự phòng: (a) đối chiếu qua `msg_id` đã lưu lúc gửi (vì vậy `sendZns()` nay trả về `msgId`), hoặc (b) lần đầu OA gửi tin xin chia sẻ SĐT, người thuê bấm 1 lần rồi lưu ánh xạ UID ↔ SĐT cho các lần sau. Chưa code hướng nào — chờ dữ liệu thật từ webhook rồi mới quyết, tránh đoán sai rồi phải viết lại.
 
 **Kết luận cho dungtv**: nguyên nhân chậm 100% là lỗi N+1 ở tầng code Flutter (không phải thiếu index database) — đã tìm và vá hết 3 chỗ tìm được trong toàn app, verify sống từng màn sau khi sửa đều nhanh (~1.5-2s) và dữ liệu vẫn đúng.
+
+## 2026-09-15 (Đợt 46) — Luồng gửi tin Zalo OA cho Tenant: chốt tham số Mẫu 1 (đã duyệt, ID 636121), ghi lại vướng mắc + phương án đang cân nhắc cho Mẫu 2
+
+Dream cung cấp thông tin Template ZBS Mẫu 1 ("Chào mừng hợp đồng") đã được Zalo duyệt (ID 636121, chụp màn hình chi tiết mẫu + bảng tham số từ account.zalo.cloud/Business Suite), yêu cầu viết tài liệu mô tả luồng gửi kèm khớp đúng tên tham số/kiểu dữ liệu đã duyệt với field thực tế trong database (không dùng lại tên tham số nháp cũ trong `zns-hoa-don-template.md`, vốn được soạn trước khi mẫu được duyệt nên lệch ở vài chỗ). Đồng thời Dream trình bày hiện trạng vướng mắc của Mẫu 2 (hoá đơn hàng tháng) — template ZBS cấm/không hỗ trợ QR động, ràng buộc quyền sở hữu tài sản đích của nút CTA, tin tư vấn bị khoá bởi cửa sổ tương tác 7 ngày trong khi chu kỳ hoá đơn là 1 tháng, các mẫu thử đều bị từ chối duyệt — và 4 phương án đang cân nhắc, **chưa chốt phương án nào**.
+
+**Đã làm:** tạo `docs/ZALO-MESSAGING.md` (mới) — gộp 2 luồng:
+
+- **Luồng A (Mẫu 1, đã duyệt):** ghi lại đúng nội dung/tham số đã duyệt (8 tham số, 1 nút CTA duy nhất — khác bản nháp cũ có 2 nút và tên tham số `ngay_thanh_toan`), map từng tham số với field DB thực tế theo schema Version 3 (`tb_tenant`, `tb_contract`, `tb_contract_version`, `tb_room`, `tb_house`). Phát hiện 2 gap thật cần chốt trước khi code: (1) `<ma_hop_dong>` không có field tương ứng — `tb_contract` chỉ có `id` (uuid), cần quyết định thêm cột mã hiển thị hay dùng tạm uuid rút gọn; (2) 1 hợp đồng có thể có nhiều phòng (`tb_contract_room` N-N) nhưng mẫu chỉ có 1 ô `<ten_phong>` — chưa có quy tắc ghép/chọn phòng nào hiển thị. Cũng phát hiện `sendZns()` (`_shared/zalo.ts`) khai báo `templateData: Record<string, string>` trong khi mẫu có 2 tham số kiểu `number` — cần verify lại đúng kiểu dữ liệu Zalo yêu cầu trước khi gọi thật. Ghi lại luôn: DB hiện **không có chỗ lưu UID/thời điểm tương tác OA của Tenant** — là điều kiện tiên quyết để tối ưu chi phí Mẫu 2 sau này (mục đích Dream nêu "quan tâm xong thì đổi SĐT→UID cho rẻ hơn"), cần bổ sung field mới (`tb_tenant.zalo_uid`, `zalo_followed_at`) — chưa quyết, cần Dream/dungtv chốt.
+- **Luồng B (Mẫu 2, chưa chốt):** ghi lại nguyên văn 4 vướng mắc + 4 phương án Dream đề xuất, bổ sung đối chiếu với research trước đó (`zalo-feasibility-review.md` trong Project brainstorm của Dream, không nằm trong repo) cho từng phương án — đặc biệt lưu ý Phương án 1 (tách 2 bước, tin tư vấn kích hoạt bởi tương tác) có rủi ro kỹ thuật CHƯA XÁC NHẬN (bấm nút ZBS có mở lại cửa sổ 7 ngày hay không) ngoài rủi ro Dream đã nêu (Tenant không bấm thì không nhận QR). Đánh dấu rõ **CHƯA CODE luồng này** tới khi có quyết định.
+
+**Việc cần làm tiếp** (xem chi tiết trong `docs/ZALO-MESSAGING.md` mục 1.7/2.4): chốt cách lấy `<ma_hop_dong>` và xử lý hợp đồng nhiều phòng cho Luồng A trước khi code; chốt 1 trong 4 phương án (hoặc phương án khác) cho Luồng B rồi mới code; sau khi chốt, cập nhật `BUSINESS-RULES.md` (`BR-NOTI-01` hiện ghi "SMS/Zalo kèm mã QR" — đã lỗi thời so với vướng mắc thật, cần rà lại theo phương án được chọn).
+
+## 2026-09-15 (Đợt 47) — Luồng OTP xác thực tài khoản: chuyển từ eSMS sang ZBS (template đã duyệt, ID 636478) để giảm chi phí
+
+Dream cung cấp Template ZBS "Mẫu OTP" đã được Zalo duyệt (ID 636478, chụp màn hình chi tiết mẫu + tham số), yêu cầu bổ sung thêm 1 luồng nữa (Luồng C) vào `docs/ZALO-MESSAGING.md`: đổi luồng gửi OTP khi đăng ký tài khoản/quên mật khẩu — hiện đang dùng eSMS (`send-otp-sms/index.ts`, Đợt 14) — sang ZBS, mục tiêu giảm chi phí, và lưu ý nội dung/tính năng liên quan đã phát triển trước đó cần rà lại cho khớp.
+
+**Đã làm:** cập nhật `docs/ZALO-MESSAGING.md` (Version 2) — thêm mục 3 (Luồng C):
+
+- Ghi lại đúng nội dung/tham số mẫu 636478 (chỉ 1 tham số `<otp>`, kiểu string — không có mismatch kiểu dữ liệu như Luồng A).
+- Xác nhận Send SMS Hook của Supabase Auth không ràng buộc kênh gửi thật (chỉ cần đúng contract webhook) — đổi nhà cung cấp chỉ cần sửa phần thân `send-otp-sms/index.ts`, không cần đổi cấu hình hook trên Supabase Dashboard.
+- Ghi lại lý do đổi hợp lý ngoài giá tiền: hiện đang dùng Brandname demo dùng chung "Baotrixemay" của eSMS (không nhắc gì tới BizTown, không dùng được cho user thật) — chuyển sang ZBS loại bỏ luôn phụ thuộc vào việc đăng ký/chờ duyệt Brandname CSKH thật của eSMS, một quy trình riêng chưa có mốc trong repo. Chi phí Brandname CSKH thật của eSMS chưa được ghi lại trong repo — cần Dream xác nhận số thật nếu muốn so sánh chính xác.
+- Gắn cờ 1 điểm kỹ thuật dễ sai: định dạng số điện thoại khác nhau giữa eSMS (`toLocalVnPhone()` ra dạng `0xxxxxxxxx`) và Zalo (`sendZns()` cần dạng `84xxxxxxxxx`, chỉ cắt dấu `+` chứ không cắt `+84`) — nhắc rõ không copy nhầm hàm cũ.
+- Liệt kê danh sách "nội dung đã phát triển cần rà lại" theo đúng yêu cầu Dream: copy UI S-02/S-04 có thể đang giả định cứng kênh "SMS"; `REQUIREMENTS.md` INT-02/INT-03 và `ARCHITECTURE.md` đang mô tả cụ thể eSMS; cảnh báo Brandname demo trong comment đầu file code sẽ không còn đúng nếu bỏ hẳn eSMS.
+- Ghi rõ luồng này **không** phải trọng tâm tối ưu UID (khác Luồng A/B) — App user gửi OTP lần đầu chưa kịp follow OA, nên phần lớn vẫn đi qua kênh SĐT.
+- Chưa sửa code thật (`send-otp-sms/index.ts` vẫn dùng eSMS) — chỉ tài liệu, đánh dấu rõ các việc cần làm trước khi bật thật ở mục 3.7.
+
+**Chưa quyết, cần Dream/dungtv chốt:** giữ eSMS làm fallback khi Zalo lỗi hay bỏ hẳn.
+
+## 2026-09-15 (Đợt 48) — Sửa `ZALO-MESSAGING.md` theo phản hồi Dream: bỏ so sánh với bản nháp cũ, làm rõ quy tắc OTP đã chốt
+
+Dream phản hồi 2 điểm về `docs/ZALO-MESSAGING.md`: (1) không muốn tài liệu nhắc/so sánh với bản nháp cũ (`zns-hoa-don-template.md`) nữa — chỉ ghi nhận đúng bản template đã được phê duyệt; (2) không thấy tài liệu nêu rõ **quy tắc gửi OTP đã đổi từ eSMS sang ZBS** — mục 3 (Luồng C) viết ở Đợt 47 mô tả kỹ thuật nhưng không có phát biểu dứt khoát "đây là quyết định đã chốt".
+
+**Phát hiện thêm khi rà lại để sửa:** file `docs/ZALO-MESSAGING.md` trên máy Dream lúc kiểm tra lại **đang ở đúng bản Version 1** (2 luồng, chưa có Luồng C) dù Đợt 47 đã ghi log là "đã cập nhật lên Version 2" và lệnh ghi file trả về thành công — tức bản Version 2 (thêm Luồng C) đã KHÔNG được giữ lại trên máy Dream vì lý do nào đó ngoài tầm kiểm soát của phiên làm việc này (khả năng cao: file đang mở sẵn trong 1 trình soạn thảo/IDE nào đó trên máy và bị ghi đè ngược lại bởi buffer cũ — **Dream nên kiểm tra xem `docs/ZALO-MESSAGING.md` có đang mở ở VS Code/editor nào không, đóng lại (không lưu) trước khi mở lại file để tránh bị ghi đè lần nữa**). Đã ghi lại toàn bộ nội dung Version 2 (cả Luồng A/B/C) lại từ đầu, không chỉ vá riêng Luồng C.
+
+**Đã sửa trong `docs/ZALO-MESSAGING.md`:**
+- Bỏ toàn bộ đoạn so sánh/nhắc tới bản nháp cũ `zns-hoa-don-template.md` (khối cảnh báo "Khác với bản nháp cũ" ở mục 1.3, các ghi chú "bản nháp cũ ghi..." trong bảng tham số mục 1.4) — chỉ còn nội dung/tham số của bản đã duyệt, không so sánh lịch sử.
+- Mục 3 (Luồng C) nay mở đầu bằng câu chốt rõ ràng: "✅ QUY TẮC ĐÃ CHỐT: kênh gửi OTP xác thực tài khoản đổi từ eSMS sang Zalo ZBS (template 636478 đã duyệt)" — tách bạch với 1 chi tiết triển khai vẫn còn mở (có giữ eSMS làm fallback hay không), để không đọc nhầm cả luồng là "chưa chốt".
+
+**Đã cập nhật thêm `docs/REQUIREMENTS.md`** — INT-03 (OTP) nay ghi rõ "ĐÃ CHỐT: đổi kênh gửi từ eSMS sang Zalo ZBS", trỏ tới `ZALO-MESSAGING.md` mục 3; tách rõ khỏi INT-02 (SMS Brandname qua eSMS — vẫn dùng cho thông báo/hoá đơn gửi Tenant qua `send-notification`, không liên quan OTP nữa).
+
+## 2026-09-16 (Đợt 49) — Hạ độ ưu tiên "Nhắc thanh toán tự động" từ Must xuống Could cho phase này
+
+Dream xác nhận (qua trao đổi ở Project brainstorm riêng, không phải phiên Claude Code trên repo): nhắc trễ hẹn (nhắc thanh toán trước/đúng/sau hạn) chỉ là **Could**, không phải **Must** trong phase hiện tại — đảo lại quyết định trước đó (BR-PAY-04/BR-NOTI-02/FR-BILL-09 từng ghi Must, kế thừa nguyên vẹn từ Version 2 mà chưa từng được đặt lại câu hỏi ở Version 3).
+
+**Đã sửa:**
+- `docs/BUSINESS-RULES.md` — `BR-PAY-04` (mục 2) và `BR-NOTI-02` (mục 5): cột Trạng thái đổi Must → Could, ghi rõ ngày hạ + tham chiếu Đợt này.
+- `docs/REQUIREMENTS.md` — `FR-BILL-09` (mục 2.6): Priority đổi Must → Could. `FR-NOTI-02` (mục 2.9): tách rõ 2 phần trong cùng 1 dòng — phần "hoá đơn mới" vẫn **Must**, phần "nhắc thanh toán" hạ xuống **Could** (2 phần trước đó gộp chung 1 mức Must, nay không còn đúng nữa vì chỉ 1 trong 2 bị hạ).
+
+**Chưa đổi (ngoài phạm vi yêu cầu lần này):** `BR-NOTI-04`/`FR-CTR-05` (nhắc gia hạn hợp đồng sắp hết hạn) vẫn giữ nguyên `Could` như cũ — không liên quan tới nhắc thanh toán hoá đơn. Chưa động tới code (tính năng nhắc thanh toán tự động hiện **chưa có implementation** nào trong `supabase/functions`/`src/lib` — đây thuần là điều chỉnh tài liệu kế hoạch, không phải rollback code).
+
+**Việc cần làm tiếp:** vì hạ xuống Could, không cần ưu tiên dựng job nhắc hạn tự động (cron/scheduled function) trong phase này; nếu sau này nâng lại lên Must, cần quay lại chốt giá trị X/Y ngày nhắc cụ thể (vẫn đang để trống trong BR-PAY-04).
+
+## 2026-09-16 (Đợt 50) — Đảo lại quyết định "OTP đổi sang Zalo ZBS" (Đợt 47/48): tạm hoãn, quay về eSMS cho tới khi chốt việc dùng OA
+
+Dream yêu cầu (qua Project brainstorm riêng, không phải phiên Claude Code trên repo) đảo lại/ghi đè quyết định "✅ ĐÃ CHỐT: đổi kênh gửi OTP xác thực tài khoản từ eSMS sang Zalo ZBS" đã ghi ở Đợt 47/48 (2026-09-15). Lý do: ZBS xác nhận rẻ hơn eSMS về giá, nhưng Dream đang cân nhắc lại **có nên tiếp tục dùng Zalo OA cho toàn hệ thống hay không** — câu hỏi rộng hơn, chưa chốt. Ràng buộc rõ từ Dream: **không sửa bất kỳ nội dung code nào đã viết**; luồng OTP tạo tài khoản/đổi mật khẩu **tiếp tục ưu tiên gửi qua SMS (eSMS)** cho tới khi có quyết định về việc dùng OA.
+
+**Xác nhận trước khi sửa tài liệu:** rà lại `supabase/functions/send-otp-sms/index.ts` — file này **chưa từng thực sự đổi sang Zalo**, toàn bộ logic vẫn chỉ gọi `sendViaEsms()` (không có nhánh `sendZns()`/import `_shared/zalo.ts` nào). Quyết định Đợt 47/48 chỉ dừng ở mức tài liệu, chưa từng được implement. Vì vậy việc đảo quyết định lần này **không cần và không có sửa code nào** — code hiện tại đã khớp sẵn với quyết định mới (tiếp tục dùng eSMS). Không đổi `supabase/functions/_shared/zalo.ts`, không đổi migration `tb_zalo_token`, không đổi secrets `ZALO_OA_ID`/`ZALO_APP_ID`/`ZALO_APP_SECRET` — các phần này vẫn giữ nguyên để dùng cho Luồng A (Mẫu 1 hoá đơn, đã duyệt) và làm sẵn cho tương lai nếu OA tiếp tục được dùng.
+
+**Đã sửa (chỉ tài liệu):**
+- `docs/ZALO-MESSAGING.md` — mục Trạng thái tài liệu nâng lên Version 3, ngày 2026-09-16; Luồng C (mục 3) đổi câu chốt "✅ QUY TẮC ĐÃ CHỐT (2026-09-15)" thành "⏸️ TẠM HOÃN (16/09/2026, Đợt 50)" kèm giải thích lý do (đang cân nhắc lại câu hỏi OA) và khẳng định rõ: cho tới khi có quyết định về OA, kênh gửi OTP tiếp tục ưu tiên eSMS, không đổi so với hiện tại. Nội dung kỹ thuật chi tiết của Luồng C (tham số template 636478, mapping, checklist code ở mục 3.7...) **được giữ nguyên làm tài liệu tham khảo**, không xoá — để tái sử dụng nếu sau này quyết định tiếp tục dùng OA. Mục 3.6 đổi thành bảng lịch sử trạng thái quyết định (Đợt 47/48 → chốt ZBS; Đợt 50 → tạm hoãn, quay lại eSMS).
+- `docs/REQUIREMENTS.md` — `INT-03` (OTP): đổi từ "ĐÃ CHỐT: đổi kênh gửi từ eSMS sang Zalo ZBS" thành "Tạm hoãn quyết định đổi sang ZBS (Đợt 50) — đang cân nhắc lại việc dùng Zalo OA cho hệ thống; cho tới khi chốt, tiếp tục ưu tiên gửi SMS qua eSMS như hiện tại".
+- `docs/DECISIONS.md` (file này) — thêm entry Đợt 50 này, không sửa/xoá nội dung Đợt 47/48 (giữ nguyên theo đúng tính chất "nhật ký", không ghi đè lịch sử).
+
+**Chưa quyết, cần Dream/dungtv chốt tiếp:** có tiếp tục dùng Zalo OA cho hệ thống (Luồng A hoá đơn, Luồng B tin tư vấn, Luồng C OTP) hay không — quyết định này ảnh hưởng rộng hơn riêng luồng OTP, cần chốt trước khi quay lại bất kỳ luồng Zalo nào. Nếu sau này chốt tiếp tục dùng OA và muốn OTP dùng ZBS: nội dung kỹ thuật Đợt 47/48 (mục 3 `ZALO-MESSAGING.md`) đã có sẵn, chỉ cần đổi lại trạng thái và code `send-otp-sms/index.ts` theo checklist mục 3.7 đã ghi.
+
+## 2026-09-16 (Đợt 51) — Chốt: bỏ hẳn Zalo OA cho Phase 1, chuyển hoá đơn hàng tháng gửi Tenant sang eSMS kèm link ảnh chi tiết + QR
+
+Dream chốt (qua Project brainstorm riêng, không phải phiên Claude Code trên repo), trả lời luôn câu hỏi còn để mở ở Đợt 50: **cơ chế vận hành Zalo OA phức tạp hơn mức cần thiết cho Phase 1** — đăng ký + xác thực doanh nghiệp, tạo và chờ duyệt từng mẫu ZNS/ZBS (2-3 ngày làm việc/mẫu), quản lý cửa sổ tương tác 7 ngày cho tin tư vấn, chính sách cấm QR trong khối hình ảnh của mẫu ZNS/ZBS (đã ghi nhận ở `ZALO-MESSAGING.md` mục 2.1) — while Phase 1 chỉ cần 1 kênh gửi thông tin hoá đơn đơn giản, đáng tin cậy. Quyết định:
+
+1. **Bỏ hẳn Zalo OA cho Phase 1**, không dùng cho bất kỳ luồng nào (Luồng A chào mừng hợp đồng, Luồng B hoá đơn hàng tháng, Luồng C OTP). Luồng C đã tạm hoãn từ Đợt 50 vì lý do khác (đang cân nhắc OA) — nay chính thức khớp với lý do rộng hơn này, không còn là "tạm" nữa.
+2. **Hoá đơn hàng tháng gửi Tenant chuyển hẳn sang kênh SMS qua eSMS** (kênh đã tích hợp sẵn cho `send-notification`, xem `REQUIREMENTS.md` INT-02) — không còn ghi kênh nước đôi "SMS/Zalo" như trước.
+3. **Nội dung SMS gồm 2 phần:** (a) thông tin chính ngắn gọn ngay trong text (tên nhà/phòng, kỳ, tổng tiền, hạn thanh toán); (b) 1 **link ngắn** dẫn tới 1 **ảnh** do hệ thống tự tạo riêng cho từng hoá đơn, ảnh gồm bảng chi phí chi tiết (tiền phòng/điện/nước/phí khác/tổng cộng/hạn) **và mã QR VietQR** để chuyển khoản. Cách này giữ SMS gọn trong 1 đoạn tính phí (viết không dấu, dưới 160 ký tự GSM-7) trong khi vẫn hiển thị đầy đủ chi tiết + QR qua ảnh — không tốn thêm ký tự SMS nào cho phần chi tiết.
+4. **Toàn bộ nội dung liên quan Zalo OA hiện có trong docs tạm ngưng sử dụng cho Phase 1** — không xoá, giữ nguyên làm tài liệu tham khảo để tái sử dụng nếu sau này đổi hướng dùng lại OA (Phase 2 trở đi).
+
+**Đã sửa:**
+- `docs/BUSINESS-RULES.md` — `BR-NOTI-01`/`BR-NOTI-02`/`BR-NOTI-04`: đổi kênh "SMS/Zalo" → "SMS (eSMS)"; `BR-NOTI-01` ghi rõ "kèm link ảnh chi tiết + mã QR" thay vì "kèm mã QR" (câu cũ không còn đúng, hoá đơn Phase 1 không gửi QR trực tiếp trong tin Zalo nữa).
+- `docs/REQUIREMENTS.md` — `FR-NOTI-02`: đổi kênh sang "SMS (eSMS) kèm link ảnh chi tiết"; `INT-01` (Zalo ZNS/OA): đổi trạng thái sang "⏸️ TẠM NGƯNG cho Phase 1 (Đợt 51)", trỏ về entry này; `INT-03` (OTP): bổ sung ghi chú đây nay là quyết định chính thức cho Phase 1 (không chỉ "chờ chốt" như Đợt 50 đã ghi).
+- `docs/ZALO-MESSAGING.md` — thêm banner ngay đầu tài liệu: toàn bộ nội dung (Luồng A/B/C) tạm ngưng sử dụng cho Phase 1 kể từ Đợt 51, giữ nguyên làm tham khảo, không xoá.
+- Thêm `docs/SMS-HOA-DON.md` (**mới**) — mẫu nội dung SMS đã tối ưu chi phí (so sánh có dấu/không dấu, số đoạn tính phí), thiết kế ảnh chi tiết kèm QR (bố cục, dữ liệu ví dụ), và bảng ánh xạ đầy đủ field (`tb_invoice`, `tb_house`, `tb_room`) — nội dung khớp với mockup ảnh đã gửi Dream xem qua Claude/Cowork.
+
+**Chưa làm (ngoài phạm vi đợt này — thuần tài liệu/thiết kế):** code thật cho luồng gửi hoá đơn qua eSMS kèm link ảnh (Edge Function sinh ảnh theo từng hoá đơn, endpoint/route phục vụ link ngắn, sửa `send-notification` bỏ nhánh Zalo `// TODO`, xoá bớt phụ thuộc Zalo nếu quyết định dứt khoát hơn nữa về sau). Hạ tầng Zalo hiện có (`_shared/zalo.ts`, `tb_zalo_token`, 3 secret) **không xoá** — giữ nguyên, không dùng tới trong Phase 1.
+
+## 2026-09-16 (Đợt 52) — Dream tự sửa trực tiếp trong Figma: gộp SMS xác nhận hợp đồng mới + hoá đơn vào cùng 1 luồng hội thoại, đổi caption "QR + CTK:" → "Chi tiet:"
+
+Dream tự sửa trực tiếp trong file Figma thiết kế (`AElzfTBuL8YyA8OJ85f7aX`, page "MVP Wireframes (EN) — Version 3"), sau đợt Claude dựng thêm 2 mockup SMS OTP + xác nhận hợp đồng mới theo yêu cầu trước đó (thêm lên trên mockup hoá đơn). Dream yêu cầu Claude so sánh lại bản Figma mới nhất với bản đã dựng rồi phản ánh đúng thay đổi vào docs — cùng tiền lệ đã áp dụng cho FigJam ở đợt 2026-09-08 (đợt 2): 1 chỉnh sửa trực tiếp trong công cụ thiết kế của Dream được coi là nguồn quyết định chính thức, cần đồng bộ ngược lại vào tài liệu, không chỉ ghi nhận trong hội thoại.
+
+**Thay đổi Dream đã tự làm trong Figma** (xác nhận bằng cách đọc lại toàn bộ node liên quan qua Figma MCP):
+
+1. **Gộp 2 mockup rời (SMS OTP và SMS xác nhận hợp đồng mới, Claude dựng tách biệt ở đợt trước) thành 1 khung hội thoại SMS duy nhất** ("MOCK-SMS — Minh hoạ tin nhắn SMS gửi hoá đơn"), chứa 2 tin nhắn nối tiếp nhau theo thời gian (tin xác nhận hợp đồng lúc 15/9, tin hoá đơn lúc hôm nay) — mô phỏng đúng 1 luồng SMS thật Tenant sẽ nhận được từ cùng 1 đầu số theo thời gian. **Mockup SMS OTP bị bỏ khỏi khung này** — không phải sai sót: OTP gửi cho người dùng App (Landlord/Manager) lúc đăng ký/quên mật khẩu, khác đối tượng nhận với 2 tin còn lại (gửi Tenant, không có tài khoản), không thuộc cùng 1 luồng hội thoại. Quyết định OTP không đổi (vẫn theo Đợt 50: eSMS, không liên quan Zalo OA).
+2. **Việc gộp thành 1 luồng hội thoại xác nhận luôn kênh gửi cho tin xác nhận hợp đồng mới: SMS qua eSMS — cùng kênh, cùng thread với hoá đơn hàng tháng.** Đây là điểm còn để ngỏ ở Đợt 51 (mục 4 entry đó ghi "Tin chào mừng hợp đồng mới (Luồng A): chưa có kênh thay thế nào được chốt — tạm thời không gửi loại tin này") — nay được Dream chốt qua chính bản thiết kế, không cần chờ quyết định riêng nữa.
+3. **Đổi caption link trong SMS hoá đơn: "QR + CTK:" → "Chi tiet:"** — không đổi phần còn lại của nội dung, không đổi độ dài (vẫn 97 ký tự, 1 đoạn GSM-7).
+4. Nội dung SMS xác nhận hợp đồng mới giữ nguyên như Dream đã viết ở đợt Figma trước: `"BizTown: HD thue phong 203 - Minh Tam da tao. Bat dau 15/09/2026, tien thue 2.500.000d/thang, han TT ngay 25 hang thang."` (114 ký tự, 1 đoạn GSM-7, không dấu — cùng nguyên tắc tối ưu chi phí như SMS hoá đơn ở Đợt 51).
+
+**Đã sửa (docs):**
+- `docs/SMS-HOA-DON.md` — mục 2 đổi tên thành "Mẫu nội dung SMS gửi Tenant", tách **2.1** (SMS xác nhận hợp đồng mới — nội dung mới, lần đầu ghi thành mẫu tham số hoá chính thức trong docs) và **2.2** (SMS hoá đơn hàng tháng — đổi caption "QR + CTK:"→"Chi tiet:"); mục 4 bổ sung 3 field mapping mới cho tin xác nhận hợp đồng mới (`tb_contract.startDate`/`tb_contract_version.startDate`, `tb_contract_version.rentFee`, `tb_contract_version.paymentDueDayOfMonth`).
+- `docs/ZALO-MESSAGING.md` — banner đầu tài liệu: bullet "Tin chào mừng hợp đồng mới (Luồng A)" đổi từ "chưa có kênh thay thế nào được chốt — tạm thời không gửi loại tin này" thành đã chốt dùng SMS qua eSMS, cùng thread với hoá đơn — trỏ về `docs/SMS-HOA-DON.md` mục 2.1 và entry này.
+
+**Chưa làm (ngoài phạm vi đợt này):** không sửa thêm gì trong Figma (Dream chỉ yêu cầu đồng bộ docs theo bản Figma hiện có). 1 khối chú thích kỹ thuật cũ (đếm ký tự SMS hoá đơn, dựng ở đợt trước) bị kéo lệch ra ngoài khung auto-layout trong lúc Dream sửa (không còn nằm trong frame "MOCK-SMS", đứng riêng lẻ trên canvas) — chưa động tới, để nguyên đúng như Dream để lại, sẽ hỏi lại nếu cần dọn dẹp. Không thêm rule BR/FR riêng nào cho tin xác nhận hợp đồng mới ở đợt này — rà `docs/BUSINESS-RULES.md`/`docs/REQUIREMENTS.md` xác nhận cả 2 file hiện chưa có rule nào cho tính năng này (có thể bổ sung ở đợt sau nếu cần, chưa bắt buộc vì nội dung/kênh đã đủ rõ trong `SMS-HOA-DON.md`). Không sửa code.
