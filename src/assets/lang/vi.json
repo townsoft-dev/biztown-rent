@@ -343,7 +343,8 @@
     "reqMinLength": "Ít nhất 8 ký tự",
     "reqNumber": "Ít nhất 1 chữ số",
     "reqUppercase": "Ít nhất 1 chữ hoa",
-    "requirementsNotMet": "Mật khẩu chưa đủ các điều kiện ở trên."
+    "requirementsNotMet": "Mật khẩu chưa đủ các điều kiện ở trên.",
+    "requirementsSummary": "Mật khẩu phải có ít nhất 8 ký tự, 1 chữ số và 1 chữ hoa."
   },
   "changePassword": {
     "title": "Đổi mật khẩu",

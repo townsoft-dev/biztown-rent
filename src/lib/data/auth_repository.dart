@@ -13,6 +13,11 @@ class AuthRepository {
 
   Session? get currentSession => _client.auth.currentSession;
 
+  /// ID người đang đăng nhập, `null` khi chưa đăng nhập — nguồn cho
+  /// `currentUserIdProvider`, thứ quyết định khi nào phải bỏ toàn bộ dữ liệu
+  /// đã tải của tài khoản cũ.
+  String? get currentUserId => _client.auth.currentUser?.id;
+
   /// Chuẩn hoá SĐT nhập kiểu VN (`0909 888 777`, có/không dấu cách) về chuẩn
   /// E.164 (`+84909888777`) mà Supabase Auth yêu cầu. Số đã có `+` thì giữ nguyên.
   static String normalizeVnPhone(String raw) {

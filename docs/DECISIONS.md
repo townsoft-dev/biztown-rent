@@ -1001,3 +1001,27 @@ P-04 Đổi mật khẩu bắt ≥8 ký tự + ≥1 số + ≥1 chữ hoa, có c
 **Lấy luật CHẶT hơn (của P-04) làm chuẩn chung**, không hạ P-04 xuống — hạ xuống là làm yếu mật khẩu của toàn bộ tài khoản. Gom vào `core/password_validation.dart` + widget `shared/password_requirements.dart`, cả 3 màn dùng chung. Thêm section i18n `password.*` (3 file en/vi/ko, đã đối chiếu khớp 672 key), xoá 4 key `changePassword.req*`/`requirementsNotMet` và `signup.passwordTooShort` nay không còn ai dùng.
 
 **Lệch so với Figma, cần Dream xác nhận:** frame S-02 Set Password (`347:2941`) **không có** khối checklist — thiết kế chỉ có dòng lỗi đỏ "Passwords do not match". Checklist được thêm vào theo yêu cầu đồng bộ của dungtv, vì nếu chỉ siết luật mà không hiện điều kiện thì người dùng bị chặn mà không biết vì sao. Nếu Dream muốn giữ đúng thiết kế cũ thì gỡ widget đi là xong, luật vẫn giữ nguyên.
+
+## 2026-09-16 (Đợt 55) — Gỡ checklist mật khẩu khỏi S-02/S-04 theo đúng rule bám sát Figma; mọi provider dữ liệu phải phụ thuộc người đang đăng nhập
+
+**1. Checklist mật khẩu chỉ giữ ở P-04 — đúng như Figma.**
+
+Đợt 54 thêm khối checklist 3 điều kiện vào S-02 Đăng ký và S-04 Quên mật khẩu rồi hỏi dungtv có giữ không, vì Figma 2 màn đó không vẽ khối này. dungtv trả lời: *"làm theo đúng rule cái này ko cần dream quyết"* — rule dự án là bám sát Figma, câu hỏi này rule đã trả lời sẵn, không cần hỏi thiết kế. **Đã gỡ checklist khỏi S-02/S-04**, chỉ P-04 giữ (Figma `220:4985` có vẽ). Luật mật khẩu vẫn dùng chung cả 3 màn, không đổi.
+
+Kéo theo một chi tiết bắt buộc: câu lỗi của S-02/S-04 **không được** dùng `password.requirementsNotMet` ("...các điều kiện **ở trên**") như P-04, vì 2 màn này không còn khối nào "ở trên" để người dùng nhìn. Thêm `password.requirementsSummary` — câu tự nêu đủ 3 điều kiện: *"Mật khẩu phải có ít nhất 8 ký tự, 1 chữ số và 1 chữ hoa."*
+
+**Bài học về quy trình:** khi Figma đơn giản là KHÔNG có một thành phần nào đó, đấy không phải mâu thuẫn thiết kế — rule bám sát Figma đã quyết sẵn, cứ áp dụng. Chỉ hỏi khi hai nguồn thiết kế **chọi nhau** (như vụ Stepper ở Đợt 53).
+
+**2. Đăng xuất không dọn dữ liệu đã tải — dữ liệu người trước lọt sang người sau.**
+
+`signOut()` chỉ xoá session, **không** dọn provider nào. Mà `FutureProvider` thường giữ kết quả đã tải suốt vòng đời app (`ProviderScope` gốc tạo 1 lần trong `main.dart`, không bao giờ dựng lại). Hệ quả: người tiếp theo đăng nhập trên cùng máy **nhìn thấy danh sách nhà/người thuê/hợp đồng/hoá đơn của người trước** cho tới khi màn đó tình cờ được làm mới.
+
+**Cách sửa:** thêm `currentUserIdProvider` (`Provider<String?>`), và cho **8 provider gốc** đọc dữ liệu theo tài khoản `ref.watch` nó: `housesProvider`, `roomStatusesByHouseProvider`, `tenantsProvider`, `contractsProvider`, `invoicesProvider`, `managerAccountsProvider`, `activeManagerByHouseProvider`, `notificationsProvider`. Các provider tổng hợp (`tenantListProvider`, `contractListProvider`, `billsHouseGroupsProvider`) tự hưởng vì đều dựng trên nhóm này.
+
+**Vì sao bọc qua `currentUserIdProvider` chứ không watch thẳng `authStateProvider`:** stream đó bắn sự kiện cả khi chỉ **làm mới token** (khoảng 1 tiếng/lần). Watch thẳng thì cứ mỗi lần làm mới token là tải lại toàn bộ danh sách một cách vô ích. `Provider` chỉ báo cho bên phụ thuộc khi **giá trị** đổi, nên bọc qua một `Provider<String?>` thì chỉ **đổi người** mới kích hoạt tải lại. 4 provider trước đây watch thẳng `authStateProvider` (`currentUserNameProvider`, `currentUserProfileProvider`, `isMainManagerProvider`, `ownedHouseIdsProvider`) cũng đã chuyển sang, vừa sửa đúng vấn đề vừa bớt tải thừa.
+
+**Không** chọn phương án dựng lại `ProviderScope` theo user id: gọn hơn thật, nhưng nó xoá sạch cả state không liên quan tài khoản (ngôn ngữ đang chọn) và làm dựng lại toàn bộ cây widget — quá tay so với vấn đề.
+
+**Đã kiểm chứng thật** (`emulator-5554`): đăng xuất rồi đăng nhập lại, chụp liên tục khung hình. Ngay khi Home hiện ra, header đọc **"0 nhà · 0/0 phòng đã thuê"** kèm vòng xoay tải, khung sau mới hiện đủ 6 nhà — tức dữ liệu cũ đã bị bỏ đúng lúc đổi phiên, không bê sang.
+
+**Chưa dựng lại được cảnh lỗi gốc** (người B thấy dữ liệu người A): cần tài khoản thứ hai, mà kho chỉ có 1 tài khoản test. Hai cách rút ngắn đều bị trình phân loại an toàn của Claude Code chặn đúng mực và **không lách**: đọc token OTP trong schema `auth` của production (*Production Reads*), và sửa dữ liệu production để tạo chênh lệch (*Modify Shared Resources*).

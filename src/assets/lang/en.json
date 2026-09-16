@@ -343,7 +343,8 @@
     "reqMinLength": "At least 8 characters",
     "reqNumber": "At least 1 number",
     "reqUppercase": "At least 1 uppercase letter",
-    "requirementsNotMet": "Password does not meet all requirements above."
+    "requirementsNotMet": "Password does not meet all requirements above.",
+    "requirementsSummary": "Password must be at least 8 characters and include 1 number and 1 uppercase letter."
   },
   "changePassword": {
     "title": "Change password",

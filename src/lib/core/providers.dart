@@ -29,20 +29,36 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
   return ref.watch(authRepositoryProvider).authStateChanges;
 });
 
-/// Tên tài khoản đang đăng nhập (Header H-01 "Hello, {tên}") — watch
-/// `authStateProvider` để tự làm mới đúng người khi đổi phiên đăng nhập.
-final currentUserNameProvider = FutureProvider<String?>((ref) {
+/// ID người đang đăng nhập (`null` khi chưa đăng nhập).
+///
+/// **Mọi provider đọc dữ liệu thuộc về một tài khoản PHẢI `ref.watch` cái này.**
+/// Đăng xuất chỉ gọi `authRepository.signOut()`, KHÔNG dọn provider nào; mà
+/// `FutureProvider` thường thì giữ kết quả đã tải suốt vòng đời app. Thiếu dòng
+/// watch này, người tiếp theo đăng nhập trên cùng máy sẽ **nhìn thấy dữ liệu
+/// nhà/người thuê/hoá đơn của người trước** cho tới khi màn đó được làm mới.
+///
+/// Cố tình KHÔNG cho các provider watch thẳng `authStateProvider`: stream đó
+/// bắn sự kiện cả khi chỉ làm mới token (khoảng 1 tiếng/lần), watch thẳng sẽ
+/// tải lại toàn bộ danh sách một cách vô ích. `Provider` chỉ báo cho bên phụ
+/// thuộc khi GIÁ TRỊ đổi, nên bọc qua đây thì chỉ đổi tài khoản mới kích hoạt
+/// tải lại, còn làm mới token thì không.
+final currentUserIdProvider = Provider<String?>((ref) {
   ref.watch(authStateProvider);
+  return ref.watch(authRepositoryProvider).currentUserId;
+});
+
+/// Tên tài khoản đang đăng nhập (Header H-01 "Hello, {tên}").
+final currentUserNameProvider = FutureProvider<String?>((ref) {
+  ref.watch(currentUserIdProvider);
   return ref.watch(authRepositoryProvider).currentFullName();
 });
 
 final userRepositoryProvider =
     Provider<UserRepository>((ref) => userRepository);
 
-/// Hồ sơ đầy đủ tài khoản đang đăng nhập (P-01/P-02) — watch
-/// `authStateProvider` để tự làm mới đúng người khi đổi phiên đăng nhập.
+/// Hồ sơ đầy đủ tài khoản đang đăng nhập (P-01/P-02).
 final currentUserProfileProvider = FutureProvider<UserProfile>((ref) {
-  ref.watch(authStateProvider);
+  ref.watch(currentUserIdProvider);
   return ref.watch(userRepositoryProvider).getCurrentProfile();
 });
 
@@ -55,7 +71,7 @@ final avatarUrlProvider = FutureProvider.family<String, String>((ref, path) {
 
 /// "Main Manager" badge (P-01/P-02) — xem `UserRepository.isMainManager`.
 final isMainManagerProvider = FutureProvider<bool>((ref) {
-  ref.watch(authStateProvider);
+  ref.watch(currentUserIdProvider);
   return ref.watch(userRepositoryProvider).isMainManager();
 });
 
@@ -71,16 +87,15 @@ final isMainManagerProvider = FutureProvider<bool>((ref) {
 /// nên nó giữ nguyên kết quả của lần đọc đầu tiên cho tới khi tắt hẳn app:
 /// tài khoản mới tạo nhà xong, quay lại P-03 "Tài khoản nhận tiền" và P-06
 /// "Tài khoản Quản lý" vẫn báo "Bạn chưa sở hữu nhà nào" (dungtv báo).
-///
-/// `authStateProvider` để đổi tài khoản thì không dùng nhầm quyền người cũ.
 final ownedHouseIdsProvider = FutureProvider<Set<String>>((ref) async {
-  ref.watch(authStateProvider);
+  ref.watch(currentUserIdProvider);
   await ref.watch(housesProvider.future);
   return ref.watch(userRepositoryProvider).listOwnedHouseIds();
 });
 
 /// Danh sách Manager (gộp theo người) của các Nhà tôi sở hữu — P-05.
 final managerAccountsProvider = FutureProvider<List<ManagerAccount>>((ref) {
+  ref.watch(currentUserIdProvider);
   return ref.watch(userRepositoryProvider).listManagerAccounts();
 });
 
@@ -88,6 +103,7 @@ final managerAccountsProvider = FutureProvider<List<ManagerAccount>>((ref) {
 /// có người quản lý khác).
 final activeManagerByHouseProvider =
     FutureProvider<Map<String, ({String phone, String name})>>((ref) {
+  ref.watch(currentUserIdProvider);
   return ref.watch(userRepositoryProvider).currentActiveManagerByHouse();
 });
 
@@ -99,6 +115,7 @@ final roomRepositoryProvider =
 /// Danh sách nhà (H-01) — gọi `ref.invalidate(housesProvider)` sau khi
 /// tạo/sửa/xoá nhà để list tự làm mới, tránh mỗi màn tự quản lý cache riêng.
 final housesProvider = FutureProvider<List<House>>((ref) {
+  ref.watch(currentUserIdProvider);
   return ref.watch(houseRepositoryProvider).listMyHouses();
 });
 
@@ -133,6 +150,7 @@ final roomProvider = FutureProvider.family<Room, String>((ref, roomId) {
 /// `RoomRepository.listStatusesGroupedByHouse`.
 final roomStatusesByHouseProvider =
     FutureProvider<Map<String, List<RoomStatus>>>((ref) {
+  ref.watch(currentUserIdProvider);
   return ref.watch(roomRepositoryProvider).listStatusesGroupedByHouse();
 });
 
@@ -236,6 +254,7 @@ final contractRepositoryProvider =
 
 /// Toàn bộ Tenant Pool thuộc phạm vi các Nhà đang có quyền — T-01.
 final tenantsProvider = FutureProvider<List<Tenant>>((ref) {
+  ref.watch(currentUserIdProvider);
   return ref.watch(tenantRepositoryProvider).listAll();
 });
 
@@ -245,6 +264,7 @@ final tenantProvider = FutureProvider.family<Tenant, String>((ref, tenantId) {
 
 /// Toàn bộ hợp đồng thuộc phạm vi các Nhà đang có quyền — nguồn thô cho T-02.
 final contractsProvider = FutureProvider<List<Contract>>((ref) {
+  ref.watch(currentUserIdProvider);
   return ref.watch(contractRepositoryProvider).listAll();
 });
 
@@ -446,6 +466,7 @@ final notificationRepositoryProvider =
 /// sẵn — không chỉ khi chính người dùng vừa thao tác xong (dungtv yêu cầu
 /// 2026-09-15, xem docs/DECISIONS.md).
 final notificationsProvider = StreamProvider<List<AppNotification>>((ref) {
+  ref.watch(currentUserIdProvider);
   return ref.watch(notificationRepositoryProvider).watch();
 });
 
@@ -470,6 +491,7 @@ final contractInvoicesProvider =
 
 /// Mọi hoá đơn thuộc phạm vi các nhà đang có quyền — B-01.
 final invoicesProvider = FutureProvider<List<Invoice>>((ref) {
+  ref.watch(currentUserIdProvider);
   return ref.watch(invoiceRepositoryProvider).listAll();
 });
 
