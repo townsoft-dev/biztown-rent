@@ -24,7 +24,10 @@
     "allHouses": "Tất cả các nhà",
     "front": "Mặt trước",
     "back": "Mặt sau",
-    "clear": "Bỏ chọn"
+    "clear": "Bỏ chọn",
+    "loadFailed": "Không tải được dữ liệu",
+    "loadFailedHint": "Kiểm tra kết nối mạng rồi kéo xuống hoặc bấm Thử lại.",
+    "retry": "Thử lại"
   },
   "bottomNav": {
     "home": "Trang chủ",

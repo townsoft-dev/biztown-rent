@@ -24,7 +24,10 @@
     "allHouses": "All houses",
     "front": "Front",
     "back": "Back",
-    "clear": "Clear"
+    "clear": "Clear",
+    "loadFailed": "Couldn't load data",
+    "loadFailedHint": "Check your connection, then pull down or tap Retry.",
+    "retry": "Retry"
   },
   "bottomNav": {
     "home": "Home",

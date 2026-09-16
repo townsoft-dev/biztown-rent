@@ -16,6 +16,7 @@ import '../shared/app_fab.dart';
 import '../shared/group_header.dart';
 import '../shared/house_filter_chip.dart';
 import '../shared/invoice_schedule_strip.dart';
+import '../shared/list_error_view.dart';
 import '../shared/stat_card.dart';
 import '../shared/status_pill.dart';
 import '../shared/top_bar.dart';
@@ -126,15 +127,33 @@ class _BillsListScreenState extends ConsumerState<BillsListScreen> {
             ),
           ),
           Expanded(
-            child: groupsAsync.when(
-              data: (groups) => _buildBody(groups),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(child: Text('$e')),
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: groupsAsync.when(
+                data: (groups) => _buildBody(groups),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, st) => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [ListErrorView(error: e, onRetry: _refresh)],
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// Kéo xuống (hoặc bấm "Thử lại" ở màn lỗi) để tải lại danh sách hoá đơn.
+  Future<void> _refresh() async {
+    ref.invalidate(housesProvider);
+    ref.invalidate(invoicesProvider);
+    ref.invalidate(billsHouseGroupsProvider);
+    try {
+      await ref.read(billsHouseGroupsProvider(_period).future);
+    } catch (_) {
+      // Lỗi đã hiển thị qua ListErrorView — nuốt để vòng xoay tắt.
+    }
   }
 
   Widget _buildBody(List<BillsHouseGroup> groups) {
@@ -167,6 +186,7 @@ class _BillsListScreenState extends ConsumerState<BillsListScreen> {
         .toList();
 
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       children: [
         Row(

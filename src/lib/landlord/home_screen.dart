@@ -9,6 +9,7 @@ import '../core/theme.dart';
 import '../data/models/room.dart';
 import '../shared/app_fab.dart';
 import '../shared/list_card.dart';
+import '../shared/list_error_view.dart';
 import '../shared/section_label.dart';
 import '../shared/stat_card.dart';
 import '../shared/status_pill.dart';
@@ -47,82 +48,112 @@ class HomeScreen extends ConsumerWidget {
                 unreadCount: unreadCount),
           ),
           Expanded(
-            child: housesAsync.when(
-              data: (houses) {
-                final statuses = statusesAsync.valueOrNull ?? const {};
-                final allStatuses = statuses.values.expand((e) => e);
-                final total = allStatuses.length;
-                final empty =
-                    allStatuses.where((s) => s == RoomStatus.empty).length;
+            child: RefreshIndicator(
+              onRefresh: () => _refresh(ref),
+              child: housesAsync.when(
+                data: (houses) {
+                  final statuses = statusesAsync.valueOrNull ?? const {};
+                  final allStatuses = statuses.values.expand((e) => e);
+                  final total = allStatuses.length;
+                  final empty =
+                      allStatuses.where((s) => s == RoomStatus.empty).length;
 
-                if (houses.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        AppStrings.t('home.emptyState'),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.textSecondary),
-                      ),
-                    ),
-                  );
-                }
-
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                  children: [
-                    Row(
+                  // Bọc trong ListView cuộn-được kể cả khi rỗng, nếu không thì
+                  // đúng lúc cần kéo xuống làm mới nhất (chưa có nhà nào, hoặc
+                  // tải hụt) lại không kéo được.
+                  if (houses.isEmpty) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       children: [
-                        Expanded(
-                            child: StatCard(
-                                value: '$total',
-                                label: AppStrings.t('home.totalRooms'))),
-                        const SizedBox(width: 8),
-                        Expanded(
-                            child: StatCard(
-                                value: '$empty',
-                                label: AppStrings.t('home.emptyRooms'))),
-                      ],
-                    ),
-                    SectionLabel(AppStrings.t('home.yourHouses')),
-                    for (final house in houses) ...[
-                      Builder(builder: (context) {
-                        final houseStatuses = statuses[house.id] ?? const [];
-                        final occupied = houseStatuses
-                            .where((s) => s == RoomStatus.occupied)
-                            .length;
-                        return ListCard(
-                          thumbColor: AppColors.primary,
-                          icon: Symbols.home_work_rounded,
-                          title: house.name,
-                          trailing: StatusPill(
-                            text: '$occupied/${houseStatuses.length}',
-                            style: occupied == houseStatuses.length &&
-                                    houseStatuses.isNotEmpty
-                                ? StatusBadgeStyle.occupied
-                                : StatusBadgeStyle.empty,
+                        Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            AppStrings.t('home.emptyState'),
+                            textAlign: TextAlign.center,
+                            style:
+                                const TextStyle(color: AppColors.textSecondary),
                           ),
-                          body: house.address,
-                          meta: AppStrings.t('home.houseListMeta', {
-                            'total': '${houseStatuses.length}',
-                            'occupied': '$occupied',
-                          }),
-                          onTap: () => context.push('/home/houses/${house.id}'),
-                        );
-                      }),
-                      const SizedBox(height: 8),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                              child: StatCard(
+                                  value: '$total',
+                                  label: AppStrings.t('home.totalRooms'))),
+                          const SizedBox(width: 8),
+                          Expanded(
+                              child: StatCard(
+                                  value: '$empty',
+                                  label: AppStrings.t('home.emptyRooms'))),
+                        ],
+                      ),
+                      SectionLabel(AppStrings.t('home.yourHouses')),
+                      for (final house in houses) ...[
+                        Builder(builder: (context) {
+                          final houseStatuses = statuses[house.id] ?? const [];
+                          final occupied = houseStatuses
+                              .where((s) => s == RoomStatus.occupied)
+                              .length;
+                          return ListCard(
+                            thumbColor: AppColors.primary,
+                            icon: Symbols.home_work_rounded,
+                            title: house.name,
+                            trailing: StatusPill(
+                              text: '$occupied/${houseStatuses.length}',
+                              style: occupied == houseStatuses.length &&
+                                      houseStatuses.isNotEmpty
+                                  ? StatusBadgeStyle.occupied
+                                  : StatusBadgeStyle.empty,
+                            ),
+                            body: house.address,
+                            meta: AppStrings.t('home.houseListMeta', {
+                              'total': '${houseStatuses.length}',
+                              'occupied': '$occupied',
+                            }),
+                            onTap: () =>
+                                context.push('/home/houses/${house.id}'),
+                          );
+                        }),
+                        const SizedBox(height: 8),
+                      ],
                     ],
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, st) => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    ListErrorView(error: e, onRetry: () => _refresh(ref))
                   ],
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(
-                  child: Text(AppStrings.t('home.loadError', {'error': '$e'}))),
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// Kéo xuống (hoặc bấm "Thử lại" ở màn lỗi) để tải lại toàn bộ dữ liệu H-01.
+  /// Nhận `ref` qua tham số vì đây là `ConsumerWidget` (không giữ state), `ref`
+  /// chỉ tồn tại trong phạm vi `build`.
+  Future<void> _refresh(WidgetRef ref) async {
+    ref.invalidate(housesProvider);
+    ref.invalidate(roomStatusesByHouseProvider);
+    ref.invalidate(currentUserNameProvider);
+    try {
+      await ref.read(housesProvider.future);
+    } catch (_) {
+      // Lỗi đã hiển thị qua ListErrorView — nuốt ở đây để vòng xoay tắt.
+    }
   }
 
   String _overviewLine(int houseCount, Map<String, List<RoomStatus>> statuses) {

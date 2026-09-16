@@ -14,6 +14,7 @@ import '../shared/app_chip.dart';
 import '../shared/app_fab.dart';
 import '../shared/house_filter_chip.dart';
 import '../shared/list_card.dart';
+import '../shared/list_error_view.dart';
 import '../shared/search_field.dart';
 import '../shared/segmented_control.dart';
 import '../shared/status_pill.dart';
@@ -92,28 +93,53 @@ class _TenantContractScreenState extends ConsumerState<TenantContractScreen> {
                     ),
           ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-              children: [
-                AppSegmentedControl(
-                  labels: [
-                    AppStrings.t('tenantList.tabTenants'),
-                    AppStrings.t('tenantList.tabContracts'),
-                  ],
-                  selectedIndex: _tab,
-                  onChanged: (i) => setState(() => _tab = i),
-                ),
-                const SizedBox(height: 8),
-                if (_tab == 0)
-                  ..._buildTenantsTab()
-                else
-                  ..._buildContractsTab(),
-              ],
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView(
+                // Luôn cuộn được kể cả khi danh sách ngắn/rỗng, nếu không thì
+                // không kéo xuống để làm mới được ở đúng lúc cần nhất (danh sách
+                // trống vì lỗi tải).
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                children: [
+                  AppSegmentedControl(
+                    labels: [
+                      AppStrings.t('tenantList.tabTenants'),
+                      AppStrings.t('tenantList.tabContracts'),
+                    ],
+                    selectedIndex: _tab,
+                    onChanged: (i) => setState(() => _tab = i),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_tab == 0)
+                    ..._buildTenantsTab()
+                  else
+                    ..._buildContractsTab(),
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// Kéo xuống để tải lại. Chỉ chờ danh sách của tab ĐANG MỞ để vòng xoay tắt
+  /// đúng lúc dữ liệu người dùng đang nhìn đã sẵn sàng, không chờ cả tab kia.
+  Future<void> _refresh() async {
+    ref.invalidate(housesProvider);
+    ref.invalidate(tenantsProvider);
+    ref.invalidate(contractsProvider);
+    ref.invalidate(tenantListProvider);
+    ref.invalidate(contractListProvider);
+    try {
+      await (_tab == 0
+          ? ref.read(tenantListProvider.future)
+          : ref.read(contractListProvider.future));
+    } catch (_) {
+      // Lỗi đã được chính danh sách hiển thị qua AsyncValue.error — ở đây chỉ
+      // cần nuốt để vòng xoay tắt, không để văng lỗi chưa bắt.
+    }
   }
 
   List<Widget> _buildTenantsTab() {
@@ -214,8 +240,7 @@ class _TenantContractScreenState extends ConsumerState<TenantContractScreen> {
                 child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: CircularProgressIndicator())),
-            error: (e, st) => Text(
-                AppStrings.t('tenantList.tenantsLoadError', {'error': '$e'})),
+            error: (e, st) => ListErrorView(error: e, onRetry: _refresh),
           ),
     ];
   }
@@ -341,8 +366,7 @@ class _TenantContractScreenState extends ConsumerState<TenantContractScreen> {
                 child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: CircularProgressIndicator())),
-            error: (e, st) => Text(
-                AppStrings.t('tenantList.contractsLoadError', {'error': '$e'})),
+            error: (e, st) => ListErrorView(error: e, onRetry: _refresh),
           ),
     ];
   }

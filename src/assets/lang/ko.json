@@ -24,7 +24,10 @@
     "allHouses": "전체 주택",
     "front": "앞면",
     "back": "뒷면",
-    "clear": "선택 해제"
+    "clear": "선택 해제",
+    "loadFailed": "데이터를 불러오지 못했습니다",
+    "loadFailedHint": "네트워크 연결을 확인한 뒤 아래로 당기거나 다시 시도를 누르세요.",
+    "retry": "다시 시도"
   },
   "bottomNav": {
     "home": "홈",

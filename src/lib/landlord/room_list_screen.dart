@@ -18,6 +18,7 @@ import '../shared/app_fab.dart';
 import '../shared/confirm_dialog.dart';
 import '../shared/detail_row.dart';
 import '../shared/list_card.dart';
+import '../shared/list_error_view.dart';
 import '../shared/section_label.dart';
 import '../shared/segmented_control.dart';
 import '../shared/status_pill.dart';
@@ -84,34 +85,52 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
                 onBack: () => context.pop()),
           ),
           Expanded(
-            child: houseAsync.when(
-              data: (house) => ListView(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                children: [
-                  AppSegmentedControl(
-                      labels: [
-                        AppStrings.t('roomList.tabHouseDetail'),
-                        AppStrings.t('roomList.tabRooms'),
-                      ],
-                      selectedIndex: _tab,
-                      onChanged: (i) => setState(() => _tab = i)),
-                  const SizedBox(height: 8),
-                  if (_tab == 0)
-                    ..._buildHouseDetail(
-                        house, roomsAsync.valueOrNull ?? const [])
-                  else
-                    ..._buildRooms(roomsAsync),
-                ],
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: houseAsync.when(
+                data: (house) => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                  children: [
+                    AppSegmentedControl(
+                        labels: [
+                          AppStrings.t('roomList.tabHouseDetail'),
+                          AppStrings.t('roomList.tabRooms'),
+                        ],
+                        selectedIndex: _tab,
+                        onChanged: (i) => setState(() => _tab = i)),
+                    const SizedBox(height: 8),
+                    if (_tab == 0)
+                      ..._buildHouseDetail(
+                          house, roomsAsync.valueOrNull ?? const [])
+                    else
+                      ..._buildRooms(roomsAsync),
+                  ],
+                ),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, st) => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [ListErrorView(error: e, onRetry: _refresh)],
+                ),
               ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(
-                  child: Text(
-                      AppStrings.t('roomList.loadError', {'error': '$e'}))),
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// Kéo xuống (hoặc bấm "Thử lại" ở màn lỗi) để tải lại H-03.
+  Future<void> _refresh() async {
+    ref.invalidate(houseProvider(widget.houseId));
+    ref.invalidate(roomsProvider(widget.houseId));
+    ref.invalidate(houseManagersProvider(widget.houseId));
+    ref.invalidate(houseOwnerNameProvider(widget.houseId));
+    try {
+      await ref.read(houseProvider(widget.houseId).future);
+    } catch (_) {
+      // Lỗi đã hiển thị qua ListErrorView — nuốt để vòng xoay tắt.
+    }
   }
 
   Future<void> _confirmDeleteHouse(BuildContext context) async {
