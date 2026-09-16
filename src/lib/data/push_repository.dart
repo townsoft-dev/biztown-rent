@@ -20,6 +20,24 @@ class PushRepository {
     try {
       final messaging = FirebaseMessaging.instance;
       await messaging.requestPermission().timeout(const Duration(seconds: 15));
+
+      // iOS: PHẢI có APNs token của Apple trước, rồi FCM mới đổi được sang
+      // device token. Gọi `getToken()` sớm hơn thì nó ném
+      // `apns-token-not-set` và (do cả hàm này bọc try/catch) hỏng im lặng —
+      // người dùng cho phép thông báo xong mà `tb_device_token` vẫn trống.
+      // Apple cấp token này bất đồng bộ sau khi đăng ký, thường dưới 1 giây
+      // nhưng mạng chậm thì lâu hơn, nên chờ có giới hạn thay vì gọi ngay.
+      // Android không có khái niệm này nên bỏ qua.
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final apnsToken = await _waitForApnsToken(messaging);
+        if (apnsToken == null) {
+          debugPrint('Chưa lấy được APNs token sau 20s — bỏ qua đăng ký push. '
+              'Thường do sai `aps-environment` trong entitlements (bản Release '
+              'phải là "production") hoặc máy chưa vào được mạng Apple.');
+          return;
+        }
+      }
+
       // getToken() gọi tới backend FCM của Google — có thể treo vô thời hạn nếu
       // máy/mạng không tới được (VD: máy ảo test không có Google Play Services
       // hoạt động đầy đủ) — timeout để không giữ mãi 1 Future không bao giờ xong.
@@ -30,6 +48,16 @@ class PushRepository {
     } catch (e) {
       debugPrint('registerDeviceToken() lỗi, bỏ qua: $e');
     }
+  }
+
+  /// Chờ Apple cấp APNs token, tối đa 20 giây. Trả `null` nếu hết giờ.
+  Future<String?> _waitForApnsToken(FirebaseMessaging messaging) async {
+    for (var attempt = 0; attempt < 20; attempt++) {
+      final apnsToken = await messaging.getAPNSToken();
+      if (apnsToken != null) return apnsToken;
+      await Future<void>.delayed(const Duration(seconds: 1));
+    }
+    return null;
   }
 
   /// FCM tự đổi token định kỳ — nghe để cập nhật lại DB, tránh push vào token cũ.

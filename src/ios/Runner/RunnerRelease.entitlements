@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Bản Release (TestFlight/App Store) PHẢI dùng "production". Trước
+	     16/09/2026 cả 3 cấu hình Debug/Profile/Release đều trỏ chung vào
+	     Runner.entitlements ghi "development", nên bản TestFlight đăng ký với
+	     APNs sandbox trong khi Apple phát bản đó qua APNs production — máy
+	     không lấy được APNs token, kéo theo FCM không cấp nổi device token,
+	     nên tb_device_token không có dòng iOS nào dù người dùng đã cho phép
+	     thông báo. -->
+	<key>aps-environment</key>
+	<string>production</string>
+</dict>
+</plist>
