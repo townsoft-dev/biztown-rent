@@ -227,16 +227,6 @@ class InvoiceRepository {
     await updateStatus(invoiceId, InvoiceStatus.sent);
   }
 
-  /// Sinh lại mã QR cho 1 hoá đơn đã có — dùng khi "Gửi lại" (B-04) mà không
-  /// cần tính lại toàn bộ hoá đơn.
-  Future<String> regeneratePaymentQr(String invoiceId) async {
-    final res = await _client.functions
-        .invoke('generate-payment-qr', body: {'invoiceId': invoiceId});
-    final data = res.data as Map<String, dynamic>;
-    if (data['error'] != null) throw Exception(data['error'] as String);
-    return data['paymentQrPayload'] as String;
-  }
-
   /// Thêm 1 dòng phí phát sinh vào hoá đơn đang Draft (B-02 "+ Add other
   /// fee") — cộng dồn vào `otherFees` + `totalAmount`. Chỉ hợp lý khi hoá
   /// đơn còn Draft (chưa gửi); không tự kiểm tra ở đây, màn gọi tự đảm bảo.

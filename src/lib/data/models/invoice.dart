@@ -92,7 +92,6 @@ class Invoice {
   final List<RecurringFee> recurringFees;
   final List<RecurringFee> otherFees;
   final num totalAmount;
-  final String? paymentQrPayload;
   final InvoiceStatus status;
   final DateTime createdAt;
   final DateTime? sentAt;
@@ -115,7 +114,6 @@ class Invoice {
     required this.recurringFees,
     required this.otherFees,
     required this.totalAmount,
-    this.paymentQrPayload,
     required this.status,
     required this.createdAt,
     this.sentAt,
@@ -151,7 +149,6 @@ class Invoice {
           .map((e) => RecurringFee.fromMap(e as Map<String, dynamic>))
           .toList(),
       totalAmount: map['total_amount'] as num,
-      paymentQrPayload: map['payment_qr_payload'] as String?,
       status: InvoiceStatusX.fromDb(map['status'] as String),
       createdAt: DateTime.parse(map['created_at'] as String),
       sentAt: map['sent_at'] == null

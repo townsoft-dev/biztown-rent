@@ -20,7 +20,6 @@
 
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
-import { buildVietQrPayload } from "../_shared/vietqr.ts";
 import { sendSmsViaEsms } from "../_shared/esms.ts";
 import { buildInvoiceSmsMessage } from "../_shared/invoice_message.ts";
 import { fanOutNotification } from "../_shared/notifications.ts";
@@ -310,15 +309,16 @@ async function generateSingleInvoice(
     .eq("id", contractRooms[0].tb_room.house_id)
     .single();
 
-  const paymentQrPayload = house?.bank_bin && house?.bank_account_number
-    ? buildVietQrPayload({
-        bankBin: house.bank_bin,
-        accountNumber: house.bank_account_number,
-        amount: totalAmount,
-        merchantName: house.bank_account_name ?? undefined,
-        message: `${house.name ?? ""} ${periodYm}`.trim(),
-      })
-    : null;
+  // KHÔNG lưu sẵn chuỗi QR vào hoá đơn nữa (bỏ từ 16/09/2026).
+  //
+  // Chuỗi QR chứa số tài khoản chủ nhà. Lưu sẵn tức là chụp lại tài khoản tại
+  // thời điểm tạo hoá đơn — chủ trọ đổi số tài khoản sau đó thì chuỗi cũ KHÔNG
+  // được cập nhật, người thuê quét vào là chuyển tiền sang tài khoản đã bỏ.
+  // Dữ liệu thật đã dính đúng lỗi này (xem changelog/2026-09-16.md).
+  //
+  // Thay vào đó, QR được sinh TẠI THỜI ĐIỂM NGƯỜI THUÊ XEM, trong Edge Function
+  // `invoice-public` — luôn lấy tài khoản hiện hành. Sinh chuỗi QR chỉ là phép
+  // ghép chuỗi, gần như không tốn gì, nên không có lý do phải lưu sẵn.
 
   const { data: invoice, error: insertError } = await supabaseAdmin
     .from("tb_invoice")
@@ -338,7 +338,6 @@ async function generateSingleInvoice(
       recurring_fees: version.recurring_fees ?? [],
       other_fees: [],
       total_amount: totalAmount,
-      payment_qr_payload: paymentQrPayload,
       status: "Draft",
     })
     .select()
