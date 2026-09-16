@@ -50,6 +50,10 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
   final _areaController = TextEditingController();
   final _referenceRentController = TextEditingController();
   final _noteController = TextEditingController();
+  // Đơn giá riêng của phòng — điền sẵn từ Nhà nhưng cho sửa, vì chủ trọ có thể
+  // ưu tiên giá điện/nước khác cho một phòng cụ thể (dungtv, 16/09/2026).
+  final _electricityPriceController = TextEditingController();
+  final _waterPriceController = TextEditingController();
   late final PhotoPickerController _photos;
   late final RecurringFeesController _fees;
   final Set<String> _selectedAmenities = {};
@@ -92,6 +96,12 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
         _selectedAmenities.add(amenity);
       }
     }
+    _electricityPriceController.text = room.defaultElectricityPrice == null
+        ? ''
+        : formatNumber(room.defaultElectricityPrice!);
+    _waterPriceController.text = room.defaultWaterPrice == null
+        ? ''
+        : formatNumber(room.defaultWaterPrice!);
     if (room.recurringFees.isNotEmpty) {
       _fees.rows
         ..clear()
@@ -114,6 +124,13 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
         ..addAll(house.recurringFees.map((f) =>
             RecurringFeeRow(name: f.name, amount: formatNumber(f.amount))));
     }
+    if (house.defaultElectricityPrice != null) {
+      _electricityPriceController.text =
+          formatNumber(house.defaultElectricityPrice!);
+    }
+    if (house.defaultWaterPrice != null) {
+      _waterPriceController.text = formatNumber(house.defaultWaterPrice!);
+    }
   }
 
   @override
@@ -122,6 +139,8 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
     _areaController.dispose();
     _referenceRentController.dispose();
     _noteController.dispose();
+    _electricityPriceController.dispose();
+    _waterPriceController.dispose();
     _photos.dispose();
     _fees.dispose();
     super.dispose();
@@ -167,6 +186,9 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
         roomNo: _roomNoController.text.trim(),
         areaSqm: parseFormattedNumber(_areaController.text) ?? 0,
         baseRent: parseFormattedNumber(_referenceRentController.text),
+        defaultElectricityPrice:
+            parseFormattedNumber(_electricityPriceController.text),
+        defaultWaterPrice: parseFormattedNumber(_waterPriceController.text),
         recurringFees: _fees.fees,
         amenities: _selectedAmenities.toList(),
         photos: _photos.keptExistingPaths,
@@ -335,6 +357,36 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                       AppChip(
                           label: AppStrings.t('roomForm.addAmenity'),
                           onTap: _addCustomAmenity),
+                    ],
+                  ),
+                  SectionLabel(AppStrings.t('roomForm.sectionUnitPrices')),
+                  Text(
+                    AppStrings.t('roomForm.unitPricesHint'),
+                    style: GoogleFonts.inter(
+                        fontSize: 12,
+                        height: 17 / 12,
+                        color: AppColors.textTertiary),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          label: AppStrings.t('houseForm.electricityPrice'),
+                          controller: _electricityPriceController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: const [ThousandsInputFormatter()],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: AppTextField(
+                          label: AppStrings.t('houseForm.waterPrice'),
+                          controller: _waterPriceController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: const [ThousandsInputFormatter()],
+                        ),
+                      ),
                     ],
                   ),
                   SectionLabel(AppStrings.t('roomForm.sectionRecurringFees')),

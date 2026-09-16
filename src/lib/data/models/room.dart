@@ -30,6 +30,13 @@ class Room {
   final String roomNo;
   final num areaSqm;
   final num? baseRent;
+
+  /// Đơn giá điện/nước riêng của phòng — ghi đè giá mặc định của Nhà khi điền
+  /// sẵn form Hợp đồng (chủ trọ có thể ưu tiên giá khác cho một phòng cụ thể).
+  /// `null` = dùng giá của Nhà. KHÔNG phải nguồn tính tiền hoá đơn: nguồn tính
+  /// tiền luôn là snapshot trên `tb_contract_version`.
+  final num? defaultElectricityPrice;
+  final num? defaultWaterPrice;
   final List<RecurringFee> recurringFees;
   final List<String> amenities;
   final List<String> photos;
@@ -43,6 +50,8 @@ class Room {
     required this.roomNo,
     required this.areaSqm,
     this.baseRent,
+    this.defaultElectricityPrice,
+    this.defaultWaterPrice,
     required this.recurringFees,
     required this.amenities,
     required this.photos,
@@ -58,6 +67,8 @@ class Room {
       roomNo: map['room_no'] as String,
       areaSqm: map['area_sqm'] as num,
       baseRent: map['base_rent'] as num?,
+      defaultElectricityPrice: map['default_electricity_price'] as num?,
+      defaultWaterPrice: map['default_water_price'] as num?,
       recurringFees: (map['recurring_fees'] as List? ?? const [])
           .map((e) => RecurringFee.fromMap(e as Map<String, dynamic>))
           .toList(),
@@ -78,6 +89,8 @@ class Room {
         'room_no': roomNo,
         'area_sqm': areaSqm,
         'base_rent': baseRent,
+        'default_electricity_price': defaultElectricityPrice,
+        'default_water_price': defaultWaterPrice,
         'recurring_fees': recurringFees.map((e) => e.toMap()).toList(),
         'amenities': amenities,
         'photos': photos,

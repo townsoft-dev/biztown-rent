@@ -243,7 +243,9 @@
     "cancel": "취소",
     "save": "저장",
     "saveError": "이 객실을 저장하지 못했습니다. 다시 시도해 주세요.\n{error}",
-    "loadError": "이 객실 정보를 불러오지 못했습니다.\n{error}"
+    "loadError": "이 객실 정보를 불러오지 못했습니다.\n{error}",
+    "sectionUnitPrices": "전기·수도 단가",
+    "unitPricesHint": "건물 기본 단가에서 자동 입력됩니다 — 이 방에 다른 단가를 적용하려면 여기서 수정하세요."
   },
   "readingEntry": {
     "title": "월간 검침 기록",

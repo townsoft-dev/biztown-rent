@@ -243,7 +243,9 @@
     "cancel": "Cancel",
     "save": "Save",
     "saveError": "Could not save this room. Please try again.\n{error}",
-    "loadError": "Could not load this room.\n{error}"
+    "loadError": "Could not load this room.\n{error}",
+    "sectionUnitPrices": "UTILITY UNIT PRICES",
+    "unitPricesHint": "Pre-filled from the house's default prices — edit here if this room uses a different rate."
   },
   "readingEntry": {
     "title": "Record monthly readings",

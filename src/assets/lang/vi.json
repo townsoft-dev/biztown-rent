@@ -243,7 +243,9 @@
     "cancel": "Huỷ",
     "save": "Lưu",
     "saveError": "Không lưu được phòng này. Vui lòng thử lại.\n{error}",
-    "loadError": "Không tải được thông tin phòng này.\n{error}"
+    "loadError": "Không tải được thông tin phòng này.\n{error}",
+    "sectionUnitPrices": "ĐƠN GIÁ ĐIỆN NƯỚC",
+    "unitPricesHint": "Tự điền từ đơn giá mặc định của Nhà — sửa tại đây nếu phòng này áp dụng giá riêng."
   },
   "readingEntry": {
     "title": "Ghi chỉ số hàng tháng",

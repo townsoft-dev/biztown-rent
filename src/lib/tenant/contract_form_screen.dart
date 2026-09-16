@@ -136,16 +136,34 @@ class _ContractFormScreenState extends ConsumerState<ContractFormScreen> {
       _monthlyRentController.text = formatNumber(totalRent);
       _depositController.text = formatNumber(totalRent);
     }
+    // Đơn giá ưu tiên lấy của PHÒNG, không có mới lấy của NHÀ — chủ trọ có thể
+    // đặt giá điện/nước riêng cho từng phòng (xem migration
+    // `20260916150000_room_default_unit_prices.sql`).
+    //
+    // Hợp đồng nhiều phòng chỉ có MỘT đơn giá cho cả hợp đồng, nên chỉ dùng
+    // giá riêng khi TẤT CẢ phòng được chọn cùng một mức; các phòng lệch giá
+    // nhau thì quay về giá của Nhà để chủ trọ tự quyết, không tự ý chọn hộ
+    // một phòng rồi tính sai cho phòng còn lại.
+    num? sharedRoomPrice(num? Function(Room room) pick) {
+      final values = selectedRooms.map(pick).toList();
+      if (values.any((v) => v == null)) return null;
+      return values.toSet().length == 1 ? values.first : null;
+    }
+
+    final roomElectricityPrice =
+        sharedRoomPrice((room) => room.defaultElectricityPrice);
+    final roomWaterPrice = sharedRoomPrice((room) => room.defaultWaterPrice);
+
+    if (_electricityPriceController.text.isEmpty) {
+      final price = roomElectricityPrice ?? house?.defaultElectricityPrice;
+      if (price != null) _electricityPriceController.text = formatNumber(price);
+    }
+    if (_waterPriceController.text.isEmpty) {
+      final price = roomWaterPrice ?? house?.defaultWaterPrice;
+      if (price != null) _waterPriceController.text = formatNumber(price);
+    }
+
     if (house != null) {
-      if (_electricityPriceController.text.isEmpty &&
-          house.defaultElectricityPrice != null) {
-        _electricityPriceController.text =
-            formatNumber(house.defaultElectricityPrice!);
-      }
-      if (_waterPriceController.text.isEmpty &&
-          house.defaultWaterPrice != null) {
-        _waterPriceController.text = formatNumber(house.defaultWaterPrice!);
-      }
       if (_servicePriceController.text.isEmpty &&
           house.serviceFeeRatePerSqm != null) {
         _servicePriceController.text =
