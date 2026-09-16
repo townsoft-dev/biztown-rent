@@ -32,10 +32,6 @@
 	<string>Cần quyền camera để chụp ảnh Nhà/Phòng.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Cần quyền thư viện ảnh để chọn ảnh Nhà/Phòng.</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -59,6 +55,10 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
