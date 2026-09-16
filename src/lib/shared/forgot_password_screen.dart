@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/app_strings.dart';
 import '../core/theme.dart';
+import '../core/phone_validation.dart';
 import '../data/auth_repository.dart';
 import 'field_label.dart';
 import 'send_otp_chip.dart';
@@ -78,6 +79,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _sendOtp() async {
     if (_phoneController.text.trim().isEmpty) {
       setState(() => _errorText = AppStrings.t('signup.phoneRequired'));
+      return;
+    }
+    // Chặn số sai định dạng trước khi gọi Supabase: gửi OTP tới số rác vẫn
+    // tốn tiền SMS mà người dùng chỉ nhận lại thông báo lỗi chung chung.
+    if (!isValidVnPhone(_phoneController.text)) {
+      setState(() => _errorText = AppStrings.t('common.phoneInvalid'));
       return;
     }
     setState(() {
@@ -253,6 +260,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   controller: _phoneController,
                   enabled: !_otpSent,
                   keyboardType: TextInputType.phone,
+                  inputFormatters: const [VnPhoneInputFormatter()],
                   style: GoogleFonts.inter(
                       fontSize: 14, color: AppColors.textPrimary),
                   decoration: const InputDecoration.collapsed(hintText: ''),

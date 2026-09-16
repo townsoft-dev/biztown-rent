@@ -41,9 +41,18 @@ class PhotoPickerRow extends StatelessWidget {
       ),
     );
     if (source == null) return;
-    final file = await ImagePicker()
-        .pickImage(source: source, maxWidth: 1600, imageQuality: 85);
-    if (file != null) controller.addFile(file);
+    final picker = ImagePicker();
+    // Chụp bằng camera thì bản chất chỉ ra 1 ảnh; còn chọn từ thư viện thì cho
+    // tick nhiều ảnh một lượt (dungtv báo 16/09/2026: mỗi lần mở thư viện chỉ
+    // chọn được 1 ảnh, nhà có chục ảnh phải mở đi mở lại rất mất công).
+    if (source == ImageSource.camera) {
+      final file = await picker.pickImage(
+          source: ImageSource.camera, maxWidth: 1600, imageQuality: 85);
+      if (file != null) controller.addFile(file);
+      return;
+    }
+    final files = await picker.pickMultiImage(maxWidth: 1600, imageQuality: 85);
+    controller.addFiles(files);
   }
 
   @override

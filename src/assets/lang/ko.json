@@ -27,7 +27,10 @@
     "clear": "선택 해제",
     "loadFailed": "데이터를 불러오지 못했습니다",
     "loadFailedHint": "네트워크 연결을 확인한 뒤 아래로 당기거나 다시 시도를 누르세요.",
-    "retry": "다시 시도"
+    "retry": "다시 시도",
+    "phoneRequired": "전화번호를 입력하세요",
+    "phoneInvalid": "유효하지 않은 전화번호입니다 (예: 0912345678)",
+    "fieldRequired": "필수 입력 항목입니다"
   },
   "bottomNav": {
     "home": "홈",
@@ -142,8 +145,8 @@
     "addressHint": "도로명, 동/읍/면, 구/군, 시/도",
     "description": "설명",
     "sectionOwnerInfo": "소유주 정보 · 총괄 관리자 전용",
-    "ownerFullName": "소유주 이름",
-    "ownerPhone": "소유주 전화번호",
+    "ownerFullName": "집주인 성명 *",
+    "ownerPhone": "집주인 전화번호 *",
     "ownerIdNumber": "소유주 신분증 번호",
     "ownerTaxCode": "소유주 사업자(세금) 번호",
     "ownerBankAccount": "입금 받을 계좌 *",

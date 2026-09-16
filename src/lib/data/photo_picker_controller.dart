@@ -28,6 +28,14 @@ class PhotoPickerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Thêm nhiều ảnh trong 1 lần chọn từ thư viện — chỉ báo thay đổi MỘT lần
+  /// cho cả lô, tránh widget vẽ lại nhiều lần liên tiếp khi chọn chục ảnh.
+  void addFiles(List<XFile> files) {
+    if (files.isEmpty) return;
+    _newFiles.addAll(files);
+    notifyListeners();
+  }
+
   void removeExisting(String path) {
     _removedExisting.add(path);
     notifyListeners();

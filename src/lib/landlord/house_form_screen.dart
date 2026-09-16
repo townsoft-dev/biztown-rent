@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,7 +11,9 @@ import '../core/locale_provider.dart';
 import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
+import '../core/phone_validation.dart';
 import '../data/models/house.dart';
+import '../data/models/vn_bank.dart';
 import '../data/photo_picker_controller.dart';
 import '../data/recurring_fees_controller.dart';
 import '../shared/app_banner.dart';
@@ -43,7 +46,16 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
   final _ownerPhoneController = TextEditingController();
   final _ownerIdNumberController = TextEditingController();
   final _ownerTaxCodeController = TextEditingController();
-  final _bankAccountController = TextEditingController();
+  // Tách riêng 3 phần thay vì gộp "Tên · Số TK" vào 1 ô (đổi 16/09/2026).
+  //
+  // Ô gộp cũ yêu cầu người dùng tự gõ dấu "·" ngăn cách — không ai đoán được,
+  // và quan trọng hơn là KHÔNG hề có chỗ chọn ngân hàng nên `bankBin` luôn
+  // rỗng với nhà tạo mới. Thiếu `bankBin` là không sinh được mã QR VietQR.
+  // Dữ liệu thật đã dính: 2 nhà dungtv tạo trên máy thật đều trống cả mã ngân
+  // hàng lẫn số tài khoản. Dùng lại đúng cách làm của màn P-03.
+  VnBank? _selectedBank;
+  final _bankAccountNumberController = TextEditingController();
+  final _bankAccountNameController = TextEditingController();
   final _ownerEmailController = TextEditingController();
   final _electricityPriceController = TextEditingController();
   final _waterPriceController = TextEditingController();
@@ -74,10 +86,9 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
     _ownerIdNumberController.text = house.ownerIdNumber ?? '';
     _ownerTaxCodeController.text = house.ownerTaxCode ?? '';
     _ownerEmailController.text = house.ownerEmail ?? '';
-    _bankAccountController.text = [
-      house.bankAccountName,
-      house.bankAccountNumber
-    ].where((e) => e != null && e.isNotEmpty).join(' · ');
+    _selectedBank = VnBank.byBin(house.bankBin);
+    _bankAccountNumberController.text = house.bankAccountNumber ?? '';
+    _bankAccountNameController.text = house.bankAccountName ?? '';
     _electricityPriceController.text = house.defaultElectricityPrice == null
         ? ''
         : formatNumber(house.defaultElectricityPrice!);
@@ -88,9 +99,28 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
     if (house.recurringFees.isNotEmpty) {
       _fees.rows
         ..clear()
-        ..addAll(house.recurringFees.map(
-            (f) => RecurringFeeRow(name: f.name, amount: f.amount.toString())));
+        ..addAll(house.recurringFees.map((f) =>
+            RecurringFeeRow(name: f.name, amount: formatNumber(f.amount))));
     }
+  }
+
+  Future<void> _pickBank() async {
+    final picked = await showModalBottomSheet<VnBank>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final bank in VnBank.all)
+              ListTile(
+                title: Text(bank.name),
+                onTap: () => Navigator.of(context).pop(bank),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null) setState(() => _selectedBank = picked);
   }
 
   @override
@@ -102,7 +132,8 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
     _ownerPhoneController.dispose();
     _ownerIdNumberController.dispose();
     _ownerTaxCodeController.dispose();
-    _bankAccountController.dispose();
+    _bankAccountNumberController.dispose();
+    _bankAccountNameController.dispose();
     _ownerEmailController.dispose();
     _electricityPriceController.dispose();
     _waterPriceController.dispose();
@@ -119,8 +150,6 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
     });
     try {
       final repo = ref.read(houseRepositoryProvider);
-      final bankParts =
-          _bankAccountController.text.split('·').map((e) => e.trim()).toList();
       final house = House(
         id: '',
         name: _nameController.text.trim(),
@@ -143,12 +172,13 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
         ownerEmail: _ownerEmailController.text.trim().isEmpty
             ? null
             : _ownerEmailController.text.trim(),
-        bankAccountName: bankParts.isNotEmpty && bankParts.first.isNotEmpty
-            ? bankParts.first
-            : null,
-        bankAccountNumber: bankParts.length > 1 && bankParts[1].isNotEmpty
-            ? bankParts[1]
-            : null,
+        bankBin: _selectedBank?.bin,
+        bankAccountName: _bankAccountNameController.text.trim().isEmpty
+            ? null
+            : _bankAccountNameController.text.trim(),
+        bankAccountNumber: _bankAccountNumberController.text.trim().isEmpty
+            ? null
+            : _bankAccountNumberController.text.trim(),
         defaultElectricityPrice:
             parseFormattedNumber(_electricityPriceController.text),
         defaultWaterPrice: parseFormattedNumber(_waterPriceController.text),
@@ -279,14 +309,20 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
                     children: [
                       Expanded(
                           child: AppTextField(
-                              label: AppStrings.t('houseForm.ownerFullName'),
-                              controller: _ownerFullNameController)),
+                        label: AppStrings.t('houseForm.ownerFullName'),
+                        controller: _ownerFullNameController,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? AppStrings.t('common.fieldRequired')
+                            : null,
+                      )),
                       const SizedBox(width: 8),
                       Expanded(
                         child: AppTextField(
                           label: AppStrings.t('houseForm.ownerPhone'),
                           controller: _ownerPhoneController,
                           keyboardType: TextInputType.phone,
+                          inputFormatters: const [VnPhoneInputFormatter()],
+                          validator: (v) => validateVnPhone(v),
                         ),
                       ),
                     ],
@@ -307,8 +343,35 @@ class _HouseFormScreenState extends ConsumerState<HouseFormScreen> {
                   ),
                   const SizedBox(height: 10),
                   AppTextField(
-                      label: AppStrings.t('houseForm.ownerBankAccount'),
-                      controller: _bankAccountController),
+                    label: AppStrings.t('payoutBankAccount.bankName'),
+                    initialValue: _selectedBank?.name ?? '',
+                    // Key phải đổi theo ngân hàng đang chọn, nếu không Flutter
+                    // tái dùng widget cũ và ô vẫn hiện tên ngân hàng trước đó.
+                    key: ValueKey('house-bank-${_selectedBank?.bin}'),
+                    trailing: AppTextFieldTrailingIcon.select,
+                    onTap: _pickBank,
+                    validator: (v) => _selectedBank == null
+                        ? AppStrings.t('common.fieldRequired')
+                        : null,
+                  ),
+                  const SizedBox(height: 10),
+                  AppTextField(
+                    label: AppStrings.t('payoutBankAccount.accountNumber'),
+                    controller: _bankAccountNumberController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? AppStrings.t('common.fieldRequired')
+                        : null,
+                  ),
+                  const SizedBox(height: 10),
+                  AppTextField(
+                    label: AppStrings.t('payoutBankAccount.accountName'),
+                    controller: _bankAccountNameController,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? AppStrings.t('common.fieldRequired')
+                        : null,
+                  ),
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(AppStrings.t('houseForm.ownerBankAccountHint'),

@@ -9,6 +9,7 @@ import '../core/app_strings.dart';
 import '../core/locale_provider.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
+import '../core/phone_validation.dart';
 import '../data/auth_repository.dart';
 import '../data/models/manager_account.dart';
 import '../shared/app_button.dart';
@@ -264,17 +265,14 @@ class _ManagerFormScreenState extends ConsumerState<ManagerFormScreen> {
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
                               hintText: AppStrings.t('managerForm.phoneHint'),
+                              inputFormatters: const [VnPhoneInputFormatter()],
                               validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return AppStrings.t('common.required');
-                                }
-                                final digits =
-                                    v.trim().replaceAll(RegExp(r'[^0-9]'), '');
-                                if (digits.length < 9 || digits.length > 11) {
-                                  return AppStrings.t('common.invalidPhone');
-                                }
+                                final phoneError = validateVnPhone(v);
+                                if (phoneError != null) return phoneError;
+                                // Qua được validateVnPhone nghĩa là v chắc
+                                // chắn khác null và đúng định dạng.
                                 if (myPhone != null &&
-                                    AuthRepository.normalizePhoneForDb(v) ==
+                                    AuthRepository.normalizePhoneForDb(v!) ==
                                         myPhone) {
                                   return AppStrings.t(
                                       'managerForm.cannotInviteSelf');

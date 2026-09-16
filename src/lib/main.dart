@@ -50,6 +50,19 @@ class App extends StatelessWidget {
       theme: buildAppTheme(),
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
+      // Chạm ra ngoài ô nhập thì ẩn bàn phím — áp cho TOÀN APP tại đúng một
+      // chỗ, thay vì phải nhớ bọc GestureDetector ở từng màn (dungtv báo
+      // 16/09/2026: bàn phím che mất nút Lưu ở màn Thêm phòng, chạm ra ngoài
+      // vẫn không ẩn).
+      //
+      // `HitTestBehavior.translucent` để cú chạm vẫn đi tiếp xuống widget bên
+      // dưới — nếu dùng `opaque` thì lớp này nuốt mất mọi cú chạm, bấm nút nào
+      // cũng không ăn.
+      builder: (context, child) => GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: child,
+      ),
     );
   }
 }

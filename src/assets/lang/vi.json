@@ -27,7 +27,10 @@
     "clear": "Bỏ chọn",
     "loadFailed": "Không tải được dữ liệu",
     "loadFailedHint": "Kiểm tra kết nối mạng rồi kéo xuống hoặc bấm Thử lại.",
-    "retry": "Thử lại"
+    "retry": "Thử lại",
+    "phoneRequired": "Vui lòng nhập số điện thoại",
+    "phoneInvalid": "Số điện thoại không hợp lệ (VD: 0912345678)",
+    "fieldRequired": "Vui lòng nhập thông tin này"
   },
   "bottomNav": {
     "home": "Trang chủ",
@@ -142,8 +145,8 @@
     "addressHint": "Số nhà, phường/xã, quận/huyện, tỉnh/thành",
     "description": "Mô tả",
     "sectionOwnerInfo": "Thông tin chủ nhà · Chỉ Quản lý chính",
-    "ownerFullName": "Họ tên chủ nhà",
-    "ownerPhone": "SĐT chủ nhà",
+    "ownerFullName": "Họ tên chủ nhà *",
+    "ownerPhone": "SĐT chủ nhà *",
     "ownerIdNumber": "Số CCCD chủ nhà",
     "ownerTaxCode": "Mã số thuế chủ nhà",
     "ownerBankAccount": "Tài khoản ngân hàng nhận tiền *",

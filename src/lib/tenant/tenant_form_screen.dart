@@ -11,6 +11,7 @@ import '../core/enum_labels.dart';
 import '../core/locale_provider.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
+import '../core/phone_validation.dart';
 import '../data/models/tenant.dart';
 import '../shared/app_button.dart';
 import '../shared/app_text_field.dart';
@@ -377,9 +378,8 @@ class _TenantFormScreenState extends ConsumerState<TenantFormScreen> {
                     label: AppStrings.t('tenantForm.phone'),
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? AppStrings.t('common.required')
-                        : null,
+                    inputFormatters: const [VnPhoneInputFormatter()],
+                    validator: (v) => validateVnPhone(v),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),

@@ -95,8 +95,8 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
     if (room.recurringFees.isNotEmpty) {
       _fees.rows
         ..clear()
-        ..addAll(room.recurringFees.map(
-            (f) => RecurringFeeRow(name: f.name, amount: f.amount.toString())));
+        ..addAll(room.recurringFees.map((f) =>
+            RecurringFeeRow(name: f.name, amount: formatNumber(f.amount))));
     }
   }
 
@@ -111,8 +111,8 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
     if (house.recurringFees.isNotEmpty) {
       _fees.rows
         ..clear()
-        ..addAll(house.recurringFees.map(
-            (f) => RecurringFeeRow(name: f.name, amount: f.amount.toString())));
+        ..addAll(house.recurringFees.map((f) =>
+            RecurringFeeRow(name: f.name, amount: formatNumber(f.amount))));
     }
   }
 

@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../core/app_strings.dart';
 import '../core/theme.dart';
+import '../core/phone_validation.dart';
 import '../data/auth_repository.dart';
 import '../data/login_rate_limiter.dart';
 import '../data/push_repository.dart';
@@ -104,6 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
+                  inputFormatters: const [VnPhoneInputFormatter()],
                   style: GoogleFonts.inter(
                       fontSize: 14, color: AppColors.textPrimary),
                   validator: (v) => (v == null || v.trim().isEmpty)

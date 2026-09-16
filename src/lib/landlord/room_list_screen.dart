@@ -348,18 +348,36 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
   }
 }
 
-class _HousePhoto extends ConsumerWidget {
+/// Ảnh nhà ở H-03. Vuốt ngang để xem hết ảnh kèm chấm chỉ số trang — trước
+/// 16/09/2026 chỉ hiện đúng `photos.first`, nhà có nhiều ảnh thì các ảnh còn
+/// lại không có cách nào xem được (dungtv báo khi test thật).
+class _HousePhoto extends ConsumerStatefulWidget {
   final House house;
   const _HousePhoto({required this.house});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_HousePhoto> createState() => _HousePhotoState();
+}
+
+class _HousePhotoState extends ConsumerState<_HousePhoto> {
+  final _pageController = PageController();
+  int _current = 0;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final photos = widget.house.photos;
     final decoration = BoxDecoration(
       color: AppColors.bgMuted,
       border: Border.all(color: AppColors.neutral200),
       borderRadius: BorderRadius.circular(AppRadii.card),
     );
-    if (house.photos.isEmpty) {
+    if (photos.isEmpty) {
       return Container(
         height: 160,
         width: double.infinity,
@@ -369,20 +387,57 @@ class _HousePhoto extends ConsumerWidget {
             color: AppColors.neutral200, size: 36),
       );
     }
-    return FutureBuilder<String>(
-      future:
-          ref.read(houseRepositoryProvider).signedPhotoUrl(house.photos.first),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Container(
-              height: 160, width: double.infinity, decoration: decoration);
-        }
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadii.card),
-          child: Image.network(snapshot.data!,
-              height: 160, width: double.infinity, fit: BoxFit.cover),
-        );
-      },
+    return Column(
+      children: [
+        SizedBox(
+          height: 160,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: photos.length,
+            onPageChanged: (i) => setState(() => _current = i),
+            itemBuilder: (context, index) => FutureBuilder<String>(
+              future: ref
+                  .read(houseRepositoryProvider)
+                  .signedPhotoUrl(photos[index]),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Container(
+                      height: 160,
+                      width: double.infinity,
+                      decoration: decoration);
+                }
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadii.card),
+                  child: Image.network(snapshot.data!,
+                      height: 160, width: double.infinity, fit: BoxFit.cover),
+                );
+              },
+            ),
+          ),
+        ),
+        // Chỉ hiện chấm khi có từ 2 ảnh trở lên — 1 ảnh mà vẫn hiện 1 chấm thì
+        // thừa và gây hiểu nhầm là còn ảnh khác.
+        if (photos.length > 1) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < photos.length; i++)
+                Container(
+                  width: i == _current ? 18 : 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: i == _current
+                        ? AppColors.primary
+                        : AppColors.neutral200,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }
