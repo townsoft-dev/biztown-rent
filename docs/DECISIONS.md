@@ -964,24 +964,18 @@ Dream tự sửa trực tiếp trong file Figma thiết kế (`AElzfTBuL8YyA8OJ8
 
 **Chưa làm (ngoài phạm vi đợt này):** không sửa thêm gì trong Figma (Dream chỉ yêu cầu đồng bộ docs theo bản Figma hiện có). 1 khối chú thích kỹ thuật cũ (đếm ký tự SMS hoá đơn, dựng ở đợt trước) bị kéo lệch ra ngoài khung auto-layout trong lúc Dream sửa (không còn nằm trong frame "MOCK-SMS", đứng riêng lẻ trên canvas) — chưa động tới, để nguyên đúng như Dream để lại, sẽ hỏi lại nếu cần dọn dẹp. Không thêm rule BR/FR riêng nào cho tin xác nhận hợp đồng mới ở đợt này — rà `docs/BUSINESS-RULES.md`/`docs/REQUIREMENTS.md` xác nhận cả 2 file hiện chưa có rule nào cho tính năng này (có thể bổ sung ở đợt sau nếu cần, chưa bắt buộc vì nội dung/kênh đã đủ rõ trong `SMS-HOA-DON.md`). Không sửa code.
 
-## 2026-09-16 (Đợt 53) — Màu Stepper đăng ký lấy theo frame màn hình thật, KHÔNG lấy theo component `173:139` (component đã cũ)
+## 2026-09-16 (Đợt 53) — Quy tắc màu Stepper đăng ký do dungtv chốt; frame Figma `386:2282` vẽ SAI, cần Dream sửa lại
 
-dungtv test bản TestFlight trên iPhone thật, chụp màn "Tạo tài khoản → Xác minh số điện thoại", khoanh đỏ đúng **vạch nối nằm giữa chấm cam (bước 1) và chấm 2**, ghi chú *"đổi màu chỗ này (thiết kế đã sửa)"*.
+**Quy tắc chính thức (dungtv chốt trực tiếp):**
 
-**Đối chiếu Figma (file `AElzfTBuL8YyA8OJ85f7aX`, đọc bằng cách render node rồi lấy mã màu trực tiếp từ pixel, không đọc bằng mắt):**
+> Chấm CAM = bước người dùng đang đứng. Làm xong bước nào thì **chấm bước đó VÀ vạch ngay sau nó** chuyển XANH. Bước chưa tới để XÁM.
 
-| Node | Màn hình | Vạch ngay sau chấm cam ở bước 1 |
-|---|---|---|
-| `173:139` (component "Stepper", variant `Step=1`) | — | Xám `#B9BDCC` |
-| `220:2214` | S-02 "Create account" → Verify your phone | Xám `#B9BDCC` |
-| `386:2282` | S-04 "Forgot password?" → Verify your phone | **Cam `#EF9F27`** |
+Hệ quả: **vạch chỉ có hai màu xám → xanh, không bao giờ cam.** Cam là màu dành riêng cho chấm đang làm. Đây đúng là hành vi code đã làm từ đầu (`shared/signup_stepper.dart`, dựng 09/09/2026).
 
-Hai frame `220:2214` và `386:2282` có **nội dung y hệt nhau** (cùng tiêu đề "Verify your phone", cùng ô SĐT đã điền `0909 888 777`, cùng dòng "We sent a 6-digit code... expires in 02:00") — tức cùng một trạng thái màn hình, nhưng vẽ vạch khác màu. Một trong hai là bản cũ chưa được cập nhật.
+**Frame `386:2282` (S-04 Forgot password → Verify your phone) trên Figma vẽ vạch bước 1 màu cam `#EF9F27` là SAI so với quy tắc trên.** Cần Dream sửa lại frame đó cho khớp 3 frame còn lại (`173:139` component, `220:2214`, `347:2941`, `388:2375` — tất cả đều vẽ xám). **Không sửa code theo frame sai này.**
 
-**Chốt: `386:2282` là bản đúng.** Hai căn cứ độc lập cùng chỉ về nó — (a) node id `386:xxx` lớn hơn `220:xxx`, mà Figma cấp node id tăng dần theo thời gian tạo, nên frame S-04 được dựng sau; (b) ghi chú của chính dungtv nói thiết kế "đã sửa", khớp tiền lệ đã lập ở Đợt 52: **Dream sửa trực tiếp trong Figma được coi là nguồn quyết định chính thức**, docs/code phải đồng bộ ngược lại theo.
+**Ghi lại lần đi sai để đợt sau không lặp:** dungtv chụp màn Đăng ký, khoanh đỏ vạch giữa chấm 1 và chấm 2, ghi *"đổi màu chỗ này (thiết kế đã sửa)"*. Claude đối chiếu Figma, phát hiện 2 frame nội dung y hệt nhau nhưng khác màu vạch, rồi **suy luận từ node id** (`386:xxx` > `220:xxx`, mà Figma cấp id tăng dần theo thời gian → frame đó dựng sau → hẳn là bản đã sửa), kết luận vạch phải cam và sửa code theo. dungtv bác bỏ: *"cái này dễ vậy mà bạn hiểu quá phức tạp"*, rồi nêu quy tắc hai dòng ở trên. Code đã được trả lại nguyên trạng.
 
-**Hệ quả quan trọng cho các đợt sau: component `173:139` nay KHÔNG còn là nguồn màu đáng tin cho Stepper.** Ai mở component ra đối chiếu sẽ thấy vạch xám và tưởng vạch cam trong code là bug rồi sửa ngược lại — đúng loại lỗi hồi quy đã xảy ra với nhãn nút ở màn `contract_end_screen`. Đã ghi cảnh báo này ngay trong doc comment của `shared/signup_stepper.dart`.
+**Bài học áp dụng cho mọi đợt sau:** thứ tự node id, thời điểm tạo frame và các suy luận tương tự **không phải bằng chứng về ý đồ thiết kế**. Khi hai nguồn thiết kế mâu thuẫn nhau, dừng lại hỏi dungtv quy tắc hành vi, đừng tự chọn bên rồi code theo. Figma cũng có thể sai — frame nào nghịch với quy tắc đã chốt thì báo lại như một lỗi thiết kế để Dream sửa, không bê vào app.
 
-**Bước 2 cố ý GIỮ NGUYÊN xám.** Cả hai frame bước 2 (`347:2941` Sign Up Step 2 và `388:2375` Forgot password Step 2) đều vẽ vạch sau chấm cam là xám `#B9BDCC`. Tức thiết kế hiện tại **không** áp dụng quy tắc "vạch sau chấm hiện tại luôn cam" một cách đồng nhất — chỉ bước 1 mới cam. Không tự suy ra quy tắc chung rồi sửa luôn bước 2, vì như thế là đoán ngược lại 2 frame đã duyệt. Nếu Dream muốn áp dụng đồng nhất thì sửa 2 frame đó trước, code sửa theo sau.
-
-**Đã sửa:** `src/lib/shared/signup_stepper.dart` — tách hàm `lineColor(index)`; vạch xanh khi bước trước đã xong, cam khi `index == current && current == 1`, còn lại xám. Dùng chung nên cả S-02 (Đăng ký) và S-04 (Quên mật khẩu) đều đổi cùng lúc, đúng như Figma.
+**Trạng thái code:** `src/lib/shared/signup_stepper.dart` giữ nguyên logic gốc (vạch xanh khi `index < current`, còn lại xám). Quy tắc màu và cảnh báo về frame `386:2282` đã ghi thẳng vào doc comment của widget để đợt sau không sửa nhầm lần nữa.
