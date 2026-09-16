@@ -9,10 +9,12 @@
 //   tổng đài, KHÔNG cần đăng ký Brandname/mẫu tin trước) vì dungtv xác nhận
 //   CHƯA có Brandname CSKH riêng (SmsType "8") cho eSMS. Đổi sang Brandname
 //   CSKH sau khi có — chỉ cần sửa `_shared/esms.ts`, không đổi luồng gọi.
-// - Push Android (FCM): code sẵn (`_shared/fcm.ts`), chờ dungtv tạo Firebase
-//   project + gửi file service account JSON để set secret FCM_SERVICE_ACCOUNT
-//   (xem docs/DECISIONS.md Đợt 41) — chưa có secret thì tự trả cảnh báo, không
-//   gửi được gì, không ảnh hưởng SMS Tenant. Push iOS (APNs) vẫn TODO riêng.
+// - Push Android + iOS (FCM HTTP v1, `_shared/fcm.ts`): ĐÃ bật thật (Đợt 46) —
+//   FCM v1 tự chuyển `notification: {title, body}` sang đúng định dạng APNs cho
+//   token iOS, dùng chung 1 API cho cả 2 nền tảng, miễn Firebase project đã có
+//   APNs Authentication Key (dungtv tự upload qua Firebase Console, ngoài phạm
+//   vi code — xem docs/DECISIONS.md Đợt 46). Thiếu secret FCM_SERVICE_ACCOUNT
+//   thì tự trả cảnh báo, không gửi được gì, không ảnh hưởng SMS Tenant.
 // - Zalo ZNS/OA: vẫn TODO — đang chờ dungtv cung cấp OA ID/App ID/Secret/Access+Refresh
 //   token/Template ID (xem docs/DECISIONS.md).
 //
@@ -25,6 +27,8 @@ import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
 import { sendSmsViaEsms } from "../_shared/esms.ts";
 import { sendFcmPush } from "../_shared/fcm.ts";
+import { sendZns } from "../_shared/zalo.ts";
+import { buildZnsInvoiceData } from "../_shared/zns_invoice.ts";
 
 interface SendNotificationRequest {
   houseId: string;
@@ -38,6 +42,13 @@ interface SendNotificationRequest {
   tenant?: {
     phone: string;
     message: string; // tiếng Việt, có thể kèm link mã QR
+  };
+  // Gửi ZNS Zalo cho 1 hoá đơn, dùng template ĐÃ được Zalo duyệt (secret
+  // ZALO_ZNS_TEMPLATE_ID). Tách hẳn khỏi `tenant` (SMS) để bật/tắt độc lập —
+  // giai đoạn này đang test nên chưa gắn tự động vào luồng gửi hoá đơn.
+  zalo?: {
+    phone: string;
+    invoiceId: string;
   };
 }
 
@@ -74,18 +85,17 @@ export default {
         .select("token, platform")
         .in("user_id", userIds);
 
-      // Android qua FCM (thật, chờ secret FCM_SERVICE_ACCOUNT — xem
-      // docs/DECISIONS.md Đợt 41); tự bỏ qua với cảnh báo nếu chưa cấu hình,
-      // không chặn phần SMS Tenant bên dưới. iOS/APNs vẫn TODO riêng (cần
-      // Apple Developer account + APNs key, ngoài phạm vi FCM).
-      const androidTokens = (tokens ?? []).filter((t: any) => t.platform === "android");
+      // Android + iOS đều qua cùng 1 API FCM v1 (thật, chờ secret
+      // FCM_SERVICE_ACCOUNT — xem docs/DECISIONS.md Đợt 41/46); tự bỏ qua với
+      // cảnh báo nếu chưa cấu hình, không chặn phần SMS Tenant bên dưới.
+      const allTokens = tokens ?? [];
       const pushResults = await Promise.all(
-        androidTokens.map((t: any) => sendFcmPush(t.token, payload.title, payload.body)),
+        allTokens.map((t: any) => sendFcmPush(t.token, payload.title, payload.body)),
       );
       const sentCount = pushResults.filter((r) => r.ok).length;
       const errors = pushResults.filter((r) => !r.ok).map((r: any) => r.reason);
       results.push = {
-        recipientCount: androidTokens.length,
+        recipientCount: allTokens.length,
         sent: sentCount,
         ...(errors.length > 0 ? { errors: [...new Set(errors)] } : {}),
       };
@@ -98,7 +108,36 @@ export default {
       } catch (e) {
         return Response.json({ error: `${e}` }, { status: 500 });
       }
-      // TODO: Zalo ZNS/OA — đang chờ dungtv cung cấp OA ID/App ID/Secret/token/Template ID.
+    }
+
+    if (payload.zalo) {
+      const templateId = Deno.env.get("ZALO_ZNS_TEMPLATE_ID");
+      if (!templateId) {
+        results.zalo = { sent: false, reason: "Thiếu secret ZALO_ZNS_TEMPLATE_ID" };
+      } else {
+        try {
+          const { data: invoice, error } = await ctx.supabaseAdmin
+            .from("tb_invoice")
+            .select(
+              "house_name, room_nos, period_start, rent_amount, utility_lines, service_fee_amount, recurring_fees, other_fees, total_amount",
+            )
+            .eq("id", payload.zalo.invoiceId)
+            .single();
+          if (error || !invoice) throw new Error(`Không tìm thấy hoá đơn: ${error?.message}`);
+
+          const templateData = buildZnsInvoiceData(invoice);
+          const sendResult = await sendZns(ctx.supabaseAdmin, {
+            phone: payload.zalo.phone,
+            templateId,
+            templateData,
+          });
+          // Trả cả templateData + msgId ra response: đang giai đoạn test thật,
+          // cần nhìn được chính xác giá trị đã gửi để đối chiếu với tin nhận được.
+          results.zalo = { sent: true, msgId: sendResult.msgId, templateData };
+        } catch (e) {
+          results.zalo = { sent: false, reason: `${e}` };
+        }
+      }
     }
 
     return Response.json({ event: payload.event, ...results });

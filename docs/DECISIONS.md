@@ -742,4 +742,126 @@ dungtv, sau khi thấy vá Bills List (Đợt 44), hỏi tiếp: sửa vậy có
 - Home tab: gần như tức thời.
 - H-06 Record Monthly Reading (nhà 33 phòng, chỗ vừa sửa): ~2s — kiểm tra thêm ĐÚNG dữ liệu hiển thị (không chỉ nhanh mà còn phải đúng): "20/33 rooms recorded", Previous/Current/Usage của từng phòng khớp đúng chuỗi chỉ số cũ (VD phòng 333: Previous 246 → Current 267 → Usage 21 kWh) — xác nhận việc gộp query không làm sai lệch dữ liệu.
 
+## 2026-09-16 (Đợt 46) — Bật thật FCM Push (Android), verify end-to-end bằng push thật
+
+dungtv tạo xong Firebase project (bắt đầu từ Đợt 41 mới chỉ chuẩn bị hạ tầng, chờ 3 file này), gửi đủ:
+1. `google-services.json` (Android) — `applicationId` khớp đúng `com.townsoftvina.biztown.rent_manager`.
+2. `GoogleService-Info.plist` (iOS) — `BUNDLE_ID` khớp đúng `com.townsoftvina.biztown.rentManager` (đã đối chiếu với `PRODUCT_BUNDLE_IDENTIFIER` trong `project.pbxproj` trước khi copy).
+3. Service account JSON (`firebase-adminsdk-fbsvc@...`) — dùng để ký JWT gọi FCM HTTP v1 API từ Edge Function (`_shared/fcm.ts`, code đã có sẵn từ Đợt 41).
+
+**Việc dùng để bật thật (không chỉ chuẩn bị nữa)**:
+- Copy 2 file config vào đúng chỗ Flutter cần (`android/app/`, `ios/Runner/`).
+- `supabase secrets set FCM_SERVICE_ACCOUNT=<nội dung file JSON>` — không commit file JSON gốc lên git (đã xoá khỏi vùng làm việc sau khi set xong).
+- Thêm `firebase_core`/`firebase_messaging` vào `pubspec.yaml`; wire plugin Gradle `com.google.gms.google-services` ở `android/settings.gradle.kts` + `android/app/build.gradle.kts` (dự án Flutter mới dùng Swift Package Manager cho iOS, không có Podfile, nên phần iOS không cần sửa gì thêm ở bước này).
+- `ios/Runner/Info.plist` thêm `UIBackgroundModes: remote-notification`. KHÔNG tự sửa tay phần "Push Notifications" capability (file entitlements + ký số) — để dungtv tự bật qua Xcode "Signing & Capabilities" khi cần build iOS thật, đúng bài học từ lúc build iOS trước (sửa tay file ký số dễ vỡ, cần đúng Apple ID/Developer Portal của dungtv).
+- `data/push_repository.dart` (mới): `registerDeviceToken()` xin quyền (`requestPermission()`) + lấy token (`getToken()`) + `upsert` vào `tb_device_token` (bảng đã có sẵn từ schema V3, trước đó chưa ai ghi vào). Gọi ở 2 chỗ: Splash (khi đã có session sẵn) và Login (ngay sau khi đăng nhập thành công) — đều gọi kiểu "bắn rồi quên" (`unawaited`), không `await` để không làm chậm điều hướng. Cả hai lệnh gọi tới Google (`requestPermission`, `getToken`) đều bọc `.timeout(15s)` — phòng trường hợp máy/mạng không tới được backend Google thì cũng không treo Future vô thời hạn. Mọi lỗi bị nuốt (`catch` + `debugPrint`) vì Push không phải luồng lõi, không được phép chặn đăng nhập/mở app.
+
+**Bug thật tự phát hiện + tự sửa (không phải dungtv báo)**: bản đầu tiên đặt `Firebase.initializeApp()` (rồi gọi `pushRepository...`) TRƯỚC `initSupabase()` trong `main.dart`. `pushRepository` là biến top-level (`final pushRepository = PushRepository(supabase);`, giống cách khai báo mọi repository khác trong app) — dòng này đọc `supabase` (getter `Supabase.instance.client`) ngay khi Dart lần đầu chạm tới biến, tức là ngay lúc gọi `pushRepository.listenTokenRefresh()`. Vì lúc đó `initSupabase()` (nằm sau) chưa chạy, code crash `Failed assertion: '_instance._isInitialized': You must initialize the supabase instance before calling Supabase.instance`. Phát hiện ngay trong lần build+cài thử đầu tiên trên `emulator-5554` (đọc logcat thật), sửa bằng cách đổi thứ tự: `initSupabase()` chạy xong trước, khối `Firebase.initializeApp()` chuyển xuống sau.
+
+**Verify thật, không chỉ "code xong không lỗi"** (toàn bộ trên `emulator-5554`, build APK debug **có đúng flag `--dart-define=SUPABASE_URL=...` + `--dart-define=SUPABASE_PUBLISHABLE_KEY=...`** — lưu ý: quên 2 flag này app vẫn build/chạy được nhưng không nối đúng backend thật, dễ hiểu lầm thành "sai mật khẩu" khi test đăng nhập, đã tự gặp và tự sửa lỗi này giữa chừng):
+1. Đăng nhập tài khoản test (`0356123970`) → hệ thống tự hiện dialog "Allow BizTown Rent Manager to send you notifications?" đúng lúc `registerDeviceToken()` chạy → bấm Allow.
+2. Query trực tiếp `tb_device_token` qua Supabase REST (service role, không qua app) → thấy đúng 1 dòng mới: `platform: "android"`, `token` là chuỗi FCM token thật, `created_at` đúng thời điểm vừa test.
+3. Lấy JWT thật của tài khoản test qua Auth API (`grant_type=password`), gọi thẳng Edge Function `send-notification` với `houseId` thật của tài khoản này → response `{"push":{"recipientCount":1,"sent":1}}`.
+4. Đọc logcat máy ảo ngay sau bước 3 → thấy `FirebaseMessaging` xử lý 1 tin nhắn đến (`Unable to log event: analytics library is missing` — cảnh báo vô hại, chỉ vì app chưa cài thêm gói `firebase_analytics`, không liên quan tới việc nhận tin) → xác nhận chuỗi **Edge Function → Google FCM → thiết bị thật đã chạy trọn vẹn**, không dừng lại ở "gọi API không báo lỗi".
+
+**Lưu ý khoanh vùng, chưa làm ở đợt này (không phải thiếu sót — ngoài phạm vi yêu cầu)**:
+- Chưa hiện banner hệ thống lúc app đang mở sẵn (foreground) — cần thêm gói `flutter_local_notifications` để tự vẽ banner khi nhận `FirebaseMessaging.onMessage`. Không làm vì lúc app đang mở đã có Realtime (Đợt 43) lo phần hiển thị trong app rồi; Push chủ yếu nhắm tới lúc app đang tắt/nền — đúng đối tượng SCREEN-SPEC/ARCHITECTURE đặt ra ban đầu.
+- Push iOS (APNs) vẫn chưa test được — cần dungtv tải APNs key (`.p8`) từ Apple Developer Portal rồi upload vào Firebase Console (Project Settings → Cloud Messaging → Apple app configuration) trước, việc dungtv đang làm dở (mới có Apple Dev access gần đây).
+- Chưa dọn "trang trí" thêm (icon push riêng, màu, âm thanh tuỳ biến) — dùng mặc định hệ thống, đủ để verify pipeline hoạt động.
+
+## 2026-09-16 (Đợt 47) — Xử lý nốt Push iOS: dungtv gửi thêm APNs key, tìm ra + vá 1 bug thật khiến Firebase không init được trên iOS
+
+dungtv gửi thêm `AuthKey_NRRK43XV84.p8` (APNs Authentication Key), yêu cầu xử lý nốt phần iOS thay vì dừng ở Android như Đợt 46.
+
+**Đã làm**:
+- `send-notification/index.ts`: bỏ giới hạn "chỉ gửi Android" — gửi push cho MỌI token (Android + iOS) qua cùng 1 hàm `sendFcmPush()`, vì FCM HTTP v1 tự dịch payload sang đúng định dạng APNs cho token iOS, không cần code riêng theo nền tảng. Deploy lại function.
+- `ios/Runner/Runner.entitlements` (mới, `aps-environment: development`) + wire `CODE_SIGN_ENTITLEMENTS` vào cả 3 build config (Debug/Release/Profile) trong `project.pbxproj`.
+- Build thử thật `flutter build ios` (cả bản không ký cho device lẫn bản cho Simulator) để kiểm chứng, không chỉ đoán.
+
+**Bug thật tự tìm ra khi build+chạy thử (không phải dungtv báo)**: đặt đúng `GoogleService-Info.plist` vào thư mục `ios/Runner/` là CHƯA ĐỦ — Xcode cần file này được khai báo vào chính `project.pbxproj` (1 `PBXFileReference` + 1 dòng trong `PBXResourcesBuildPhase`, tức mục "Copy Bundle Resources") thì mới thực sự đóng gói file vào app lúc build. Thiếu bước này, app build được (không lỗi biên dịch) nhưng chạy lên báo lỗi thật: `[FirebaseCore] Could not locate configuration file: 'GoogleService-Info.plist'` → mọi lệnh gọi Firebase sau đó lỗi tiếp `[core/no-app] No Firebase App '[DEFAULT]' has been created`. Vá bằng cách thêm đúng 4 chỗ cần thiết trong `project.pbxproj` (PBXBuildFile, PBXFileReference, PBXGroup, PBXResourcesBuildPhase) — có backup file gốc trước khi sửa tay (rút kinh nghiệm từ việc từng phải thận trọng với các thay đổi ký số/entitlements trong file này). Build lại, verify TRỰC TIẾP file `GoogleService-Info.plist` có mặt thật bên trong `Runner.app` vừa build (không chỉ tin theo log) — sau đó chạy app không còn lỗi Firebase nào.
+
+**Verify sống trên iOS Simulator thật** (`iPhone 17`, `iOS 27`, đã Booted sẵn từ phiên trước): cài + chạy app → tự khôi phục phiên đăng nhập cũ → vào đúng Home hiển thị đúng dữ liệu thật (5 nhà, 87 phòng, khớp dữ liệu test đã biết) → hệ thống tự hiện đúng dialog iOS thật *"'BizTown Rent Manager' Would Like to Send You Notifications"* (có chụp màn hình xác nhận) — đây là bằng chứng trực tiếp Firebase + entitlements đã nối đúng dây ở tầng native iOS, không chỉ "code không báo lỗi".
+
+**Giới hạn thật của môi trường (không phải lỗi code, đã xác minh kỹ trước khi kết luận)**:
+- Máy chạy Claude Code này không có cách bấm "Allow" trên dialog hệ thống đó: Simulator ở đây chạy hoàn toàn không có cửa sổ hiển thị thật (như đã ghi nhận trước đây khi thử build iOS lần đầu), `xcrun simctl` không có lệnh giả lập chạm màn hình (khác hẳn `adb shell input tap` bên Android), và `xcrun simctl privacy grant notifications ...` bị hệ thống chặn ("Failed to create TCC authorization record") trong sandbox này.
+- Quan trọng hơn, đây là giới hạn của chính Apple chứ không phải của máy này: **Simulator iOS về bản chất không thể đăng ký nhận push thật từ APNs** dù có bấm Allow thành công — Simulator chỉ hỗ trợ giả lập tin nhắn ĐẾN (`xcrun simctl push ...`) để test hiển thị UI, không lấy được token thật để server gửi ngược lại. Vì vậy bước "verify push thật tới thiết bị" trên iOS — giống như đã làm thành công với Android ở Đợt 46 — bắt buộc phải chạy trên 1 iPhone thật, không có cách nào thay thế bằng Simulator dù chạy ở máy nào.
+
+**Việc CHỈ dungtv làm được (cần đăng nhập Firebase Console bằng tài khoản Google của dungtv)** — Project Settings → tab "Cloud Messaging" → mục "Apple app configuration" → phần "APNs Authentication Key" → Upload, cần đúng 3 giá trị:
+- File: `AuthKey_NRRK43XV84.p8` (đã gửi).
+- Key ID: `NRRK43XV84` (đọc thẳng từ tên file theo quy ước đặt tên của Apple).
+- Team ID: `RZ9777C36G` (đọc từ `DEVELOPMENT_TEAM` đã có sẵn trong `project.pbxproj` — đúng team Apple Developer dungtv vừa đăng nhập lúc build thử iOS trước đó).
+
+**Kết luận cho dungtv**: toàn bộ phần code (backend + Flutter + cấu hình Xcode) cho Push iOS đã xong và đã verify tới đúng điểm giới hạn thật của môi trường (dialog hệ thống hiện đúng, chứng minh cấu hình đúng). Muốn có push thật chạy trên iOS cần đúng 2 việc còn lại mà chỉ dungtv làm được: (1) upload APNs key vào Firebase Console theo 3 giá trị ở trên, và (2) cài app lên 1 iPhone thật (không phải Simulator) để bấm Allow và nhận verify — y hệt cách đã verify thành công với Android.
+
+## 2026-09-16 (Đợt 48) — Zalo ZNS: chốt hướng "nút Chi tiết → tin tư vấn kèm QR", vá 2 lỗi thật của cơ chế token
+
+### Bối cảnh: 2 lần Zalo từ chối trước đó và cách thoát ra
+
+Trước đợt này, việc gửi hoá đơn qua Zalo bế tắc vì 2 lỗi kiểm duyệt:
+- `CT_25` — mẫu "Yêu cầu thanh toán" (Payment Request) bắt buộc dùng **tài khoản ngân hàng cố định của doanh nghiệp sở hữu OA**. Nhưng BizTown là nền tảng cho NHIỀU chủ trọ, mỗi hoá đơn cần STK của đúng chủ trọ đó → không thể cố định 1 STK.
+- `CTA_5` — thử chuyển sang gắn link cố định tới trang hoá đơn thì bị từ chối vì *"link CTA chứa thông tin hoá đơn cố định, không phù hợp gửi cho từng khách hàng khác nhau"*.
+
+dungtv đã tự xin duyệt được 1 template khác và **đã được Zalo chấp thuận**: "BizTown Rent-Manager : Hóa đơn định kỳ 2" (ID `636461`, loại **"Mẫu phản hồi nhanh"**, 10 tham số, nút "Chi tiết"). Ghi chú kiểm duyệt ghi rõ: *"mẫu thông báo hóa đơn, không quảng cáo, không mã qr barcode"*.
+
+**Hướng đi dungtv đề xuất (chốt dùng)**: tin ZNS chỉ thông báo số tiền (không QR, đúng điều kiện duyệt) → người thuê bấm "Chi tiết" → nút phản hồi nhanh đẩy 1 tin nhắn vào khung chat OA từ phía người thuê → lúc này hội thoại do NGƯỜI DÙNG khởi tạo nên OA được phép gửi **tin tư vấn tự do kèm ảnh** → gửi ảnh QR VietQR của đúng chủ trọ đó.
+
+Vì sao hướng này thoát được cả 2 lỗi trên: QR không nằm trong template (né ghi chú "không mã qr barcode" và né `CT_25`), và không cần link động trong CTA (né `CTA_5`). Tài khoản ngân hàng động nằm ở tin tư vấn — loại tin không bị ràng buộc template.
+
+### Đã làm — giai đoạn 1 (gửi được tin ZNS)
+
+- `_shared/zns_invoice.ts` (mới): map `tb_invoice` sang đúng 10 tham số template. Đáng chú ý: `utility_lines` là mảng jsonb theo từng phòng × từng loại tiện ích nên phải **gộp theo loại** mới ra `so_kwh`/`tien_dien`/`so_khoi_nuoc`/`tien_nuoc`; `phi_khac` là tổng của 3 nguồn khác nhau (`service_fee_amount` + `recurring_fees` + `other_fees`). Tham số số tiền gửi **chữ số thuần** (Zalo tự định dạng lúc hiển thị).
+- `send-notification`: thêm kênh `zalo` **tách hẳn** khỏi kênh `tenant` (SMS) — bật/tắt độc lập, không rủi ro làm hỏng luồng SMS đang chạy thật. Response trả cả `templateData` và `msg_id` vì đang giai đoạn test cần đối chiếu.
+- Chưa gắn tự động vào luồng gửi hoá đơn (B-03/B-05) — cố ý, chờ test thật xong mới nối.
+
+**Còn 1 điểm chưa verify**: tham số `so_ky` kiểu "Thời gian" của Zalo — template khai báo mẫu `09/2026` (tháng/năm) nhưng đoạn "Mẫu code ví dụ" Zalo tự sinh lại ghi `01/08/2020` (ngày/tháng/năm). Code hiện gửi theo `MM/yyyy` đúng như template khai báo; nếu Zalo báo lỗi định dạng thì đổi 1 chỗ duy nhất trong `periodLabel()`.
+
+### Bug thật #1 — SĐT Tenant sai định dạng (có sẵn từ Đợt 41)
+
+`sendZns()` gửi thẳng SĐT lấy từ DB kèm comment ghi *"dạng 84xxxxxxxxx — khớp sẵn convention của app"*. Comment này SAI và là loại sai nguy hiểm vì nghe rất thuyết phục: `tb_user.phone` (chủ nhà/quản lý, do `normalizePhoneForDb` sinh ra) đúng là lưu `84...`, nhưng `tb_tenant.phone` lưu `09...` vì đó là ô người dùng gõ tay ở form Tenant — mà người nhận ZNS chính là Tenant, không phải user. Đã thêm `toZaloPhone()` chuẩn hoá cả 3 dạng ngay trong `sendZns()` để nơi gọi không phải nhớ bảng nào dùng quy ước nào.
+
+### Bug thật #2 — tranh chấp khi làm mới token (nghiêm trọng)
+
+**Triệu chứng**: gửi thử tin ZNS đầu tiên thì Zalo trả `Invalid refresh token` (-14014).
+
+**Truy nguyên**: đọc `tb_zalo_token` thấy `expires_at` = `updated_at` = đúng thời điểm nạp token (15/09 01:35) — tức token được nạp với hạn dùng bằng 0, nên ngay lần gọi đầu tiên hệ thống đã đi làm mới. `updated_at` chưa từng đổi ⇒ Zalo đã cấp cặp mới nhưng DB **không hề được ghi lại** ⇒ cặp cũ bị Zalo huỷ, cặp mới mất luôn.
+
+**Vì sao đây là bug thật chứ không chỉ là sự cố nạp dữ liệu**: refresh token Zalo là loại **dùng đúng 1 lần**. Chức năng B-03 "tạo & gửi hàng loạt" gửi nhiều hoá đơn **song song** (`Promise.all`). Nếu đúng lúc đó token hết hạn, cả chục lời gọi sẽ cùng thấy "hết hạn" và cùng gọi Zalo với **cùng một refresh token**: 1 cái thành công, phần còn lại vừa thất bại vừa làm chết token. Tức là tính năng gửi hàng loạt qua Zalo sẽ hỏng ngay lần chạy thật đầu tiên ở quy mô nhiều hoá đơn — không phải rủi ro lý thuyết.
+
+**Đã vá 3 lớp**:
+1. **Khoá chống tranh chấp** (`20260916100000_zalo_token_refresh_lock.sql`): thêm cột `refresh_lock_until`, giành khoá bằng UPDATE **có điều kiện ngay trong câu lệnh** (`where id='default' and (refresh_lock_until is null or refresh_lock_until < now())`). Chạy song song thì Postgres chỉ cho đúng 1 câu lệnh cập nhật thành công → chỉ 1 tiến trình nhận được dòng trả về và được phép gọi Zalo; các tiến trình khác chờ tối đa 15s rồi đọc token mới. Khoá tự hết hiệu lực sau 30s nên tiến trình chết giữa chừng không làm kẹt vĩnh viễn.
+2. **Ghi token chắc chắn**: sau khi Zalo đã cấp cặp mới thì mọi lỗi ghi DB đều là mất token vĩnh viễn — nên thử lại 3 lần, thất bại hết thì ném lỗi ghi rõ "phải xin cấp lại cặp token mới bằng tay" thay vì nuốt lỗi im lặng (đúng cách đã làm token chết lần này).
+3. **Tự gia hạn định kỳ** (`20260916110000_zalo_token_weekly_cron.sql` + Edge Function `refresh-zalo-token`): refresh token sống ~3 tháng và chỉ được gia hạn khi có người dùng. Nếu 3 tháng không chủ trọ nào gửi Zalo thì token chết dù code không có lỗi gì. Bật `pg_cron`/`pg_net`, chạy 08:00 thứ Hai hàng tuần. Service role key để gọi Edge Function lưu trong **Supabase Vault** (`vault.decrypted_secrets`), không nhúng thẳng vào `cron.job` — bảng đó ai đọc được database cũng xem được.
+
+**Verify thật** (không chỉ deploy rồi tin là chạy): chạy migration trên database thật, xác nhận `cron.job` có dòng `refresh-zalo-token-weekly`, `active=true`. Test cơ chế khoá bằng 2 lượt PATCH liên tiếp qua REST — lượt 1 trả 1 dòng (giành được), lượt 2 ngay sau trả 0 dòng (bị chặn đúng thiết kế). Nhân tiện ghi lại 1 cái bẫy khi tự viết script test: dấu `+` của múi giờ ISO (`+00:00`) nằm trong URL query bị Postgres hiểu thành dấu cách và báo `invalid input syntax for type timestamp` — code Deno dùng `toISOString()` (đuôi `Z`) nên không dính, nhưng script tay bằng Python thì phải tự đổi sang đuôi `Z`.
+
+### Việc còn lại
+
+- **Chờ dungtv cấp lại cặp token Zalo mới** (cặp cũ đã chết) → gửi tin ZNS test thật tới `0356123970`.
+### Lấy được token OA đúng loại — và chạm trần ở quyền của OA
+
+Sau khi vá xong cơ chế token, gửi thử vẫn thất bại. Truy nguyên ra một nhầm lẫn cơ bản đã kéo dài từ Đợt 41: **Zalo có 2 loại token khác nhau** và cặp token đang dùng là loại sai.
+
+| | Token App | Token OA |
+|---|---|---|
+| Lấy bằng | App ID + App Secret là đủ | Phải qua bước OA **cấp quyền** cho app (OAuth) |
+| Endpoint làm mới | `/v4/access_token` | `/v4/oa/access_token` |
+| Gửi ZNS được không | **Không** | Có |
+
+Triệu chứng của việc lấy nhầm loại rất dễ hiểu sai: gửi ZNS báo `-124 Access token invalid`, làm mới báo `-14014 Invalid refresh token` — nhìn như token hỏng/hết hạn, trong khi thực chất là sai loại. Đây cũng là lý do câu trả lời ở Đợt 41 (*"miền townsoftvina.com KHÔNG cần, chỉ dùng cho đăng nhập Zalo trên web"*) là **SAI**: luồng cấp quyền OA bắt buộc có `redirect_uri` thuộc domain đã xác thực.
+
+**Đã dựng luồng lấy token tự động** thay cho việc copy/dán tay:
+- Edge Function `zalo-oauth-callback` (mới, `auth: ["none"]` vì Zalo chuyển hướng trình duyệt tới, không kèm JWT): nhận `code` → đổi ra cặp token OA → lưu `tb_zalo_token` với `expires_at` đúng. Có 2 lớp chặn: `state` phải khớp secret `ZALO_OAUTH_STATE`, và `oa_id` Zalo trả về phải đúng OA của BizTown — nếu không, bất kỳ ai biết URL cũng có thể cấp quyền OA CỦA HỌ và ghi đè token của mình.
+- Zalo bắt **xác thực quyền sở hữu** đường dẫn callback trước khi cho dùng, bằng cách đặt file `zalo_verifier<mã>.html` tại chính đường dẫn đó. Vì callback là Edge Function chứ không phải web tĩnh, hàm tự sinh nội dung file từ mã trong tên file — không ghi cứng 1 mã, để Zalo cấp lại mã khác thì không phải deploy lại. Đã verify thật bằng cách gọi vào đường dẫn và so khớp từng dòng với file Zalo cấp.
+- Kết quả: dungtv bấm 1 link, chọn OA, bấm đồng ý → token OA tự lưu. Gọi `openapi.zalo.me/v2.0/oa/getoa` xác nhận token đúng OA "Townsoft Vina - BizTown", `is_verified=true`.
+
+**Chạm trần thật sự — `-120 "OA does not have permission to use this feature"`**: token OA hợp lệ nhưng MỌI endpoint ZNS đều bị chặn, kể cả API chỉ để xem hạn mức (`business.openapi.zalo.me/message/quota`). Đối chiếu thêm: app đã được duyệt đủ cả 3 quyền ZNS API ("Gửi ZNS", "Gửi ZNS với hệ mã hóa RSA", "Khởi tạo Journey Token"). Vậy vướng không nằm ở app cũng không nằm ở token, mà ở **chính OA chưa được bật gửi ZNS qua API trực tiếp**. Dấu hiệu củng cố: template `636461` ghi rõ là "ID mẫu **ZBS**", và OA có liên kết tài khoản ZBS riêng (`biztown`, ZBS-311863) — tức ZNS của OA này đang đi theo nhánh ZBS, còn nhánh OpenAPI trực tiếp phải xin bật riêng. Đang chờ dungtv liên hệ Zalo/ZBS để bật.
+
+### Chốt: KHÔNG gửi ZNS qua eSMS
+
+Claude đề xuất đường vòng: gửi ZNS qua eSMS (đối tác ZNS chính thức, mà dự án đã có sẵn tài khoản đang chạy thật cho SMS) để khỏi phải chờ Zalo bật quyền. **dungtv bác bỏ**, lý do: **eSMS đắt hơn và không kiểm soát được chi phí** — đi qua đại lý thì giá do đại lý đặt chứ không theo bảng giá gốc của Zalo, và khó theo dõi chi tiêu.
+
+Quyết định: ZNS đi thẳng API Zalo; gặp vướng thì xử lý ở phía Zalo/ZBS (xin bật quyền, xin duyệt) chứ không lấy eSMS làm lối thoát. eSMS **vẫn giữ nguyên cho SMS thường** — quyết định này chỉ áp dụng cho kênh ZNS.
+
+- **Câu hỏi mấu chốt cần test mới trả lời được**: khi người thuê bấm "Chi tiết", webhook Zalo gửi về những gì? Zalo chỉ định danh người dùng bằng **UID**, còn BizTown gửi ZNS theo **số điện thoại** — nếu webhook không kèm `msg_id` hay mã tham chiếu nào thì không biết UID đó ứng với hoá đơn nào. Có 2 hướng dự phòng: (a) đối chiếu qua `msg_id` đã lưu lúc gửi (vì vậy `sendZns()` nay trả về `msgId`), hoặc (b) lần đầu OA gửi tin xin chia sẻ SĐT, người thuê bấm 1 lần rồi lưu ánh xạ UID ↔ SĐT cho các lần sau. Chưa code hướng nào — chờ dữ liệu thật từ webhook rồi mới quyết, tránh đoán sai rồi phải viết lại.
+
 **Kết luận cho dungtv**: nguyên nhân chậm 100% là lỗi N+1 ở tầng code Flutter (không phải thiếu index database) — đã tìm và vá hết 3 chỗ tìm được trong toàn app, verify sống từng màn sau khi sửa đều nhanh (~1.5-2s) và dữ liệu vẫn đúng.
