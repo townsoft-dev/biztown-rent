@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import '../core/app_strings.dart';
 import '../core/theme.dart';
 import '../data/auth_repository.dart';
 import '../data/login_rate_limiter.dart';
+import '../data/push_repository.dart';
 import 'field_label.dart';
 
 /// S-01 — Đăng nhập. Layout/copy khớp ảnh Figma thật (09/09/2026) — không suy
@@ -50,6 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await authRepository.signInWithPassword(
           phone: phone, password: _passwordController.text);
       await loginRateLimiter.recordSuccess(phone);
+      unawaited(pushRepository.registerDeviceToken());
       if (mounted) context.go('/home');
     } catch (e) {
       final justLockedUntil = await loginRateLimiter.recordFailure(phone);

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../core/app_strings.dart';
 import '../core/supabase_client.dart';
 import '../core/theme.dart';
+import '../data/push_repository.dart';
 
 /// S-00 — Splash. Xem docs/SCREEN-SPEC.md mục 2.1 + ảnh Figma thật (09/09/2026).
 class SplashScreen extends StatefulWidget {
@@ -28,6 +31,8 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     final hasSession = supabase.auth.currentSession != null;
+    // Không await — không được phép làm chậm điều hướng vì lý do push.
+    if (hasSession) unawaited(pushRepository.registerDeviceToken());
     context.go(hasSession ? '/home' : '/login');
   }
 
