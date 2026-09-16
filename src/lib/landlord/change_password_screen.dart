@@ -5,11 +5,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/app_strings.dart';
 import '../core/locale_provider.dart';
+import '../core/password_validation.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../shared/app_button.dart';
 import '../shared/app_text_field.dart';
-import '../shared/detail_row.dart';
+import '../shared/password_requirements.dart';
 import '../shared/top_bar.dart';
 
 /// P-04 — Change Password (node 220:4985, Figma) — checklist dưới field "New
@@ -31,10 +32,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   bool _isSaving = false;
   String? _errorText;
 
-  bool get _hasMinLength => _newController.text.length >= 8;
-  bool get _hasNumber => _newController.text.contains(RegExp(r'[0-9]'));
-  bool get _hasUppercase => _newController.text.contains(RegExp(r'[A-Z]'));
-
   @override
   void dispose() {
     _currentController.dispose();
@@ -50,9 +47,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           _errorText = AppStrings.t('changePassword.currentPasswordRequired'));
       return;
     }
-    if (!_hasMinLength || !_hasNumber || !_hasUppercase) {
-      setState(
-          () => _errorText = AppStrings.t('changePassword.requirementsNotMet'));
+    if (!isValidPassword(_newController.text)) {
+      setState(() => _errorText = AppStrings.t('password.requirementsNotMet'));
       return;
     }
     if (_newController.text != _confirmController.text) {
@@ -110,18 +106,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   obscureText: true,
                 ),
                 const SizedBox(height: 10),
-                DetailBlock(children: [
-                  DetailRow(
-                      label: AppStrings.t('changePassword.reqMinLength'),
-                      value: _hasMinLength ? '✓' : '—'),
-                  DetailRow(
-                      label: AppStrings.t('changePassword.reqNumber'),
-                      value: _hasNumber ? '✓' : '—'),
-                  DetailRow(
-                      label: AppStrings.t('changePassword.reqUppercase'),
-                      value: _hasUppercase ? '✓' : '—',
-                      showDivider: false),
-                ]),
+                PasswordRequirements(password: _newController.text),
                 if (_errorText != null) ...[
                   const SizedBox(height: 8),
                   Text(_errorText!,

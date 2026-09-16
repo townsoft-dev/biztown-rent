@@ -979,3 +979,25 @@ Hệ quả: **vạch chỉ có hai màu xám → xanh, không bao giờ cam.** C
 **Bài học áp dụng cho mọi đợt sau:** thứ tự node id, thời điểm tạo frame và các suy luận tương tự **không phải bằng chứng về ý đồ thiết kế**. Khi hai nguồn thiết kế mâu thuẫn nhau, dừng lại hỏi dungtv quy tắc hành vi, đừng tự chọn bên rồi code theo. Figma cũng có thể sai — frame nào nghịch với quy tắc đã chốt thì báo lại như một lỗi thiết kế để Dream sửa, không bê vào app.
 
 **Trạng thái code:** `src/lib/shared/signup_stepper.dart` giữ nguyên logic gốc (vạch xanh khi `index < current`, còn lại xám). Quy tắc màu và cảnh báo về frame `386:2282` đã ghi thẳng vào doc comment của widget để đợt sau không sửa nhầm lần nữa.
+
+## 2026-09-16 (Đợt 54) — `ownedHouseIdsProvider` bám theo nhịp làm mới của `housesProvider`; thống nhất luật mật khẩu toàn app
+
+**1. Quyền sở hữu nhà bị "đóng băng" từ lần đọc đầu tiên.**
+
+`ownedHouseIdsProvider` (`core/providers.dart`) là `FutureProvider` thường và **không được `ref.invalidate` ở bất kỳ đâu trong toàn bộ app** — rà toàn bộ 60 chỗ gọi `invalidate(` không có chỗ nào chạm tới nó. Nghĩa là kết quả của lần đọc đầu tiên được giữ nguyên cho tới khi tắt hẳn app. Tài khoản mới tạo nhà xong, quay lại P-03 "Tài khoản nhận tiền" và P-06 "Tài khoản Quản lý" vẫn báo "Bạn chưa sở hữu nhà nào" (dungtv báo, kèm ảnh chụp cả 2 màn).
+
+**Cách sửa đã chọn: cho provider này phụ thuộc `housesProvider`** (`await ref.watch(housesProvider.future)`), cộng thêm `authStateProvider` để đổi tài khoản không dùng nhầm quyền người cũ.
+
+Cân nhắc 2 phương án: (a) thêm `ref.invalidate(ownedHouseIdsProvider)` vào các màn tạo/xoá nhà; (b) khai báo phụ thuộc. Chọn (b) vì (a) đòi mọi màn viết sau này phải **nhớ** invalidate thêm — mà chính lỗi này sinh ra từ việc quên. Với (b), mọi chỗ đang gọi `ref.invalidate(housesProvider)` (tạo nhà, xoá nhà, kéo xuống làm mới ở Home/Bills, lưu tài khoản ở P-03) tự động kéo theo. Lưu ý đây **không phải** phụ thuộc dữ liệu — quyền sở hữu nằm ở bảng `tb_user_house_access`, không nằm ở `tb_house` — mà là phụ thuộc **nhịp làm mới**, đã ghi rõ trong comment để đợt sau không tưởng thừa rồi gỡ đi.
+
+**2. Lỗi vòng đời widget ở P-03 bị che khuất bởi lỗi trên.**
+
+Vá xong mục 1 thì P-03 crash đỏ màn ngay: `setState() or markNeedsBuild() called during build`. `payout_bank_account_screen.dart` gọi `_selectHouse(...)` (có `setState`) ngay **trong** `build` để chọn sẵn nhà đầu tiên. Lỗi nằm im từ trước vì nhánh đó chưa bao giờ chạy — màn luôn rơi vào nhánh "Bạn chưa sở hữu nhà nào". Bản release **không** đỏ màn vì assert bị tắt, nên dungtv test TestFlight không thấy, nhưng vẫn là sai vòng đời. Tách `_fillForm` (chỉ gán) khỏi `_selectHouse` (`setState` + gán); trong `build` gọi `_fillForm`.
+
+**3. Hai luật mật khẩu khác nhau trong cùng một app.**
+
+P-04 Đổi mật khẩu bắt ≥8 ký tự + ≥1 số + ≥1 chữ hoa, có checklist sống. S-02 Đăng ký và S-04 Quên mật khẩu chỉ kiểm tra `length < 6`. Người dùng đăng ký được bằng `abc123` rồi sau đó **không đổi nổi** sang mật khẩu cùng độ mạnh. dungtv yêu cầu đồng bộ.
+
+**Lấy luật CHẶT hơn (của P-04) làm chuẩn chung**, không hạ P-04 xuống — hạ xuống là làm yếu mật khẩu của toàn bộ tài khoản. Gom vào `core/password_validation.dart` + widget `shared/password_requirements.dart`, cả 3 màn dùng chung. Thêm section i18n `password.*` (3 file en/vi/ko, đã đối chiếu khớp 672 key), xoá 4 key `changePassword.req*`/`requirementsNotMet` và `signup.passwordTooShort` nay không còn ai dùng.
+
+**Lệch so với Figma, cần Dream xác nhận:** frame S-02 Set Password (`347:2941`) **không có** khối checklist — thiết kế chỉ có dòng lỗi đỏ "Passwords do not match". Checklist được thêm vào theo yêu cầu đồng bộ của dungtv, vì nếu chỉ siết luật mà không hiện điều kiện thì người dùng bị chặn mà không biết vì sao. Nếu Dream muốn giữ đúng thiết kế cũ thì gỡ widget đi là xong, luật vẫn giữ nguyên.

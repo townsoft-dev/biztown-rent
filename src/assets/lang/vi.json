@@ -102,7 +102,6 @@
     "password": "Mật khẩu",
     "confirmPassword": "Xác nhận mật khẩu",
     "passwordsDoNotMatch": "Mật khẩu xác nhận không khớp.",
-    "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự.",
     "accountCreationFailed": "Không tạo được tài khoản. Vui lòng thử lại.",
     "createAccount": "Tạo tài khoản",
     "successTitle": "Chúc mừng! Tài khoản đã được tạo.",
@@ -340,16 +339,18 @@
     "saveError": "Không lưu được. Vui lòng thử lại.",
     "applyAllError": "Không áp dụng được cho tất cả các nhà. Vui lòng thử lại."
   },
+  "password": {
+    "reqMinLength": "Ít nhất 8 ký tự",
+    "reqNumber": "Ít nhất 1 chữ số",
+    "reqUppercase": "Ít nhất 1 chữ hoa",
+    "requirementsNotMet": "Mật khẩu chưa đủ các điều kiện ở trên."
+  },
   "changePassword": {
     "title": "Đổi mật khẩu",
     "currentPassword": "Mật khẩu hiện tại *",
     "newPassword": "Mật khẩu mới *",
     "confirmNewPassword": "Xác nhận mật khẩu mới *",
-    "reqMinLength": "Ít nhất 8 ký tự",
-    "reqNumber": "Ít nhất 1 chữ số",
-    "reqUppercase": "Ít nhất 1 chữ hoa",
     "currentPasswordRequired": "Nhập mật khẩu hiện tại của bạn.",
-    "requirementsNotMet": "Mật khẩu mới chưa đủ các điều kiện ở trên.",
     "currentPasswordIncorrect": "Mật khẩu hiện tại không đúng.",
     "saveError": "Không đổi được mật khẩu. Vui lòng thử lại.",
     "passwordsDoNotMatch": "Mật khẩu xác nhận không khớp."

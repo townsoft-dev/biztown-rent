@@ -55,16 +55,20 @@ class _PayoutBankAccountScreenState
   bool _hasAccount(House house) =>
       house.bankAccountNumber != null && house.bankAccountNumber!.isNotEmpty;
 
-  void _selectHouse(House house) {
-    setState(() {
-      _editingHouseId = house.id;
-      _selectedBank = VnBank.byBin(house.bankBin);
-      _accountNameController.text = house.bankAccountName ?? '';
-      _accountNumberController.text = house.bankAccountNumber ?? '';
-      _ownerFullNameController.text = house.ownerFullName;
-      _ownerTaxCodeController.text = house.ownerTaxCode ?? '';
-    });
+  /// Đổ dữ liệu 1 Nhà vào form. Tách riêng khỏi `setState` để lần đầu vào màn
+  /// (đang ở TRONG `build`) gọi được mà không vi phạm vòng đời widget — xem
+  /// `_selectHouse` và chỗ dùng trong `build`.
+  void _fillForm(House house) {
+    _editingHouseId = house.id;
+    _selectedBank = VnBank.byBin(house.bankBin);
+    _accountNameController.text = house.bankAccountName ?? '';
+    _accountNumberController.text = house.bankAccountNumber ?? '';
+    _ownerFullNameController.text = house.ownerFullName;
+    _ownerTaxCodeController.text = house.ownerTaxCode ?? '';
   }
+
+  /// Người dùng chủ động bấm chọn 1 Nhà khác ở dải chip phía trên.
+  void _selectHouse(House house) => setState(() => _fillForm(house));
 
   Future<void> _pickBank() async {
     final picked = await showModalBottomSheet<VnBank>(
@@ -196,8 +200,21 @@ class _PayoutBankAccountScreenState
                     final editingHouse = houses.firstWhere(
                         (h) => h.id == (_editingHouseId ?? houses.first.id),
                         orElse: () => houses.first);
+                    // Lần đầu vào màn thì chọn sẵn Nhà đầu tiên. Cố tình gọi
+                    // `_fillForm` chứ KHÔNG gọi `_selectHouse`: ta đang ở
+                    // trong `build`, mà `_selectHouse` gọi `setState` nên
+                    // Flutter ném "setState() or markNeedsBuild() called
+                    // during build" và cả màn đỏ lòm. Không cần `setState` ở
+                    // đây thật — `build` đang chạy sẵn rồi, gán thẳng vào
+                    // controller là khung hình đầu tiên đã hiện đúng dữ liệu.
+                    //
+                    // Lỗi này nằm im từ trước vì nhánh có nhà chưa bao giờ
+                    // chạy: `ownedHouseIdsProvider` không được làm mới nên màn
+                    // luôn rơi vào nhánh "Bạn chưa sở hữu nhà nào" ở trên.
+                    // Ở bản release assert bị tắt nên không thấy màn đỏ, nhưng
+                    // vẫn là sai vòng đời widget.
                     if (_editingHouseId == null) {
-                      _selectHouse(editingHouse);
+                      _fillForm(editingHouse);
                     }
 
                     return Form(

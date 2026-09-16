@@ -60,7 +60,22 @@ final isMainManagerProvider = FutureProvider<bool>((ref) {
 });
 
 /// ID các Nhà tài khoản hiện tại SỞ HỮU — dùng ở P-03/P-06.
-final ownedHouseIdsProvider = FutureProvider<Set<String>>((ref) {
+///
+/// `ref.watch(housesProvider.future)` ở đây KHÔNG phải để lấy dữ liệu (quyền
+/// sở hữu nằm ở bảng `tb_user_house_access`, không nằm ở `tb_house`) mà để bám
+/// theo cùng một nhịp làm mới: mọi chỗ đang gọi `ref.invalidate(housesProvider)`
+/// sau khi tạo/xoá nhà sẽ tự kéo theo provider này, và màn nào thêm sau cũng
+/// được hưởng mà không phải nhớ invalidate thêm.
+///
+/// Trước 16/09/2026 provider này KHÔNG được invalidate ở bất kỳ đâu trong app,
+/// nên nó giữ nguyên kết quả của lần đọc đầu tiên cho tới khi tắt hẳn app:
+/// tài khoản mới tạo nhà xong, quay lại P-03 "Tài khoản nhận tiền" và P-06
+/// "Tài khoản Quản lý" vẫn báo "Bạn chưa sở hữu nhà nào" (dungtv báo).
+///
+/// `authStateProvider` để đổi tài khoản thì không dùng nhầm quyền người cũ.
+final ownedHouseIdsProvider = FutureProvider<Set<String>>((ref) async {
+  ref.watch(authStateProvider);
+  await ref.watch(housesProvider.future);
   return ref.watch(userRepositoryProvider).listOwnedHouseIds();
 });
 

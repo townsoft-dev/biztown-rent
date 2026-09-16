@@ -102,7 +102,6 @@
     "password": "Password",
     "confirmPassword": "Confirm password",
     "passwordsDoNotMatch": "Passwords do not match.",
-    "passwordTooShort": "Password must be at least 6 characters.",
     "accountCreationFailed": "Could not create the account. Please try again.",
     "createAccount": "Create account",
     "successTitle": "Congratulation! Account created.",
@@ -340,16 +339,18 @@
     "saveError": "Could not save. Please try again.",
     "applyAllError": "Could not apply to all houses. Please try again."
   },
+  "password": {
+    "reqMinLength": "At least 8 characters",
+    "reqNumber": "At least 1 number",
+    "reqUppercase": "At least 1 uppercase letter",
+    "requirementsNotMet": "Password does not meet all requirements above."
+  },
   "changePassword": {
     "title": "Change password",
     "currentPassword": "Current password *",
     "newPassword": "New password *",
     "confirmNewPassword": "Confirm new password *",
-    "reqMinLength": "At least 8 characters",
-    "reqNumber": "At least 1 number",
-    "reqUppercase": "At least 1 uppercase letter",
     "currentPasswordRequired": "Enter your current password.",
-    "requirementsNotMet": "New password does not meet all requirements above.",
     "currentPasswordIncorrect": "Current password is incorrect.",
     "saveError": "Could not change password. Please try again.",
     "passwordsDoNotMatch": "Passwords do not match."

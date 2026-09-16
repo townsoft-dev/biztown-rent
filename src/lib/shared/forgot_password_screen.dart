@@ -9,9 +9,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/app_strings.dart';
 import '../core/theme.dart';
+import '../core/password_validation.dart';
 import '../core/phone_validation.dart';
 import '../data/auth_repository.dart';
 import 'field_label.dart';
+import 'password_requirements.dart';
 import 'send_otp_chip.dart';
 import 'signup_stepper.dart';
 import 'top_bar.dart';
@@ -149,8 +151,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _savePassword() async {
-    if (_passwordController.text.length < 6) {
-      setState(() => _errorText = AppStrings.t('signup.passwordTooShort'));
+    // Dùng chung đúng một luật với P-04 Đổi mật khẩu (xem
+    // core/password_validation.dart) — trước 16/09/2026 màn này chỉ bắt
+    // `length < 6` nên đăng ký được bằng mật khẩu mà chính P-04 lại từ chối.
+    if (!isValidPassword(_passwordController.text)) {
+      setState(() => _errorText = AppStrings.t('password.requirementsNotMet'));
       return;
     }
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -420,6 +425,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Text(_confirmPasswordError!,
               style: GoogleFonts.inter(fontSize: 12, color: AppColors.error)),
         ],
+        const SizedBox(height: 12),
+        PasswordRequirements(password: _passwordController.text),
         if (_errorText != null) ...[
           const SizedBox(height: 8),
           Text(_errorText!,
