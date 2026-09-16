@@ -10,6 +10,7 @@ import '../core/locale_provider.dart';
 import '../core/number_format.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
+import '../data/models/contract.dart';
 import '../data/models/reading.dart';
 import '../data/models/vn_bank.dart';
 import '../shared/app_banner.dart';
@@ -63,6 +64,71 @@ class InvoiceScheduleScreen extends ConsumerWidget {
           }
 
           final period = periodStartingAt(version, periodStart);
+
+          // Chỉ số điện/nước thật của kỳ đang xem. Trước 16/09/2026 màn này
+          // KHÔNG hề truy vấn chỉ số — 2 ô Điện/Nước luôn hiện "— chưa có chỉ
+          // số" kể cả khi đã ghi đủ, nên chủ trọ tưởng chưa ghi (dungtv báo).
+          //
+          // Dùng lại `houseMeterEntriesProvider` (đã gộp sẵn chỉ số kỳ này +
+          // chỉ số liền trước cho mọi phòng, chỉ 2 lượt gọi mạng cho cả nhà)
+          // thay vì tự truy vấn riêng ở đây.
+          final meterEntriesAsync = ref.watch(houseMeterEntriesProvider(
+              (houseId: house.id, periodYm: period.start)));
+          final meterEntries = meterEntriesAsync.valueOrNull;
+          if (meterEntries == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          /// Giá trị hiển thị cho 1 ô tiện ích, tính ĐÚNG theo quy tắc của Edge
+          /// Function `generate-invoice` để xem trước khớp hoá đơn thật:
+          /// `NOT_BILLED` không tính, `FLAT` lấy tiền khoán, `BY_READING` lấy
+          /// (chỉ số kỳ này − chỉ số liền trước) × đơn giá.
+          ///
+          /// Hợp đồng nhiều phòng thì CỘNG DỒN sản lượng mọi phòng — hoá đơn
+          /// cũng gộp về một hợp đồng chứ không tách theo phòng.
+          String utilityValue(UtilityType type) {
+            final isElectricity = type == UtilityType.electricity;
+            final method = isElectricity
+                ? version.electricityBillingMethod
+                : version.waterBillingMethod;
+            if (method == UtilityBillingMethod.notBilled) return '—';
+            if (method == UtilityBillingMethod.flat) {
+              final flat = isElectricity
+                  ? version.electricityFlatAmount
+                  : version.waterFlatAmount;
+              return flat == null ? '—' : formatNumber(flat);
+            }
+            final price = isElectricity
+                ? version.electricityUnitPrice
+                : version.waterUnitPrice;
+            if (price == null) return '—';
+
+            final roomIds = rooms.map((r) => r.id).toSet();
+            num? usage;
+            for (final entry in meterEntries) {
+              if (entry.utilityType != type) continue;
+              if (!roomIds.contains(entry.room.id)) continue;
+              final current = entry.thisPeriod?.currentReading;
+              final previous = entry.previous?.currentReading;
+              // Thiếu 1 trong 2 đầu thì không ra được sản lượng — bỏ qua phòng
+              // đó, đúng như backend (`usage = null` khi không có chỉ số trước).
+              if (current == null || previous == null) continue;
+              usage = (usage ?? 0) + (current - previous);
+            }
+            if (usage == null) {
+              return AppStrings.t('invoiceSchedule.noReadingYet', {
+                'price': formatNumber(price),
+                'unit': type.unit,
+              });
+            }
+            return AppStrings.t('invoiceSchedule.readingAmount', {
+              'amount': formatNumber(usage * price),
+              'usage': formatNumber(usage),
+              'unit': type.unit,
+              'price': formatNumber(price),
+            });
+          }
+
           final roomLabel = rooms.map((r) => r.roomNo).join(', ');
           final bank = VnBank.byBin(house.bankBin);
           final hasPayoutAccount =
@@ -122,22 +188,11 @@ class InvoiceScheduleScreen extends ConsumerWidget {
                           value: formatNumber(version.monthlyRent)),
                       DetailRow(
                         label: AppStrings.t('contractDetail.electricity'),
-                        value: version.electricityUnitPrice == null
-                            ? '—'
-                            : AppStrings.t('invoiceSchedule.noReadingYet', {
-                                'price':
-                                    formatNumber(version.electricityUnitPrice!),
-                                'unit': UtilityType.electricity.unit,
-                              }),
+                        value: utilityValue(UtilityType.electricity),
                       ),
                       DetailRow(
                         label: AppStrings.t('contractDetail.water'),
-                        value: version.waterUnitPrice == null
-                            ? '—'
-                            : AppStrings.t('invoiceSchedule.noReadingYet', {
-                                'price': formatNumber(version.waterUnitPrice!),
-                                'unit': UtilityType.water.unit,
-                              }),
+                        value: utilityValue(UtilityType.water),
                       ),
                       if (version.serviceFeeAmount != null)
                         DetailRow(

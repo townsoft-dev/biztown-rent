@@ -623,6 +623,7 @@
     "monthlyRent": "월세",
     "service": "관리비",
     "noReadingYet": "— 아직 지침 없음  ·  {price} / {unit}",
+    "readingAmount": "{amount}  ·  {usage} {unit} × {price}",
     "fixedPartTotal": "고정 항목 합계",
     "termsNote": "이 기간이 시작되기 전까지 조건이 바뀔 수 있습니다 — 미리보기는 항상 현재 계약 조건을 사용합니다.",
     "sectionPayoutAccount": "입금 계좌",

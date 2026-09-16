@@ -623,6 +623,7 @@
     "monthlyRent": "Tiền thuê/tháng",
     "service": "Dịch vụ",
     "noReadingYet": "— chưa có chỉ số  ·  {price} / {unit}",
+    "readingAmount": "{amount}  ·  {usage} {unit} × {price}",
     "fixedPartTotal": "Tổng phần cố định",
     "termsNote": "Điều khoản có thể còn thay đổi trước khi kỳ này bắt đầu — bản xem trước luôn dùng điều khoản hiện hành.",
     "sectionPayoutAccount": "Tài khoản nhận tiền",

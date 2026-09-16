@@ -623,6 +623,7 @@
     "monthlyRent": "Monthly rent",
     "service": "Service",
     "noReadingYet": "— no reading yet  ·  {price} / {unit}",
+    "readingAmount": "{amount}  ·  {usage} {unit} × {price}",
     "fixedPartTotal": "Fixed part total",
     "termsNote": "Terms may still change before this period starts — the preview always uses the current contract version.",
     "sectionPayoutAccount": "Payout account",
