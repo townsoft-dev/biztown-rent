@@ -1,10 +1,10 @@
 # ZALO-MESSAGING.md — Gửi tin nhắn Zalo OA (Tenant + xác thực tài khoản)
 
-> **Trạng thái tài liệu:** Version 2 — **Last updated:** 2026-09-15 (Dream, qua Claude/Cowork)
+> **Trạng thái tài liệu:** Version 3 — **Last updated:** 2026-09-16 (Dream, qua Claude/Cowork)
 > Tài liệu này gộp 3 luồng dùng chung hạ tầng Zalo OA (`_shared/zalo.ts`, `tb_zalo_token`):
-> - **Luồng A (chào mừng hợp đồng, gửi Tenant)** — template đã duyệt, có thể code.
+> - **Luồng A (chào mừng hợp đồng, gửi Tenant)** — template đã duyệt, có thể code. Vẫn phụ thuộc câu hỏi rộng hơn "có tiếp tục dùng Zalo OA hay không" — xem ghi chú Luồng C.
 > - **Luồng B (hoá đơn hàng tháng, gửi Tenant)** — **CHƯA CHỐT phương án**, đang nghiên cứu.
-> - **Luồng C (OTP xác thực tài khoản — đăng ký/quên mật khẩu, gửi App user)** — **ĐÃ CHỐT**: đổi kênh gửi từ eSMS sang Zalo ZBS, template đã duyệt.
+> - **Luồng C (OTP xác thực tài khoản — đăng ký/quên mật khẩu, gửi App user)** — **⏸️ TẠM HOÃN (16/09/2026, đảo lại quyết định "ĐÃ CHỐT" ngày 2026-09-15):** ZBS xác nhận rẻ hơn eSMS, nhưng Dream đang cân nhắc lại có nên tiếp tục dùng Zalo OA cho hệ thống hay không — chưa chốt. **Cho tới khi có quyết định về OA: kênh gửi OTP (tạo tài khoản + quên mật khẩu) tiếp tục ưu tiên SMS qua eSMS như hiện tại, không đổi.** Xem Đợt 50 trong `DECISIONS.md`.
 >
 > Tài liệu nghiên cứu chi tiết hơn cho Luồng B (bảng giá, chính sách Zalo, so sánh chi phí từng phương án) nằm ở Claude Project brainstorm riêng của Dream ("BizTown - Rent-Manager / Brainstorm"), KHÔNG nằm trong repo này: `zalo-feasibility-review.md`. Tài liệu ở đây trích lại các điểm liên quan trực tiếp tới việc code, không lặp lại toàn bộ.
 
@@ -170,7 +170,7 @@ Từ `zalo-feasibility-review.md`: bỏ hẳn QR dạng ảnh, chỉ giữ thôn
 
 ## 3. Luồng C — OTP xác thực tài khoản (đăng ký / quên mật khẩu)
 
-> ✅ **QUY TẮC ĐÃ CHỐT (Dream, 2026-09-15):** kênh gửi OTP xác thực tài khoản (đăng ký tài khoản + quên mật khẩu, cho **App user** — Landlord/Manager) đổi từ **eSMS** sang **Zalo ZBS, template 636478 đã duyệt**. Mục tiêu: giảm chi phí gửi OTP. Đây không phải phương án đang cân nhắc như Luồng B — hướng đi đã chốt, chỉ còn việc code theo mục 3.4 bên dưới.
+> ⏸️ **TẠM HOÃN (Dream, 16/09/2026, Đợt 50) — đảo lại quyết định "ĐÃ CHỐT" ngày 2026-09-15:** kênh gửi OTP xác thực tài khoản (đăng ký tài khoản + quên mật khẩu, cho **App user** — Landlord/Manager) **tiếp tục dùng eSMS như hiện tại, KHÔNG đổi sang Zalo ZBS** cho tới khi có quyết định rõ ràng. Lý do đảo lại: ZBS đã xác nhận rẻ hơn eSMS (xem mục 3.2), nhưng Dream đang cân nhắc lại câu hỏi rộng hơn — có nên tiếp tục dùng Zalo OA cho hệ thống này hay không (ảnh hưởng cả Luồng A/B, không riêng OTP) — nên chưa muốn chốt riêng cho Luồng C trước khi có câu trả lời chung đó. Toàn bộ nội dung mục 3 bên dưới (template 636478, tham số, checklist code) **vẫn giữ nguyên làm tài liệu tham khảo** — không xoá gì, chỉ đổi trạng thái quyết định, để khi nào chốt xong việc dùng OA thì áp dụng lại ngay, không phải nghiên cứu lại từ đầu. **Không có gì cần sửa trong code** — `send-otp-sms/index.ts` trên thực tế chưa từng được đổi sang gọi `sendZns()` (Đợt 47/48 chỉ là quyết định ghi trên tài liệu, chưa code), nên hiện trạng code đã đúng sẵn với quyết định mới này.
 
 ### 3.1 Hiện trạng trước khi đổi
 
@@ -229,9 +229,10 @@ Các chỗ đã code trước đây (S-02 Đăng ký, S-04 Quên mật khẩu) c
 - [ ] Cảnh báo Brandname demo ở đầu `send-otp-sms/index.ts` (dòng 14-17) không còn đúng nếu bỏ hẳn eSMS — cần xoá/sửa lại comment khi code xong.
 - [ ] Test OTP number cấu hình sẵn trong Supabase Auth (`0356123970` → mã cố định) đi qua đường riêng của Supabase (bỏ qua hook hoàn toàn) — không bị ảnh hưởng bởi thay đổi này, không cần sửa.
 
-### 3.6 Đã cập nhật cùng đợt này
+### 3.6 Lịch sử cập nhật trạng thái quyết định
 
-`docs/REQUIREMENTS.md` INT-02/INT-03 đã được sửa lại trạng thái để phản ánh đúng quy tắc mới (kênh OTP chuyển sang ZBS) — xem file đó.
+- 2026-09-15 (Đợt 47/48): `docs/REQUIREMENTS.md` INT-02/INT-03 được sửa để ghi "ĐÃ CHỐT: đổi sang ZBS".
+- 2026-09-16 (Đợt 50): **đảo lại** — INT-03 nay ghi "tạm hoãn, giữ eSMS, chờ quyết định OA" — xem `docs/REQUIREMENTS.md` INT-03 và `docs/DECISIONS.md` Đợt 50.
 
 ### 3.7 Giới hạn tối ưu chi phí UID cho luồng này
 
@@ -252,6 +253,6 @@ Giống Luồng A/B, tối ưu SĐT→UID cần biết UID của người nhận
 
 - `supabase/functions/_shared/zalo.ts`, `tb_zalo_token` (migration `20260915100000_tb_zalo_token.sql`)
 - `supabase/functions/send-otp-sms/index.ts`, `supabase/functions/_shared/esms.ts` (Luồng C)
-- `docs/DECISIONS.md` Đợt 14 (chọn eSMS cho OTP), Đợt 41 (hạ tầng Zalo), Đợt 46 (Luồng A/B), Đợt 47 (Luồng C), Đợt 48 (bản sửa này)
+- `docs/DECISIONS.md` Đợt 14 (chọn eSMS cho OTP), Đợt 41 (hạ tầng Zalo), Đợt 46 (Luồng A/B), Đợt 47 (Luồng C — đổi sang ZBS), Đợt 48 (sửa lại nội dung mục 3), Đợt 50 (đảo lại quyết định Luồng C — tạm hoãn, quay về eSMS)
 - `docs/REQUIREMENTS.md` INT-02/INT-03
 - Project brainstorm của Dream (ngoài repo, research chi tiết cho Luồng B): `zalo-feasibility-review.md`

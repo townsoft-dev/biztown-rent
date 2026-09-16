@@ -782,3 +782,28 @@ Dream phản hồi 2 điểm về `docs/ZALO-MESSAGING.md`: (1) không muốn t�
 - Mục 3 (Luồng C) nay mở đầu bằng câu chốt rõ ràng: "✅ QUY TẮC ĐÃ CHỐT: kênh gửi OTP xác thực tài khoản đổi từ eSMS sang Zalo ZBS (template 636478 đã duyệt)" — tách bạch với 1 chi tiết triển khai vẫn còn mở (có giữ eSMS làm fallback hay không), để không đọc nhầm cả luồng là "chưa chốt".
 
 **Đã cập nhật thêm `docs/REQUIREMENTS.md`** — INT-03 (OTP) nay ghi rõ "ĐÃ CHỐT: đổi kênh gửi từ eSMS sang Zalo ZBS", trỏ tới `ZALO-MESSAGING.md` mục 3; tách rõ khỏi INT-02 (SMS Brandname qua eSMS — vẫn dùng cho thông báo/hoá đơn gửi Tenant qua `send-notification`, không liên quan OTP nữa).
+
+## 2026-09-16 (Đợt 49) — Hạ độ ưu tiên "Nhắc thanh toán tự động" từ Must xuống Could cho phase này
+
+Dream xác nhận (qua trao đổi ở Project brainstorm riêng, không phải phiên Claude Code trên repo): nhắc trễ hẹn (nhắc thanh toán trước/đúng/sau hạn) chỉ là **Could**, không phải **Must** trong phase hiện tại — đảo lại quyết định trước đó (BR-PAY-04/BR-NOTI-02/FR-BILL-09 từng ghi Must, kế thừa nguyên vẹn từ Version 2 mà chưa từng được đặt lại câu hỏi ở Version 3).
+
+**Đã sửa:**
+- `docs/BUSINESS-RULES.md` — `BR-PAY-04` (mục 2) và `BR-NOTI-02` (mục 5): cột Trạng thái đổi Must → Could, ghi rõ ngày hạ + tham chiếu Đợt này.
+- `docs/REQUIREMENTS.md` — `FR-BILL-09` (mục 2.6): Priority đổi Must → Could. `FR-NOTI-02` (mục 2.9): tách rõ 2 phần trong cùng 1 dòng — phần "hoá đơn mới" vẫn **Must**, phần "nhắc thanh toán" hạ xuống **Could** (2 phần trước đó gộp chung 1 mức Must, nay không còn đúng nữa vì chỉ 1 trong 2 bị hạ).
+
+**Chưa đổi (ngoài phạm vi yêu cầu lần này):** `BR-NOTI-04`/`FR-CTR-05` (nhắc gia hạn hợp đồng sắp hết hạn) vẫn giữ nguyên `Could` như cũ — không liên quan tới nhắc thanh toán hoá đơn. Chưa động tới code (tính năng nhắc thanh toán tự động hiện **chưa có implementation** nào trong `supabase/functions`/`src/lib` — đây thuần là điều chỉnh tài liệu kế hoạch, không phải rollback code).
+
+**Việc cần làm tiếp:** vì hạ xuống Could, không cần ưu tiên dựng job nhắc hạn tự động (cron/scheduled function) trong phase này; nếu sau này nâng lại lên Must, cần quay lại chốt giá trị X/Y ngày nhắc cụ thể (vẫn đang để trống trong BR-PAY-04).
+
+## 2026-09-16 (Đợt 50) — Đảo lại quyết định "OTP đổi sang Zalo ZBS" (Đợt 47/48): tạm hoãn, quay về eSMS cho tới khi chốt việc dùng OA
+
+Dream yêu cầu (qua Project brainstorm riêng, không phải phiên Claude Code trên repo) đảo lại/ghi đè quyết định "✅ ĐÃ CHỐT: đổi kênh gửi OTP xác thực tài khoản từ eSMS sang Zalo ZBS" đã ghi ở Đợt 47/48 (2026-09-15). Lý do: ZBS xác nhận rẻ hơn eSMS về giá, nhưng Dream đang cân nhắc lại **có nên tiếp tục dùng Zalo OA cho toàn hệ thống hay không** — câu hỏi rộng hơn, chưa chốt. Ràng buộc rõ từ Dream: **không sửa bất kỳ nội dung code nào đã viết**; luồng OTP tạo tài khoản/đổi mật khẩu **tiếp tục ưu tiên gửi qua SMS (eSMS)** cho tới khi có quyết định về việc dùng OA.
+
+**Xác nhận trước khi sửa tài liệu:** rà lại `supabase/functions/send-otp-sms/index.ts` — file này **chưa từng thực sự đổi sang Zalo**, toàn bộ logic vẫn chỉ gọi `sendViaEsms()` (không có nhánh `sendZns()`/import `_shared/zalo.ts` nào). Quyết định Đợt 47/48 chỉ dừng ở mức tài liệu, chưa từng được implement. Vì vậy việc đảo quyết định lần này **không cần và không có sửa code nào** — code hiện tại đã khớp sẵn với quyết định mới (tiếp tục dùng eSMS). Không đổi `supabase/functions/_shared/zalo.ts`, không đổi migration `tb_zalo_token`, không đổi secrets `ZALO_OA_ID`/`ZALO_APP_ID`/`ZALO_APP_SECRET` — các phần này vẫn giữ nguyên để dùng cho Luồng A (Mẫu 1 hoá đơn, đã duyệt) và làm sẵn cho tương lai nếu OA tiếp tục được dùng.
+
+**Đã sửa (chỉ tài liệu):**
+- `docs/ZALO-MESSAGING.md` — mục Trạng thái tài liệu nâng lên Version 3, ngày 2026-09-16; Luồng C (mục 3) đổi câu chốt "✅ QUY TẮC ĐÃ CHỐT (2026-09-15)" thành "⏸️ TẠM HOÃN (16/09/2026, Đợt 50)" kèm giải thích lý do (đang cân nhắc lại câu hỏi OA) và khẳng định rõ: cho tới khi có quyết định về OA, kênh gửi OTP tiếp tục ưu tiên eSMS, không đổi so với hiện tại. Nội dung kỹ thuật chi tiết của Luồng C (tham số template 636478, mapping, checklist code ở mục 3.7...) **được giữ nguyên làm tài liệu tham khảo**, không xoá — để tái sử dụng nếu sau này quyết định tiếp tục dùng OA. Mục 3.6 đổi thành bảng lịch sử trạng thái quyết định (Đợt 47/48 → chốt ZBS; Đợt 50 → tạm hoãn, quay lại eSMS).
+- `docs/REQUIREMENTS.md` — `INT-03` (OTP): đổi từ "ĐÃ CHỐT: đổi kênh gửi từ eSMS sang Zalo ZBS" thành "Tạm hoãn quyết định đổi sang ZBS (Đợt 50) — đang cân nhắc lại việc dùng Zalo OA cho hệ thống; cho tới khi chốt, tiếp tục ưu tiên gửi SMS qua eSMS như hiện tại".
+- `docs/DECISIONS.md` (file này) — thêm entry Đợt 50 này, không sửa/xoá nội dung Đợt 47/48 (giữ nguyên theo đúng tính chất "nhật ký", không ghi đè lịch sử).
+
+**Chưa quyết, cần Dream/dungtv chốt tiếp:** có tiếp tục dùng Zalo OA cho hệ thống (Luồng A hoá đơn, Luồng B tin tư vấn, Luồng C OTP) hay không — quyết định này ảnh hưởng rộng hơn riêng luồng OTP, cần chốt trước khi quay lại bất kỳ luồng Zalo nào. Nếu sau này chốt tiếp tục dùng OA và muốn OTP dùng ZBS: nội dung kỹ thuật Đợt 47/48 (mục 3 `ZALO-MESSAGING.md`) đã có sẵn, chỉ cần đổi lại trạng thái và code `send-otp-sms/index.ts` theo checklist mục 3.7 đã ghi.
