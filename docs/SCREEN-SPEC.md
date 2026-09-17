@@ -302,11 +302,11 @@
 
 ### B-05 — Send Invoice Sheet
 - **Mục đích:** Xem mã QR và chọn kênh gửi — dùng chung cho cả B-02 (đơn lẻ) và B-03 (hàng loạt).
-- **Thành phần chính:** Preview mã QR VietQR/NAPAS-247 (mẫu đại diện nếu hàng loạt), chọn kênh gửi (SMS/Zalo/Cả hai), số lượng hoá đơn sẽ gửi (nếu hàng loạt), nút "Gửi", nút "Chỉ lưu nháp, gửi sau".
+- **Thành phần chính:** Preview mã QR VietQR/NAPAS-247 (mẫu đại diện nếu hàng loạt), chọn kênh gửi — **SMS / Email / Cả hai** (sửa 17/09/2026: **bổ sung kênh Email**, xem `BUSINESS-RULES.md` BR-NOTI-08; thay cho nhãn "SMS/Zalo/Cả hai" đã lỗi thời từ Đợt 51 khi Zalo OA bị bỏ cho Phase 1 — Zalo không còn là lựa chọn), số lượng hoá đơn sẽ gửi (nếu hàng loạt), nút "Gửi", nút "Chỉ lưu nháp, gửi sau".
 - **Trạng thái:** Xem trước → Đang gửi → Hoàn tất.
 - **Hành động & điều hướng:** "Gửi" → hoá đơn chuyển trạng thái "Sent", hệ thống gửi qua kênh đã chọn → B-01. "Chỉ lưu nháp" → hoá đơn giữ "Draft" → B-01.
 - **Dữ liệu hiển thị:** Số hoá đơn sẽ gửi + tổng tiền.
-- **Edge cases:** Thiếu tài khoản ngân hàng nhận tiền của nhà → không hiện được QR, cảnh báo rõ trước khi cho gửi.
+- **Edge cases:** Thiếu tài khoản ngân hàng nhận tiền của nhà → không hiện được QR, cảnh báo rõ trước khi cho gửi. **Mới (17/09/2026):** Tenant chưa có email trong hồ sơ mà chọn kênh "Email" hoặc "Cả hai" → **chặn gửi qua kênh Email**, hiện thông báo (dialog/snackbar) yêu cầu bổ sung email trước khi gửi (VD: "Người thuê chưa có email, vui lòng bổ sung trước khi gửi qua Email"), có link/nút dẫn nhanh tới T-04 để bổ sung — xem `BUSINESS-RULES.md` BR-NOTI-09. Gửi hàng loạt (từ B-03) mà có nhiều Tenant thiếu email → liệt kê rõ những hồ sơ thiếu, không chặn toàn bộ lô nếu Landlord chỉ muốn gửi SMS cho các hồ sơ đó (`TBD`: hành vi chính xác khi trộn lẫn thiếu/đủ email trong 1 lô cần Dream xác nhận). **Mockup nội dung email (17/09/2026):** đã có bản mockup giao diện email hoá đơn thực tế trên Figma — frame `MOCK-EMAIL` (node `584:2524`, page "MVP Wireframes"), tham khảo bố cục từ `MOCK-IMG` (ảnh SMS) và tinh chỉnh theo 2 ví dụ email thật (Uniqlo, AeonEshop) — xem [DECISIONS.md](DECISIONS.md) Đợt 58. Đây chỉ là mockup **nội dung email nhận được**, chưa phải bản cập nhật control chọn kênh SMS/Email tại chính màn B-05 này (vẫn `TBD`).
 
 ---
 

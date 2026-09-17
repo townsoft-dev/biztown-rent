@@ -108,13 +108,15 @@
 
 | ID | Sự kiện | Kênh | Trạng thái |
 |---|---|---|---|
-| BR-NOTI-01 | Hoá đơn mới được tạo & gửi (đơn lẻ hoặc hàng loạt) | Push (người có quyền trên nhà đó) + SMS qua eSMS (Tenant, kèm link ảnh chi tiết + mã QR) — đổi từ "SMS/Zalo (kèm mã QR)" (16/09/2026, Đợt 51: bỏ Zalo OA cho Phase 1), xem `docs/SMS-HOA-DON.md` | Must |
+| BR-NOTI-01 | Hoá đơn mới được tạo & gửi (đơn lẻ hoặc hàng loạt) | Push (người có quyền trên nhà đó) + SMS qua eSMS (Tenant, kèm link ảnh chi tiết + mã QR) — đổi từ "SMS/Zalo (kèm mã QR)" (16/09/2026, Đợt 51: bỏ Zalo OA cho Phase 1), xem `docs/SMS-HOA-DON.md`. **Bổ sung (17/09/2026): thêm kênh Email** — xem BR-NOTI-08/09 | Must |
 | BR-NOTI-02 | Nhắc thanh toán (trước/đúng/sau hạn) | Push + SMS qua eSMS — đổi từ "SMS/Zalo" (Đợt 51) | Could — hạ từ Must (16/09/2026, Đợt 49), xem BR-PAY-04 |
 | BR-NOTI-03 | Đánh dấu đã thu tiền | Push nội bộ (cho người khác cùng quyền trên nhà đó, nếu có) | Should |
 | BR-NOTI-04 | Hợp đồng sắp hết hạn (nhắc gia hạn) | Push + có thể kèm SMS qua eSMS — đổi từ "SMS/Zalo" (Đợt 51) | Could |
 | BR-NOTI-05 | **Đến hạn ghi chỉ số điện/nước định kỳ hàng tháng** của 1 Nhà/Dãy trọ | Push (người có quyền trên nhà đó) | Must — điều hướng tới màn **Ghi chỉ số** (Home tab), không phải màn Tạo hoá đơn như cách hiểu tạm thời ở Version 2 (xem mục 6) |
 | BR-NOTI-06 | Được mời làm quản lý 1 Nhà/Dãy trọ | Push (nếu đã có tài khoản); nếu chưa có tài khoản thì thông báo hiện khi đăng nhập lần đầu sau khi đăng ký | Should |
 | BR-NOTI-07 | **Ngôn ngữ nội dung** SMS gửi cho Tenant (hoá đơn, nhắc thanh toán) | Cố định **tiếng Việt** ở Phase 1 — **không dùng song ngữ Anh+Việt trong cùng 1 tin nhắn** vì làm tăng độ dài tin nhắn, đội chi phí gửi tin (SMS tính phí theo đoạn ký tự) — **độc lập hoàn toàn** với ngôn ngữ hiển thị (English/Tiếng Việt/한국어) mà chủ nhà/quản lý đang chọn ở P-01 (`FR-MGR-05`); Tenant không có tài khoản/app nên không có lựa chọn ngôn ngữ riêng | Mới, 09/09/2026 (đợt 4) — sửa lại đợt 5: tiếng Anh → tiếng Việt; bỏ nhắc "Zalo" (16/09/2026, Đợt 51 — chỉ còn kênh SMS cho Phase 1) |
+| BR-NOTI-08 | **Bổ sung tính năng gửi hoá đơn qua Email** — thêm **Email** làm kênh gửi hoá đơn cho Tenant, lựa chọn thêm bên cạnh SMS tại màn Gửi hoá đơn (B-05): gửi qua SMS, qua Email, hoặc cả hai. Email gửi tới `tb_tenant.email`, nội dung tối thiểu gồm bảng chi phí chi tiết + mã QR thanh toán (tương tự ảnh chi tiết đã thiết kế cho SMS — xem `docs/SMS-HOA-DON.md` mục 3), có thể đính kèm ảnh/PDF hoá đơn | **Đề xuất mới (17/09/2026)** — cần Dream xác nhận độ ưu tiên (Must/Should/Could), nhà cung cấp gửi email (transactional email — chưa tích hợp, xem `REQUIREMENTS.md` mục Integrations) và nội dung email cụ thể (subject, template) trước khi code |
+| BR-NOTI-09 | **Chặn chọn kênh Email khi Tenant chưa có email** — nếu hồ sơ Tenant chưa có địa chỉ email (`tb_tenant.email` rỗng/null), người dùng vẫn có thể thấy tuỳ chọn "Email"/"Cả hai" tại B-05 nhưng khi **chọn** tuỳ chọn đó, hệ thống phải **hiện thông báo cảnh báo ngay** (ví dụ: "Người thuê chưa có email, vui lòng bổ sung email trước khi gửi qua kênh này") và **không cho gửi qua Email** cho tới khi hồ sơ được bổ sung email (sửa tại màn T-04 — Tenant Create/Edit) | **Đã chốt (17/09/2026)** — theo yêu cầu Dream; xem `SCREEN-SPEC.md` B-05 edge cases |
 
 ---
 
