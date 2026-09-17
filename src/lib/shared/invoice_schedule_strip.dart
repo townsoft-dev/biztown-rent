@@ -11,7 +11,11 @@ import '../core/theme.dart';
 class InvoiceScheduleStrip extends StatelessWidget {
   final List<InvoiceScheduleChipData> chips;
   final int visibleCount;
-  final ValueChanged<DateTime> onTapPeriod;
+
+  /// Nhận nguyên chip chứ không chỉ `periodStart`: màn cha cần biết kỳ đó đã
+  /// có hoá đơn thật chưa (`chip.invoiceId`) để mở HOÁ ĐƠN thay vì màn xem
+  /// trước — xem `InvoiceScheduleChipData.invoiceId`.
+  final ValueChanged<InvoiceScheduleChipData> onTapPeriod;
   final bool showLegend;
 
   const InvoiceScheduleStrip({
@@ -34,7 +38,7 @@ class InvoiceScheduleStrip extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             for (final chip in visible)
-              _Chip.period(chip, onTap: () => onTapPeriod(chip.periodStart)),
+              _Chip.period(chip, onTap: () => onTapPeriod(chip)),
             if (overflow > 0) _Chip.overflow('+$overflow'),
           ],
         ),

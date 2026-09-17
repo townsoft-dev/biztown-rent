@@ -51,8 +51,21 @@ class InvoiceScheduleChipData {
   final InvoiceChipState state;
   final DateTime periodStart;
 
-  const InvoiceScheduleChipData(
-      {required this.label, required this.state, required this.periodStart});
+  /// ID hoá đơn THẬT của kỳ này, `null` khi kỳ đó chưa có hoá đơn nào.
+  ///
+  /// Cần tách riêng khỏi [state] vì hoá đơn **Nháp** cũng vẽ bằng trạng thái
+  /// `current` (đúng Figma: viền cam = kỳ đang tới) — nhìn vào `state` thì
+  /// không phân biệt được "chưa có hoá đơn" với "có hoá đơn nháp". Trước
+  /// 17/09/2026 chỗ bấm chip chỉ có `periodStart` nên luôn mở màn XEM TRƯỚC,
+  /// khiến hoá đơn nháp không bao giờ mở được để gửi (dungtv báo).
+  final String? invoiceId;
+
+  const InvoiceScheduleChipData({
+    required this.label,
+    required this.state,
+    required this.periodStart,
+    this.invoiceId,
+  });
 }
 
 /// Dựng dải chip "Invoice schedule" cho T-05 — `totalPeriods` kỳ tính từ kỳ
@@ -96,7 +109,8 @@ List<InvoiceScheduleChipData> buildInvoiceScheduleChips(
     return InvoiceScheduleChipData(
         label: 'T${period.start.month}',
         state: state,
-        periodStart: period.start);
+        periodStart: period.start,
+        invoiceId: invoice?.id);
   });
 }
 
