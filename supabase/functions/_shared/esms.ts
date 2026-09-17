@@ -14,7 +14,13 @@ function toLocalVnPhone(phone: string): string {
   return phone.startsWith("+84") ? `0${phone.slice(3)}` : phone;
 }
 
-export async function sendSmsViaEsms(phone: string, message: string): Promise<void> {
+/** Kết quả thô từ eSMS — `smsId` dùng để tra cứu tình trạng giao tin sau đó. */
+export interface EsmsSendResult {
+  smsId: string | null;
+  raw: Record<string, unknown>;
+}
+
+export async function sendSmsViaEsms(phone: string, message: string): Promise<EsmsSendResult> {
   const apiKey = Deno.env.get("ESMS_API_KEY");
   const secretKey = Deno.env.get("ESMS_SECRET_KEY");
   if (!apiKey || !secretKey) throw new Error("Thiếu secret ESMS_API_KEY/ESMS_SECRET_KEY");
@@ -36,4 +42,10 @@ export async function sendSmsViaEsms(phone: string, message: string): Promise<vo
   if (body.CodeResult !== "100") {
     throw new Error(`eSMS gửi thất bại: ${JSON.stringify(body)}`);
   }
+  // CHÚ Ý: "100" chỉ nghĩa là eSMS ĐÃ NHẬN đơn, KHÔNG phải nhà mạng đã giao
+  // tới máy người nhận. Trước 17/09/2026 hàm này vứt luôn phản hồi nên khi
+  // dungtv không nhận được tin, không còn gì để tra cứu — không biết tin có
+  // tồn tại trên hệ thống eSMS hay không. Trả `smsId` ra để tra tình trạng
+  // giao tin (và đối chiếu trong trang quản trị eSMS).
+  return { smsId: (body.SMSID ?? null) as string | null, raw: body };
 }

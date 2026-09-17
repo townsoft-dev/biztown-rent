@@ -103,8 +103,15 @@ export default {
 
     if (payload.tenant) {
       try {
-        await sendSmsViaEsms(payload.tenant.phone, payload.tenant.message);
-        results.tenantMessage = { sent: true, channel: "sms", phone: payload.tenant.phone };
+        const sms = await sendSmsViaEsms(payload.tenant.phone, payload.tenant.message);
+        // `sent` ở đây nghĩa là eSMS đã NHẬN đơn, không bảo đảm máy người nhận
+        // đã có tin — kèm `smsId` để còn tra cứu được khi tin không tới.
+        results.tenantMessage = {
+          sent: true,
+          channel: "sms",
+          phone: payload.tenant.phone,
+          smsId: sms.smsId,
+        };
       } catch (e) {
         return Response.json({ error: `${e}` }, { status: 500 });
       }
