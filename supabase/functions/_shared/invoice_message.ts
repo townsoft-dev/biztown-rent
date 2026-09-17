@@ -27,7 +27,7 @@ const VN_BANKS: { bin: string; name: string }[] = [
   { bin: "970431", name: "Eximbank" },
 ];
 
-function bankByBin(bin: string | null | undefined) {
+export function bankByBin(bin: string | null | undefined) {
   if (!bin) return null;
   return VN_BANKS.find((b) => b.bin === bin) ?? null;
 }

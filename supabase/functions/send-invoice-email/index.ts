@@ -32,6 +32,14 @@
 
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
+// Dùng lại bảng tra tên ngân hàng đã có, không chép thêm bản thứ ba.
+import { bankByBin } from "../_shared/invoice_message.ts";
+
+interface UtilityLine {
+  utilityType: "electricity" | "water";
+  usageAmount: number | null;
+  totalAmount: number | null;
+}
 
 interface SendInvoiceEmailRequest {
   invoiceId: string;
@@ -46,43 +54,183 @@ function esc(s: string): string {
   );
 }
 
-/** Bản dựng tối giản — thay bằng mẫu của Hường khi có. */
-function renderInvoiceEmail(inv: {
+/// Mẫu thư theo thiết kế Figma "MOCK-EMAIL" của Hường (17/09/2026). Màu lấy
+/// bằng cách đọc pixel từ bản render, không ước lượng bằng mắt:
+///   navy `#1E2A51` · cam `#F29437` · nền tổng `#FDECE1` · viền `#EBEEF3`
+///   nền thẻ `#F6F8FA` · đỏ hạn thanh toán `#B64D43`
+///
+/// Vì sao viết bằng `<table>` và CSS inline: Gmail/Outlook **cắt bỏ thẻ
+/// `<style>`** và không hiểu flex/grid. Cũng vì vậy không dùng JavaScript,
+/// không dùng font tải về, và mọi thông tin quan trọng (số tiền, số tài khoản)
+/// đều là CHỮ chứ không nằm trong ảnh — nhiều hộp thư chặn ảnh mặc định.
+///
+/// Logo dựng bằng chữ thay vì ảnh, cùng lý do: ảnh bị chặn thì tiêu đề thư
+/// trắng trơn.
+interface InvoiceEmailData {
   houseName: string;
   rooms: string;
   tenantName: string;
   periodStart: string;
   periodEnd: string;
   dueDate: string;
+  rent: number;
+  electricity: { usage: number | null; amount: number } | null;
+  water: { usage: number | null; amount: number } | null;
+  fees: { name: string; amount: number }[];
   total: number;
+  invoiceCode: string | null;
   qrUrl: string | null;
-}): string {
-  return `<!doctype html><html lang="vi"><body style="margin:0;background:#F5F6F9;
- font:15px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1B2440">
-<div style="max-width:480px;margin:0 auto;padding:16px">
-  <div style="background:#fff;border-radius:14px;padding:20px">
-    <h1 style="font-size:18px;margin:0 0 4px">Hoá đơn tiền nhà</h1>
-    <p style="color:#6B7392;font-size:13px;margin:0 0 16px">
-      ${esc(inv.houseName)} &middot; Phòng ${esc(inv.rooms)} &middot; ${esc(inv.tenantName)}
-    </p>
-    <table style="width:100%;border-collapse:collapse;font-size:14px">
-      <tr><td style="padding:6px 0;color:#6B7392">Kỳ</td>
-          <td style="padding:6px 0;text-align:right;font-weight:600">${day(inv.periodStart)} - ${day(inv.periodEnd)}</td></tr>
-      <tr><td style="padding:6px 0;color:#6B7392">Hạn thanh toán</td>
-          <td style="padding:6px 0;text-align:right;font-weight:600">${day(inv.dueDate)}</td></tr>
-      <tr><td style="padding:10px 0;color:#6B7392;border-top:1px solid #EDEFF5">Tổng cộng</td>
-          <td style="padding:10px 0;text-align:right;font-size:20px;font-weight:700;border-top:1px solid #EDEFF5">${vnd(inv.total)}đ</td></tr>
+  bank: { name: string; accountNumber: string; accountName: string } | null;
+}
+
+const NAVY = "#1E2A51";
+const CAM = "#F29437";
+const VIEN = "#EBEEF3";
+const MO = "#6B7392";
+
+function hang(label: string, value: string, dam = true): string {
+  return `<tr>
+    <td style="padding:7px 0;color:${MO};font-size:13px">${label}</td>
+    <td style="padding:7px 0;text-align:right;font-size:13px;color:${NAVY};font-weight:${dam ? 700 : 400}">${value}</td>
+  </tr>`;
+}
+
+function renderInvoiceEmail(d: InvoiceEmailData): string {
+  const ky = `${day(d.periodStart)} - ${day(d.periodEnd)}`;
+  const dongPhi = d.fees.map((f) =>
+    `<tr><td style="padding:5px 0 5px 16px;color:${MO};font-size:13px">&ndash; ${esc(f.name)}</td>
+     <td style="padding:5px 0;text-align:right;font-size:13px;color:${NAVY};font-weight:700">${vnd(f.amount)}đ</td></tr>`
+  ).join("");
+
+  return `<!doctype html><html lang="vi"><body style="margin:0;padding:0;background:#EBEEF3">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EBEEF3;padding:16px 0">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:8px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+
+  <tr><td style="height:4px;background:${CAM};font-size:0;line-height:0">&nbsp;</td></tr>
+
+  <tr><td style="background:${NAVY};padding:28px 32px">
+    <div style="font-size:30px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">Biz<span style="color:#AEB6CC">Town</span></div>
+    <div style="height:3px;width:150px;background:${CAM};margin:6px 0 8px"></div>
+    <div style="font-size:11px;letter-spacing:3px;color:#AEB6CC">RENT MANAGER</div>
+    <div style="font-size:17px;font-weight:700;color:#ffffff;margin-top:22px">Hoá đơn tiền trọ hàng tháng của bạn</div>
+    <div style="font-size:12px;color:#AEB6CC;margin-top:5px">Xem chi tiết bên dưới hoặc thanh toán trực tiếp qua email</div>
+  </td></tr>
+
+  <tr><td style="padding:26px 32px 8px">
+    <div style="font-size:15px;font-weight:700;color:${NAVY}">Xin chào ${esc(d.tenantName)},</div>
+    <div style="font-size:13px;color:#4A5372;line-height:1.6;margin-top:8px">
+      Hoá đơn tiền trọ kỳ ${ky} của bạn tại ${esc(d.houseName)} &middot; Phòng ${esc(d.rooms)}
+      đã sẵn sàng. Vui lòng xem chi tiết bên dưới và thanh toán trước hạn.
+    </div>
+  </td></tr>
+
+  <tr><td style="padding:14px 32px 0">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F8FA;border-radius:8px">
+      <tr><td style="padding:14px 16px 4px">
+        <span style="display:inline-block;background:${CAM};color:#ffffff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px">Chưa thanh toán</span>
+      </td></tr>
+      <tr><td style="padding:2px 16px 12px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          ${hang("Người thuê", esc(d.tenantName))}
+          ${d.invoiceCode ? hang("Mã hoá đơn", esc(d.invoiceCode)) : ""}
+        </table>
+      </td></tr>
     </table>
-  </div>
-  ${
-    inv.qrUrl
-      ? `<div style="background:#fff;border-radius:14px;padding:20px;margin-top:12px;text-align:center">
-    <img src="${inv.qrUrl}" alt="Ma QR chuyen khoan" width="220" height="220" style="display:block;margin:0 auto">
-    <p style="color:#6B7392;font-size:12px;margin:8px 0 0">Quét mã để chuyển khoản</p>
-  </div>`
+  </td></tr>
+
+  <tr><td style="padding:18px 32px 0">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${VIEN}">
+      ${hang("Tiền phòng", vnd(d.rent) + "đ")}
+      ${
+    d.electricity
+      ? hang(
+        d.electricity.usage != null ? `Tiền điện (${vnd(d.electricity.usage)} kWh)` : "Tiền điện",
+        vnd(d.electricity.amount) + "đ",
+      )
       : ""
   }
-</div></body></html>`;
+      ${
+    d.water
+      ? hang(
+        d.water.usage != null ? `Tiền nước (${vnd(d.water.usage)} m³)` : "Tiền nước",
+        vnd(d.water.amount) + "đ",
+      )
+      : ""
+  }
+      ${d.fees.length ? `<tr><td colspan="2" style="padding:7px 0 0;color:${MO};font-size:13px">Phí khác:</td></tr>${dongPhi}` : ""}
+    </table>
+  </td></tr>
+
+  <tr><td style="padding:16px 32px 0">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FDECE1;border:1px solid #F0D1B2;border-radius:8px">
+      <tr>
+        <td style="padding:14px 16px;font-size:13px;font-weight:700;color:${NAVY}">TỔNG CỘNG</td>
+        <td style="padding:14px 16px;text-align:right;font-size:20px;font-weight:700;color:#C75A2F">${vnd(d.total)}đ</td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="padding:14px 32px 0">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="font-size:13px;font-weight:700;color:#B64D43">Hạn thanh toán</td>
+        <td style="text-align:right;font-size:13px;font-weight:700;color:#B64D43">${day(d.dueDate)}</td>
+      </tr>
+    </table>
+  </td></tr>
+
+  ${
+    d.qrUrl
+      ? `<tr><td style="padding:16px 32px 0">
+    <div style="text-align:center;font-size:11px;color:${MO};margin-bottom:10px">Hoặc quét mã QR bên dưới để chuyển khoản trực tiếp</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px dashed #C9CFDD;border-radius:8px">
+      <tr><td align="center" style="padding:16px 16px 6px">
+        <div style="font-size:13px;font-weight:700;color:${NAVY};margin-bottom:12px">Quét mã để thanh toán qua VietQR</div>
+        <img src="${d.qrUrl}" alt="Ma QR chuyen khoan" width="200" height="200" style="display:block;border:0">
+      </td></tr>
+      ${
+        d.bank
+          ? `<tr><td style="padding:6px 16px 14px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F8FA;border-radius:6px">
+          <tr><td style="padding:10px 12px 2px;color:${MO};font-size:12px">Ngân hàng</td>
+              <td style="padding:10px 12px 2px;text-align:right;font-size:12px;font-weight:700;color:${NAVY}">${esc(d.bank.name)}</td></tr>
+          <tr><td style="padding:2px 12px;color:${MO};font-size:12px">Số tài khoản</td>
+              <td style="padding:2px 12px;text-align:right;font-size:12px;font-weight:700;color:${NAVY}">${esc(d.bank.accountNumber)}</td></tr>
+          <tr><td style="padding:2px 12px;color:${MO};font-size:12px">Chủ tài khoản</td>
+              <td style="padding:2px 12px;text-align:right;font-size:12px;font-weight:700;color:${NAVY}">${esc(d.bank.accountName)}</td></tr>
+          ${
+            d.invoiceCode
+              ? `<tr><td style="padding:2px 12px 10px;color:${MO};font-size:12px">Nội dung CK</td>
+              <td style="padding:2px 12px 10px;text-align:right;font-size:12px;font-weight:700;color:${NAVY}">${esc(d.invoiceCode)}</td></tr>`
+              : ""
+          }
+        </table>
+      </td></tr>`
+          : ""
+      }
+    </table>
+  </td></tr>`
+      : ""
+  }
+
+  <tr><td style="padding:18px 32px 0">
+    <div style="text-align:center;font-size:11px;color:${MO};line-height:1.6">
+      Quý khách vui lòng chuyển khoản đúng số tiền, đúng hạn để tránh phí trễ hạn.<br>
+      Sau khi chuyển khoản, vui lòng thông báo cho chủ nhà qua Zalo/SMS.
+    </div>
+    <div style="text-align:center;font-size:11px;color:${MO};margin-top:10px">
+      Đây là email tự động, vui lòng không trả lời trực tiếp email này.
+    </div>
+  </td></tr>
+
+  <tr><td style="padding:18px 32px 24px;text-align:center;border-top:1px solid ${VIEN}">
+    <div style="font-size:11px;color:${MO}">BizTown Rent Manager &copy; ${new Date().getFullYear()}</div>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
 }
 
 async function sendViaBrevo(to: string, subject: string, html: string) {
@@ -124,7 +272,7 @@ export default {
     const { data: invoice } = await ctx.supabase
       .from("tb_invoice")
       .select(
-        "id, contract_id, house_name, room_nos, tenant_name, period_start, period_end, due_date, total_amount, public_code",
+        "id, contract_id, house_id, house_name, room_nos, tenant_name, period_start, period_end, due_date, rent_amount, utility_lines, service_fee_amount, recurring_fees, other_fees, total_amount, public_code",
       )
       .eq("id", invoiceId)
       .maybeSingle();
@@ -143,6 +291,34 @@ export default {
       ? `${Deno.env.get("SUPABASE_URL")}/functions/v1/invoice-qr/${invoice.public_code}`
       : null;
 
+    // Tài khoản nhận tiền lấy từ nhà, KHÔNG lấy bản lưu trong hoá đơn — chủ trọ
+    // đổi số tài khoản sau khi tạo hoá đơn thì bản lưu đã cũ (xem `invoice-qr`).
+    const { data: house } = await ctx.supabaseAdmin
+      .from("tb_house")
+      .select("bank_bin, bank_account_number, bank_account_name")
+      .eq("id", invoice.house_id)
+      .maybeSingle();
+
+    const lines = (invoice.utility_lines ?? []) as UtilityLine[];
+    const gop = (type: "electricity" | "water") => {
+      const of = lines.filter((l) => l.utilityType === type);
+      if (of.length === 0) return null;
+      const usage = of.every((l) => l.usageAmount != null)
+        ? of.reduce((n, l) => n + Number(l.usageAmount), 0)
+        : null;
+      return { usage, amount: of.reduce((n, l) => n + Number(l.totalAmount ?? 0), 0) };
+    };
+
+    // "Phí khác" gộp phí dịch vụ + phí định kỳ + phí phát sinh, đúng thứ tự mẫu.
+    const fees: { name: string; amount: number }[] = [];
+    if (Number(invoice.service_fee_amount ?? 0) > 0) {
+      fees.push({ name: "Phí dịch vụ", amount: Number(invoice.service_fee_amount) });
+    }
+    for (const f of [...(invoice.recurring_fees ?? []), ...(invoice.other_fees ?? [])] as
+      { name: string; amount: number }[]) {
+      fees.push({ name: f.name, amount: Number(f.amount) });
+    }
+
     const html = renderInvoiceEmail({
       houseName: invoice.house_name ?? "",
       rooms,
@@ -150,8 +326,20 @@ export default {
       periodStart: invoice.period_start,
       periodEnd: invoice.period_end,
       dueDate: invoice.due_date,
+      rent: Number(invoice.rent_amount ?? 0),
+      electricity: gop("electricity"),
+      water: gop("water"),
+      fees,
       total: Number(invoice.total_amount),
+      invoiceCode: invoice.public_code ?? null,
       qrUrl,
+      bank: house?.bank_account_number
+        ? {
+          name: bankByBin(house.bank_bin)?.name ?? "",
+          accountNumber: house.bank_account_number,
+          accountName: house.bank_account_name ?? "",
+        }
+        : null,
     });
 
     try {
