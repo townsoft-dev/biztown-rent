@@ -4,10 +4,20 @@
 // generate-invoice (mode "batchSend", tạo + gửi hàng loạt phía backend). Tách
 // ra đây vì cả 2 nơi cần đúng 1 logic gọi eSMS giống hệt nhau.
 //
-// SmsType "1" = tin thường qua đầu số/tổng đài dùng chung của eSMS — gửi
-// được nội dung TỰ DO ngay, không cần đăng ký/duyệt Brandname trước (dungtv
-// xác nhận CHƯA có Brandname CSKH riêng, 2026-09-14). Nâng cấp lên Brandname
-// CSKH thật (SmsType "8") sau chỉ cần đổi trong hàm này.
+// ⚠️ SmsType "1" (đầu số/tổng đài dùng chung) — eSMS NHẬN đơn nhưng NHÀ MẠNG
+// KHÔNG GIAO. Kiểm chứng thật 17/09/2026: gửi cùng lúc tới cùng một số bằng
+// cùng một tài khoản eSMS, tin SmsType "1" không tới máy, tin brandname
+// (SmsType "2" + "Baotrixemay") tới ngay. Vậy nên SMS hoá đơn hiện KHÔNG đến
+// được tay người thuê, dù hàm này trả về thành công.
+//
+// Ghi chú cũ ("gửi được nội dung TỰ DO ngay, không cần Brandname") là SAI —
+// nó dựa trên việc eSMS trả CodeResult 100, mà mã đó chỉ nghĩa là eSMS đã
+// nhận đơn.
+//
+// KHÔNG có đường vòng: brandname demo "Baotrixemay" chỉ cho gửi đúng một mẫu
+// nội dung cố định của eSMS, không nhét được nội dung hoá đơn. Muốn gửi hoá
+// đơn thật phải ĐĂNG KÝ BRANDNAME CSKH riêng rồi đổi sang SmsType "8" +
+// `Brandname` ở hàm này.
 
 // Supabase gửi SĐT dạng E.164 (+84...) — eSMS cần dạng nội địa (0...).
 function toLocalVnPhone(phone: string): string {

@@ -1043,3 +1043,27 @@ Plugin `firebase_messaging` gọi hàm này trong hook `didFinishLaunchingWithOp
 **Hạ tầng test rút ngắn được**: iPhone dungtv paired sẵn và cùng mạng nội bộ ⇒ `xcrun devicectl` cài + chạy app **qua mạng, không cáp, không TestFlight**. Nhưng phải dựng bản **ad-hoc** (`flutter build ipa --export-method ad-hoc`) chứ không phải bản Development: ad-hoc mới ra `aps-environment = production` khớp cấu hình APNs của dự án; bản Development ra `development` (sandbox) nên kết quả test vô nghĩa. Vòng lặp từ ~30 phút xuống ~2 phút.
 
 **Đã verify thật**: `tb_device_token` có đủ 2 dòng `ios` + `android` của `84356123970`; gọi `send-notification` trả `{"recipientCount":2,"sent":2}`.
+
+## 2026-09-17 (Đợt 57) — SMS hoá đơn KHÔNG gửi được nếu chưa có Brandname: đầu số dùng chung bị nhà mạng chặn
+
+**Triệu chứng**: backend báo gửi SMS hoá đơn thành công nhưng máy dungtv không nhận được tin nào.
+
+**Kiểm chứng tách bạch** (cùng một số nhận, cùng một tài khoản eSMS, cách nhau vài phút):
+
+| Cách gửi | eSMS nhận đơn | Máy nhận được |
+|---|---|---|
+| `SmsType "1"` — đầu số/tổng đài dùng chung | `CodeResult 100` | **KHÔNG** |
+| `SmsType "2"` + Brandname `Baotrixemay` | `CodeResult 100` | **CÓ** |
+
+**Kết luận**: `CodeResult 100` chỉ nghĩa là **eSMS đã nhận đơn**, không phải nhà mạng đã giao. Đầu số dùng chung bị chặn. Ghi chú cũ trong `_shared/esms.ts` ("SmsType 1 gửi được nội dung tự do ngay, không cần Brandname") là **SAI** — đã sửa lại trong code.
+
+**Hệ quả**: **SMS hoá đơn hiện không đến được tay người thuê.** Không có đường vòng — brandname demo `Baotrixemay` chỉ cho gửi đúng một mẫu nội dung cố định của eSMS, không nhét được nội dung hoá đơn. Muốn chạy thật thì **bắt buộc đăng ký Brandname CSKH riêng**, rồi đổi sang `SmsType "8"` + `Brandname` trong `_shared/esms.ts` (đúng một hàm, không đụng chỗ khác).
+
+**Loại trừ được các nghi phạm khác trong lúc truy**:
+- **Không phải sai tài khoản**: khoá eSMS trên server là của Dream, không khớp khoá của dungtv (đối chiếu bằng SHA-256 — có tự kiểm chứng phương pháp trước bằng một secret biết trước giá trị). Nhưng gửi bằng tài khoản dungtv vẫn không tới, nên tài khoản không phải nguyên nhân.
+- **Không phải hết tiền**: số dư tài khoản dungtv 1.720đ, còn gửi được.
+- **Không phải do nội dung có dấu hay có link**: tin thử không dấu, không link cũng không tới.
+
+**Cũng khép lại câu hỏi eSMS hay SpeedSMS**: cả hai đều đòi Brandname để gửi nội dung tự do — đúng cái rào đã loại SpeedSMS ở Đợt 14. Nay eSMS cũng vướng đúng rào đó, nên lý do chọn eSMS ngày xưa (có brandname demo để test ngay) đã hết hiệu lực. So lại từ đầu là hợp lý; chi phí đổi bên thấp vì chỉ 2 file chạm tới eSMS.
+
+**Việc chỉ dungtv làm được**: đăng ký Brandname CSKH với eSMS (hoặc SpeedSMS) — cần giấy tờ doanh nghiệp, chờ duyệt. Trước khi có, mọi test SMS hoá đơn tới người thuê đều vô nghĩa.
