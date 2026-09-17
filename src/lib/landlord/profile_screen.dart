@@ -186,10 +186,8 @@ class ProfileScreen extends ConsumerWidget {
                 // TestFlight không đọc được log, xem `PushStatus`).
                 Center(
                   child: Text(
-                    AppStrings.t('profile.pushStatus', {
-                      'status': _pushStatusLabel(
-                          ref.watch(pushStatusProvider).valueOrNull),
-                    }),
+                    _pushStatusText(ref.watch(pushStatusProvider).valueOrNull),
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
                         fontSize: 12, color: AppColors.textTertiary),
                   ),
@@ -201,6 +199,16 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Dòng trạng thái push, kèm nguyên văn lỗi Apple trả về nếu có — cái đó mới
+  /// là thứ khoanh được lỗi, tên trạng thái chỉ nói chết ở bước nào.
+  String _pushStatusText(PushDiagnosis? diagnosis) {
+    final line = AppStrings.t(
+        'profile.pushStatus', {'status': _pushStatusLabel(diagnosis?.status)});
+    final detail = diagnosis?.apnsDetail;
+    if (detail == null || detail == 'ok') return line;
+    return '$line\nAPNs: $detail';
   }
 
   /// `null` = đang kiểm tra (chưa có kết quả).

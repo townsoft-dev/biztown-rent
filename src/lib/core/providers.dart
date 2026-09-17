@@ -64,7 +64,7 @@ final packageInfoProvider =
 /// Chẩn đoán push hiện ở cuối tab Hồ sơ — xem `PushStatus`. Mỗi lần mở tab là
 /// một lần thử đăng ký lại, nên nó vừa là chẩn đoán vừa là đường tự chữa.
 final pushStatusProvider =
-    FutureProvider<PushStatus>((ref) => pushRepository.diagnose());
+    FutureProvider<PushDiagnosis>((ref) => pushRepository.diagnose());
 
 final userRepositoryProvider =
     Provider<UserRepository>((ref) => userRepository);

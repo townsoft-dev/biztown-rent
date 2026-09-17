@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/supabase_client.dart';
@@ -30,6 +31,17 @@ enum PushStatus {
   ready,
 }
 
+/// Trạng thái push + lý do thô từ tầng iOS (nếu có).
+class PushDiagnosis {
+  final PushStatus status;
+
+  /// Nguyên văn lỗi Apple trả về khi đăng ký APNs thất bại, do
+  /// `AppDelegate.swift` ghi lại. `null` khi không có/không phải iOS.
+  final String? apnsDetail;
+
+  const PushDiagnosis(this.status, {this.apnsDetail});
+}
+
 /// Đăng ký device token (FCM) vào `tb_device_token` — điều kiện để nhận Push
 /// khi app đang tắt/nền (khác Realtime chỉ chạy khi app đang mở, xem
 /// docs/DECISIONS.md Đợt 43, 46). Gọi mỗi khi có session hợp lệ (Splash +
@@ -43,9 +55,9 @@ class PushRepository {
   /// Chạy lại đúng các bước của `registerDeviceToken()` nhưng TRẢ VỀ lý do
   /// thất bại thay vì nuốt. Gọi khi mở tab Hồ sơ — vừa chẩn đoán, vừa là một
   /// lần thử đăng ký lại (lưu token luôn nếu lấy được).
-  Future<PushStatus> diagnose() async {
+  Future<PushDiagnosis> diagnose() async {
     final userId = _client.auth.currentUser?.id;
-    if (userId == null) return PushStatus.notSignedIn;
+    if (userId == null) return const PushDiagnosis(PushStatus.notSignedIn);
     try {
       final messaging = FirebaseMessaging.instance;
       final settings = await messaging
@@ -53,21 +65,25 @@ class PushRepository {
           .timeout(const Duration(seconds: 15));
       if (settings.authorizationStatus != AuthorizationStatus.authorized &&
           settings.authorizationStatus != AuthorizationStatus.provisional) {
-        return PushStatus.permissionDenied;
+        return const PushDiagnosis(PushStatus.permissionDenied);
       }
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         if (await _waitForApnsToken(messaging) == null) {
-          return PushStatus.noApnsToken;
+          return PushDiagnosis(PushStatus.noApnsToken,
+              apnsDetail: await _apnsNativeStatus());
         }
       }
       final token =
           await messaging.getToken().timeout(const Duration(seconds: 15));
-      if (token == null) return PushStatus.noFcmToken;
+      if (token == null) {
+        return PushDiagnosis(PushStatus.noFcmToken,
+            apnsDetail: await _apnsNativeStatus());
+      }
       await _upsert(userId, token);
-      return PushStatus.ready;
+      return const PushDiagnosis(PushStatus.ready);
     } catch (e) {
       debugPrint('diagnose() lỗi: $e');
-      return PushStatus.saveFailed;
+      return PushDiagnosis(PushStatus.saveFailed, apnsDetail: '$e');
     }
   }
 
@@ -104,6 +120,18 @@ class PushRepository {
       await _upsert(userId, token);
     } catch (e) {
       debugPrint('registerDeviceToken() lỗi, bỏ qua: $e');
+    }
+  }
+
+  /// Nguyên văn kết quả đăng ký APNs do `AppDelegate.swift` ghi lại —
+  /// `"ok"` nếu Apple đã cấp, còn lại là domain + mã + mô tả lỗi của Apple.
+  /// `null` khi chưa có callback nào chạy (thường là chưa gọi đăng ký).
+  Future<String?> _apnsNativeStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('push.apnsNativeStatus');
+    } catch (e) {
+      return null;
     }
   }
 
