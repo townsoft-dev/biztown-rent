@@ -31,6 +31,15 @@ class AppColors {
   static const textPrimary = Color(0xFF23305E); // = primary
   static const textSecondary = Color(0xFF5A6B8A); // = secondary
   static const borderSubtle = Color(0xFFEEF0F5);
+
+  /// Gạch phân cách trong menu "⋮" (`Action` pop-up, node Figma `400:2652`).
+  ///
+  /// Đọc pixel trực tiếp trên bản render Figma 18/09/2026: nét LIỀN màu
+  /// `#7F7F7F`, đậm hơn hẳn mọi token viền khác. Cố ý để riêng chứ không gộp
+  /// vào `borderSubtle`/`neutral200`: đây là màu Dream dùng riêng cho menu,
+  /// không có trong bảng token ở docs/DESIGN-SYSTEMS.md, nên gộp vào là mất
+  /// dấu vết và lần sau lại sửa nhầm.
+  static const menuDivider = Color(0xFF7F7F7F);
   static const borderNav = Color(0xFFECEEF3); // viền trên Bottom navigation
 
   static const coralBg = Color(0xFFFDEEE8); // UnderRepair badge bg

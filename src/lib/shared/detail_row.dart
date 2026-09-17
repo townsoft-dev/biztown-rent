@@ -77,8 +77,10 @@ class DetailBlock extends StatelessWidget {
 
 /// Đường ngăn cách nét chấm ở đáy 1 `DetailRow`.
 ///
-/// Màu `neutral200` chứ không phải `borderSubtle` `#EEF0F5`: nét chấm vốn đã
-/// thưa, dùng màu chỉ lệch ~4% so với nền trắng thì coi như không thấy gì.
+/// Thông số đo pixel trực tiếp trên component Figma `168:58` (18/09/2026):
+/// chấm **2px, cách 2px**, dày 1px, đầu vuông, màu `borderSubtle` `#EEF0F5`,
+/// chạy suốt bề ngang dòng. Bản sửa đầu tiên hôm nay đoán 1.5/3.0 màu
+/// `neutral200` vì lúc đó Figma MCP mất đăng nhập — sai cả 3 thông số.
 class _DottedBottomBorder extends Decoration {
   const _DottedBottomBorder();
 
@@ -89,17 +91,17 @@ class _DottedBottomBorder extends Decoration {
 
 class _DottedBottomBorderPainter extends BoxPainter {
   static const _strokeWidth = 1.0;
-  static const _dotWidth = 1.5;
-  static const _gapWidth = 3.0;
+  static const _dotWidth = 2.0;
+  static const _gapWidth = 2.0;
 
   @override
   void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
     final size = configuration.size!;
     final y = offset.dy + size.height - _strokeWidth / 2;
     final paint = Paint()
-      ..color = AppColors.neutral200
+      ..color = AppColors.borderSubtle
       ..strokeWidth = _strokeWidth
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.butt;
     var x = offset.dx;
     final endX = offset.dx + size.width;
     while (x < endX) {

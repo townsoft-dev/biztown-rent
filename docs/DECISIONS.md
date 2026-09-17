@@ -1133,10 +1133,25 @@ Entry Đợt 59 (Dream, thuần thiết kế) ghi *"chưa chốt nhà cung cấp
 
 **Quyết định**:
 
-1. **Đổi màu sang `neutral200` `#B9BDCC`.** `#EEF0F5` chỉ lệch ~4% so với nền trắng nên trên thiết bị thật gần như vô hình; bản render Figma vẽ đường kẻ thấy rõ. Khi mô tả trong tài liệu và bản render thực tế lệch nhau thì **lấy bản render làm chuẩn** — cùng nguyên tắc đã áp dụng ở Đợt 53 (Stepper) và Đợt 60 (logo email).
+1. ~~**Đổi màu sang `neutral200` `#B9BDCC`.**~~ **ĐÃ SỬA LẠI CÙNG NGÀY — xem Đợt 62.** Lúc viết mục này Figma MCP đang mất đăng nhập nên màu là **ước lượng bằng mắt từ ảnh chụp**, và ước lượng đó sai. Màu đúng đo từ node `400:2652` là **`#7F7F7F`**.
 
 2. **`_ActionPopupRow` phải đặt `width: double.infinity`.** Đây là lỗi thật, không phải chuyện màu: `PopupMenuButton` bọc nội dung trong `IntrinsicWidth`, nên `Container` tự co làm mỗi dòng rộng đúng bằng chữ của nó và gạch dài ngắn khác nhau theo từng dòng.
 
 **Ảnh hưởng**: cả menu Nhà (H-03, 3 mục) lẫn menu Phòng (H-04, 2 mục) vì dùng chung component.
 
 **Chưa làm**: chưa rà các chỗ khác trong app cũng dùng `borderSubtle` làm đường kẻ ngăn cách — mỗi chỗ có frame Figma riêng, chưa đối chiếu thì không sửa, tránh lặp lại kiểu suy diễn đã sai ở Đợt 53.
+
+## 2026-09-18 (Đợt 62) — Đo lại 2 đường ngăn cách bằng Figma MCP, sửa cả 2 thông số đã đoán sai ở Đợt 61
+
+**Bối cảnh**: Đợt 61 sửa gạch menu "⋮" và gạch nét chấm trong thẻ chi tiết trong lúc **Figma MCP mất đăng nhập**, nên màu và khoảng cách đều là ước lượng bằng mắt từ ảnh chụp dungtv gửi. dungtv nối lại connector; đo pixel trực tiếp thì **cả hai đều sai**.
+
+| | Đợt 61 (đoán) | Đo thật từ Figma | Node |
+|---|---|---|---|
+| Gạch menu "⋮" | nét liền `#B9BDCC` | nét liền **`#7F7F7F`** | `400:2652` |
+| Gạch trong thẻ chi tiết | nét chấm 1.5 / cách 3.0, `#B9BDCC` | nét chấm **2.0 / cách 2.0**, **`#EEF0F5`** | `168:58` |
+
+**Điều đáng chú ý**: màu `#EEF0F5` (`borderSubtle`) của thẻ chi tiết hoá ra **vẫn đúng như code cũ** — chỉ có *kiểu nét* là sai (liền thay vì chấm). Suy luận ở Đợt 61 rằng "`#EEF0F5` gần như vô hình nên chắc chắn sai" đã đúng với menu nhưng **sai với thẻ chi tiết**: hai component dùng hai màu khác nhau, không thể suy từ cái này ra cái kia.
+
+**`#7F7F7F` cố ý để riêng** thành `AppColors.menuDivider` chứ không gộp vào token viền nào: nó không có trong bảng token ở `docs/DESIGN-SYSTEMS.md`, gộp vào là mất dấu vết và lần sau lại sửa nhầm.
+
+**Bài học quy trình**: khi Figma MCP không dùng được, ảnh chụp đủ để thấy **cái gì sai** (nét liền lẽ ra là nét chấm, gạch cụt lẽ ra chạy suốt) nhưng **không đủ để lấy giá trị chính xác** (mã màu, bước chấm). Với giá trị số, phải chờ đo được trên node thật rồi mới chốt, hoặc ghi rõ đó là số tạm.

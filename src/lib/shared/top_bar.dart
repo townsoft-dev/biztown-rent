@@ -249,11 +249,13 @@ class _ActionPopupRow extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 2),
       decoration: showDivider
-          // Dùng `neutral200` chứ KHÔNG dùng `borderSubtle` (#EEF0F5): trên
-          // nền trắng của menu, #EEF0F5 chỉ lệch ~4% so với trắng nên gần như
-          // vô hình, trong khi bản thiết kế vẽ đường kẻ nhìn rõ.
+          // Màu `#7F7F7F` đo pixel trực tiếp trên node Figma `400:2652`
+          // (18/09/2026). KHÔNG phải `borderSubtle` (#EEF0F5, gần như vô hình
+          // trên nền trắng) và cũng không phải `neutral200` như bản sửa đầu
+          // tiên hôm nay — lúc đó Figma MCP đang mất đăng nhập nên mới phải
+          // ước lượng bằng mắt từ ảnh chụp.
           ? const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.neutral200)))
+              border: Border(bottom: BorderSide(color: AppColors.menuDivider)))
           : null,
       child: Text(label,
           style: const TextStyle(
