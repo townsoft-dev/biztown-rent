@@ -30,7 +30,9 @@
     "retry": "다시 시도",
     "phoneRequired": "전화번호를 입력하세요",
     "phoneInvalid": "유효하지 않은 전화번호입니다 (예: 0912345678)",
-    "fieldRequired": "필수 입력 항목입니다"
+    "fieldRequired": "필수 입력 항목입니다",
+    "emailRequired": "이메일을 입력하세요.",
+    "emailInvalid": "이메일 형식이 올바르지 않습니다."
   },
   "bottomNav": {
     "home": "홈",
@@ -448,7 +450,7 @@
     "duplicateHint": "중복된 전화번호가 있으면 경고와 함께 기존 프로필을 열도록 안내합니다.",
     "sex": "성별",
     "dateOfBirth": "생년월일",
-    "email": "이메일",
+    "email": "이메일 *",
     "idNumber": "신분증 번호 (CCCD/CMND) *",
     "sectionIdPhotos": "신분증 사진 * · 양면 모두 필요",
     "note": "메모",

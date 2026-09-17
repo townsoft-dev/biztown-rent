@@ -30,7 +30,9 @@
     "retry": "Thử lại",
     "phoneRequired": "Vui lòng nhập số điện thoại",
     "phoneInvalid": "Số điện thoại không hợp lệ (VD: 0912345678)",
-    "fieldRequired": "Vui lòng nhập thông tin này"
+    "fieldRequired": "Vui lòng nhập thông tin này",
+    "emailRequired": "Vui lòng nhập email.",
+    "emailInvalid": "Email không hợp lệ."
   },
   "bottomNav": {
     "home": "Trang chủ",
@@ -448,7 +450,7 @@
     "duplicateHint": "Nếu SĐT đã có hồ sơ trong nhà này, hệ thống sẽ cảnh báo và gợi ý mở hồ sơ cũ.",
     "sex": "Giới tính",
     "dateOfBirth": "Ngày sinh",
-    "email": "Email",
+    "email": "Email *",
     "idNumber": "Số CCCD/CMND *",
     "sectionIdPhotos": "ẢNH CCCD/CMND * · CẦN CẢ 2 MẶT",
     "note": "Ghi chú",
