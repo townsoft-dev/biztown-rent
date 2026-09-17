@@ -1025,3 +1025,21 @@ Kéo theo một chi tiết bắt buộc: câu lỗi của S-02/S-04 **không đ�
 **Đã kiểm chứng thật** (`emulator-5554`): đăng xuất rồi đăng nhập lại, chụp liên tục khung hình. Ngay khi Home hiện ra, header đọc **"0 nhà · 0/0 phòng đã thuê"** kèm vòng xoay tải, khung sau mới hiện đủ 6 nhà — tức dữ liệu cũ đã bị bỏ đúng lúc đổi phiên, không bê sang.
 
 **Chưa dựng lại được cảnh lỗi gốc** (người B thấy dữ liệu người A): cần tài khoản thứ hai, mà kho chỉ có 1 tài khoản test. Hai cách rút ngắn đều bị trình phân loại an toàn của Claude Code chặn đúng mực và **không lách**: đọc token OTP trong schema `auth` của production (*Production Reads*), và sửa dữ liệu production để tạo chênh lệch (*Modify Shared Resources*).
+
+## 2026-09-17 (Đợt 56) — Push iOS: phải tự gọi `registerForRemoteNotifications()` trong AppDelegate, plugin không còn tự gọi
+
+**Triệu chứng**: Android nhận push ngon từ 16/09, còn iOS **không bao giờ** có dòng nào trong `tb_device_token` — dù quyền thông báo đã bật, dù bản TestFlight lẫn bản cài trực tiếp, dù đã vá chuyện chờ APNs token.
+
+**Nguyên nhân gốc**: app **chưa bao giờ gọi `registerForRemoteNotifications()`**. Apple không từ chối — không ai hỏi Apple cả.
+
+Plugin `firebase_messaging` gọi hàm này trong hook `didFinishLaunchingWithOptions` của chính nó. Nhưng Flutter 3.47 dùng **mẫu AppDelegate mới**: plugin được đăng ký trong `didInitializeImplicitFlutterEngine`, **chạy SAU** `didFinishLaunchingWithOptions`. Hook của plugin không bao giờ tới lượt, lời gọi đăng ký APNs biến mất — **không lỗi, không log, không crash**. Android không dính vì Android không có bước đăng ký với Apple.
+
+**Sửa**: gọi thẳng `application.registerForRemoteNotifications()` trong `didFinishLaunchingWithOptions` của `ios/Runner/AppDelegate.swift`. Đúng chuẩn Apple và **không cần quyền thông báo trước** — đăng ký nhận remote notification và xin quyền hiện banner là hai việc tách rời, Apple vẫn cấp device token khi chưa bấm Allow.
+
+**Cách khoanh ra được** (đáng ghi lại vì lỗi thuộc loại im lặng tuyệt đối):
+1. Thêm `PushStatus` + `diagnose()` hiện trạng thái ở cuối tab Hồ sơ — biết được chết ở bước nào thay vì đoán. Đọc ra "chưa lấy được mã APNs của Apple" ⇒ Firebase OK, quyền OK.
+2. Override **cả hai** callback APNs (`didRegisterForRemoteNotificationsWithDeviceToken` và `didFailToRegisterForRemoteNotificationsWithError`) trong AppDelegate, ghi kết quả vào `UserDefaults` khoá `flutter.push.apnsNativeStatus` cho Dart đọc. **Cả hai đều im** ⇒ chưa từng gọi đăng ký. Đây mới là bước chốt: nếu Apple từ chối thì phải có dòng lỗi.
+
+**Hạ tầng test rút ngắn được**: iPhone dungtv paired sẵn và cùng mạng nội bộ ⇒ `xcrun devicectl` cài + chạy app **qua mạng, không cáp, không TestFlight**. Nhưng phải dựng bản **ad-hoc** (`flutter build ipa --export-method ad-hoc`) chứ không phải bản Development: ad-hoc mới ra `aps-environment = production` khớp cấu hình APNs của dự án; bản Development ra `development` (sandbox) nên kết quả test vô nghĩa. Vòng lặp từ ~30 phút xuống ~2 phút.
+
+**Đã verify thật**: `tb_device_token` có đủ 2 dòng `ios` + `android` của `84356123970`; gọi `send-notification` trả `{"recipientCount":2,"sent":2}`.
