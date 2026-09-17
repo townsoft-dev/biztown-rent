@@ -173,29 +173,36 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
             selected: false,
             enabled: false,
           ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: AppColors.bgMuted,
-                borderRadius: BorderRadius.circular(AppRadii.checkRow)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(AppStrings.t('bills.messagePreview').toUpperCase(),
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.6,
-                        color: AppColors.textTertiary)),
-                const SizedBox(height: 4),
-                Text(message,
-                    style: const TextStyle(
-                        fontSize: 13, color: AppColors.textSecondary)),
-              ],
+          // Khối "Xem trước tin nhắn" CHỈ dành cho kênh SMS — đó là nội dung
+          // app tự dựng và gửi thẳng. Thư điện tử do backend dựng theo mẫu
+          // của Hường nên đoạn text này không phản ánh thứ người thuê nhận
+          // được; để nguyên lúc chọn Email là đánh lừa chủ trọ (thấy khi test
+          // thật 17/09/2026).
+          if (_channel == _SendChannel.sms) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                  color: AppColors.bgMuted,
+                  borderRadius: BorderRadius.circular(AppRadii.checkRow)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(AppStrings.t('bills.messagePreview').toUpperCase(),
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.6,
+                          color: AppColors.textTertiary)),
+                  const SizedBox(height: 4),
+                  Text(message,
+                      style: const TextStyle(
+                          fontSize: 13, color: AppColors.textSecondary)),
+                ],
+              ),
             ),
-          ),
+          ],
           if (_errorText != null) ...[
             const SizedBox(height: 8),
             Text(_errorText!,

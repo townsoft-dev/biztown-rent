@@ -1,7 +1,7 @@
 name: rent_manager
 description: BizTown Rent-Manager - ung dung mobile quan ly nha cho thue
 publish_to: "none"
-version: 0.1.0+10
+version: 0.1.0+11
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

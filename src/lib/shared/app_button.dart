@@ -26,6 +26,13 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Nút bị khoá (`onPressed == null`) phải NHÌN RA là đang khoá. Trước
+    // 17/09/2026 mọi style đều vẽ y hệt lúc bật, chỉ không bắt chạm — test
+    // thật ở B-02 cho thấy "Xoá bản nháp" vẫn đỏ rực trên hoá đơn đã gửi,
+    // bấm vào thì không có gì xảy ra mà chủ trọ không hiểu vì sao. Màu lấy
+    // đúng token đã định nghĩa trong docs/DESIGN-SYSTEMS.md: nền
+    // `color-neutral-200`, chữ `color-secondary-light`.
+    final isDisabled = onPressed == null;
     final isGhost = style == AppButtonStyle.ghost;
     final isDanger = style == AppButtonStyle.danger;
     final bg = switch (style) {
@@ -44,18 +51,24 @@ class AppButton extends StatelessWidget {
       AppButtonStyle.danger => AppColors.error,
       _ => Colors.white,
     };
+    final bgFinal = isDisabled ? AppColors.neutral200 : bg;
+    final fgFinal = isDisabled ? AppColors.secondaryLight : fg;
     final height = size == AppButtonSize.md ? 44.0 : 36.0;
     final fontSize = size == AppButtonSize.md ? 14.0 : 12.0;
 
     return Material(
-      color: bg,
+      color: bgFinal,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.button),
-        side: isGhost
-            ? const BorderSide(color: AppColors.primary)
-            : isDanger
-                ? const BorderSide(color: AppColors.error)
-                : BorderSide.none,
+        side: isDisabled
+            ? (isGhost || isDanger
+                ? const BorderSide(color: AppColors.neutral200)
+                : BorderSide.none)
+            : isGhost
+                ? const BorderSide(color: AppColors.primary)
+                : isDanger
+                    ? const BorderSide(color: AppColors.error)
+                    : BorderSide.none,
       ),
       child: InkWell(
         onTap: onPressed,
@@ -67,7 +80,9 @@ class AppButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(label,
               style: GoogleFonts.inter(
-                  fontSize: fontSize, fontWeight: FontWeight.w700, color: fg)),
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w700,
+                  color: fgFinal)),
         ),
       ),
     );

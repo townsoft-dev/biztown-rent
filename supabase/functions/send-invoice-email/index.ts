@@ -47,6 +47,13 @@ interface SendInvoiceEmailRequest {
 
 const vnd = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n));
 const day = (s: string) => s.split("-").reverse().join("/");
+// Kỳ hoá đơn LUÔN trọn 1 tháng dương lịch (BR-BILL-07) nên tiêu đề thư chỉ
+// nêu tháng/năm. Bản đầu dùng `day()` nên chủ đề ra "ky 01/09/2026" — người
+// thuê đọc tưởng là hạn ngày 01 (thấy khi test thật 17/09/2026).
+const monthYear = (s: string) => {
+  const [y, m] = s.split("-");
+  return `${m}/${y}`;
+};
 
 function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) =>
@@ -381,7 +388,7 @@ export default {
     try {
       const id = await sendViaBrevo(
         to,
-        `Hoa don tien nha phong ${rooms} - ky ${day(invoice.period_start)}`,
+        `Hoa don tien nha phong ${rooms} - ky ${monthYear(invoice.period_start)}`,
         html,
       );
       return Response.json({ sent: true, channel: "email", to, messageId: id });
