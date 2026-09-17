@@ -168,3 +168,21 @@ Ngoài ra: tên thương hiệu **bắt buộc xuất hiện trong nội dung ti
 ### 6.3 Không mượn được mẫu của bên khác
 
 Đã tra danh sách template của brandname demo `Baotrixemay` qua API `GetTemplate` — **21 mẫu, không mẫu nào có link, không mẫu nào hợp nghiệp vụ hoá đơn** (toàn mẫu tiệm xe máy: xe đã sửa xong, tới hạn bảo trì, chúc sinh nhật, mã xác minh). Mẫu gắn chết với từng brandname, **không có kho mẫu dùng chung để mượn**. Muốn gửi hoá đơn thì bắt buộc đăng ký brandname riêng.
+
+
+### 6.4 Link trong SMS: CHẶN vì `?` và `&`, không phải vì là link (test thật 17/09/2026)
+
+Gửi thật tới máy dungtv, cùng brandname `Baotrixemay`, cùng mẫu, chỉ khác dạng link:
+
+| Link trong tin | Kết quả |
+|---|---|
+| `https://qr.sepay.vn/img?acc=9697354961&bank=970436` | ❌ Thất bại |
+| `qr.sepay.vn/img?acc=9697354961&bank=970436` (bỏ `https://`) | ❌ Thất bại |
+| `qr.sepay.vn/pay/98A31YT6Q1W0` | ✅ **Tới, bấm được** |
+| `btr.vn/i/98A31YT6Q1W0` | ✅ **Tới, bấm được** |
+
+**Kết luận**: cái bị chặn là **tham số truy vấn (`?`, `&`)**, không phải bản thân đường link. Link dạng đường dẫn sạch đi lọt và hiện thành liên kết bấm được trên máy.
+
+**Hệ quả cho thiết kế**: mẫu `https://btr.vn/i/{ma_tra_cuu}` đã chọn từ trước **đúng dạng đi lọt** — không phải đổi gì. Ngược lại, **không được dùng link kiểu `?code=...`** (VD link ảnh QR của SePay) vì sẽ bị loại.
+
+**Lưu ý chi phí**: tin thất bại **vẫn bị trừ tiền** như tin thành công.
