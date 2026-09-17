@@ -1126,3 +1126,17 @@ Entry Đợt 59 (Dream, thuần thiết kế) ghi *"chưa chốt nhà cung cấp
 2. **Dòng "Mã hợp đồng"**: mẫu có, nhưng **schema chưa có trường này**. Đã bỏ, giữ "Mã hoá đơn" (mã tra cứu 12 ký tự, cũng dùng làm nội dung chuyển khoản).
 
 **Cũng đã làm, khớp `BR-NOTI-09`**: B-05 tự **khoá kênh Email** kèm phụ đề "Người thuê chưa có email" khi hồ sơ thiếu email, thay vì để bấm rồi mới báo lỗi.
+
+## 2026-09-18 (Đợt 61) — Đổi màu gạch phân cách trong menu "⋮" sang `neutral200`, và vá lỗi gạch chỉ dài bằng chữ
+
+**Bối cảnh**: Đợt 17 (10/09/2026) đã chọn `borderSubtle` `#EEF0F5` cho đường kẻ ngăn cách trong `TopBarActionMenuButton`, sau khi đọc node Figma "action pop-up". Nay dungtv gửi ảnh render frame "Action" và nói đường kẻ phải nhìn rõ.
+
+**Quyết định**:
+
+1. **Đổi màu sang `neutral200` `#B9BDCC`.** `#EEF0F5` chỉ lệch ~4% so với nền trắng nên trên thiết bị thật gần như vô hình; bản render Figma vẽ đường kẻ thấy rõ. Khi mô tả trong tài liệu và bản render thực tế lệch nhau thì **lấy bản render làm chuẩn** — cùng nguyên tắc đã áp dụng ở Đợt 53 (Stepper) và Đợt 60 (logo email).
+
+2. **`_ActionPopupRow` phải đặt `width: double.infinity`.** Đây là lỗi thật, không phải chuyện màu: `PopupMenuButton` bọc nội dung trong `IntrinsicWidth`, nên `Container` tự co làm mỗi dòng rộng đúng bằng chữ của nó và gạch dài ngắn khác nhau theo từng dòng.
+
+**Ảnh hưởng**: cả menu Nhà (H-03, 3 mục) lẫn menu Phòng (H-04, 2 mục) vì dùng chung component.
+
+**Chưa làm**: chưa rà các chỗ khác trong app cũng dùng `borderSubtle` làm đường kẻ ngăn cách — mỗi chỗ có frame Figma riêng, chưa đối chiếu thì không sửa, tránh lặp lại kiểu suy diễn đã sai ở Đợt 53.

@@ -239,11 +239,21 @@ class _ActionPopupRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // `width: double.infinity` là bắt buộc: `PopupMenuButton` bọc nội dung
+    // trong `IntrinsicWidth`, nên nếu để Container tự co thì mỗi dòng rộng
+    // đúng bằng chữ của nó — gạch dưới "Sửa" ngắn cũn, gạch dưới "Ghi chỉ số
+    // hàng tháng" dài hơn hẳn, trông như lỗi vỡ layout chứ không phải đường
+    // kẻ ngăn cách (dungtv báo 18/09/2026). Cho rộng vô hạn thì cả 3 dòng
+    // cùng bằng bề ngang menu, gạch chạy suốt như Figma.
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 2),
       decoration: showDivider
+          // Dùng `neutral200` chứ KHÔNG dùng `borderSubtle` (#EEF0F5): trên
+          // nền trắng của menu, #EEF0F5 chỉ lệch ~4% so với trắng nên gần như
+          // vô hình, trong khi bản thiết kế vẽ đường kẻ nhìn rõ.
           ? const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.borderSubtle)))
+              border: Border(bottom: BorderSide(color: AppColors.neutral200)))
           : null,
       child: Text(label,
           style: const TextStyle(
