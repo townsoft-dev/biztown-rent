@@ -20,10 +20,11 @@ class DetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      decoration: showDivider
-          ? const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.borderSubtle)))
-          : null,
+      // Figma vẽ đường ngăn cách giữa 2 dòng là **nét chấm**, không phải nét
+      // liền (dungtv gửi ảnh 2 màn B-02 và T-05, 18/09/2026). `Border` của
+      // Flutter không có kiểu nét chấm nên phải tự vẽ — dùng lại đúng cách đã
+      // làm cho viền đứt nét của chip "kỳ tương lai" ở `invoice_schedule_strip`.
+      decoration: showDivider ? const _DottedBottomBorder() : null,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -71,5 +72,40 @@ class DetailBlock extends StatelessWidget {
       child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: children),
     );
+  }
+}
+
+/// Đường ngăn cách nét chấm ở đáy 1 `DetailRow`.
+///
+/// Màu `neutral200` chứ không phải `borderSubtle` `#EEF0F5`: nét chấm vốn đã
+/// thưa, dùng màu chỉ lệch ~4% so với nền trắng thì coi như không thấy gì.
+class _DottedBottomBorder extends Decoration {
+  const _DottedBottomBorder();
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) =>
+      _DottedBottomBorderPainter();
+}
+
+class _DottedBottomBorderPainter extends BoxPainter {
+  static const _strokeWidth = 1.0;
+  static const _dotWidth = 1.5;
+  static const _gapWidth = 3.0;
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final size = configuration.size!;
+    final y = offset.dy + size.height - _strokeWidth / 2;
+    final paint = Paint()
+      ..color = AppColors.neutral200
+      ..strokeWidth = _strokeWidth
+      ..strokeCap = StrokeCap.round;
+    var x = offset.dx;
+    final endX = offset.dx + size.width;
+    while (x < endX) {
+      final next = (x + _dotWidth).clamp(offset.dx, endX);
+      canvas.drawLine(Offset(x, y), Offset(next, y), paint);
+      x = next + _gapWidth;
+    }
   }
 }
