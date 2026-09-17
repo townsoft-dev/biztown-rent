@@ -109,12 +109,48 @@ function renderInvoiceEmail(d: InvoiceEmailData): string {
 
   <tr><td style="height:4px;background:${CAM};font-size:0;line-height:0">&nbsp;</td></tr>
 
-  <tr><td style="background:${NAVY};padding:28px 32px">
-    <div style="font-size:30px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">Biz<span style="color:#AEB6CC">Town</span></div>
-    <div style="height:3px;width:150px;background:${CAM};margin:6px 0 8px"></div>
-    <div style="font-size:11px;letter-spacing:3px;color:#AEB6CC">RENT MANAGER</div>
-    <div style="font-size:17px;font-weight:700;color:#ffffff;margin-top:22px">Hoá đơn tiền trọ hàng tháng của bạn</div>
-    <div style="font-size:12px;color:#AEB6CC;margin-top:5px">Xem chi tiết bên dưới hoặc thanh toán trực tiếp qua email</div>
+  <tr><td style="background:${NAVY};padding:40px 32px 34px">
+    <!-- Cụm logo (biểu tượng 3 cột + chữ) dựng bằng ô bảng có nền màu thay vì
+         ảnh: nhiều hộp thư chặn ảnh mặc định, dùng ảnh thì logo biến mất hẳn.
+         Hình học + màu đo từng pixel trên bản render Figma MOCK-EMAIL (node
+         584:2524) va doi chieu design/Logo/biztown-rent-manager-lockup-on-navy.svg:
+         3 cột bo góc cao 31/47/38px, ĐỨNG TRÊN một thanh ngang xám nhô ra 2px
+         mỗi bên — bản đầu 17/09/2026 thiếu thanh ngang này và xếp chữ xuống
+         dưới biểu tượng nên dungtv báo "không giống Figma". -->
+    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+      <tr>
+        <td style="vertical-align:middle;padding-right:40px">
+          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+            <tr>
+              <td style="width:2px;font-size:0;line-height:0">&nbsp;</td>
+              <td style="vertical-align:bottom;padding-right:6px">
+                <div style="width:16px;height:31px;background:#B0B5C3;border-radius:3px;font-size:0;line-height:0">&nbsp;</div></td>
+              <td style="vertical-align:bottom;padding-right:6px">
+                <div style="width:16px;height:47px;background:#FFFFFF;border-radius:3px;font-size:0;line-height:0">&nbsp;</div></td>
+              <td style="vertical-align:bottom">
+                <div style="width:16px;height:38px;background:${CAM};border-radius:3px;font-size:0;line-height:0">&nbsp;</div></td>
+              <td style="width:2px;font-size:0;line-height:0">&nbsp;</td>
+            </tr>
+            <tr><td colspan="5" style="font-size:0;line-height:0">
+              <div style="width:64px;height:5px;background:#80889F;border-radius:2px;font-size:0;line-height:0">&nbsp;</div></td></tr>
+          </table>
+        </td>
+        <td style="vertical-align:middle">
+          <!-- Gạch cam phải rộng ĐÚNG bằng chữ "BizTown" (Figma). Không đặt
+               width cố định vì mỗi hộp thư dựng chữ bằng một font khác nhau nên
+               bề ngang chữ lệch đi — để bảng tự co theo chữ rồi cho gạch
+               width:100% thì nó luôn khớp. -->
+          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+            <tr><td style="font-size:42px;line-height:44px;font-weight:700;color:#ffffff;letter-spacing:-1px;white-space:nowrap">Biz<span style="color:#8695B3;font-weight:400">Town</span></td></tr>
+            <tr><td style="padding:10px 0 13px;font-size:0;line-height:0">
+              <div style="width:100%;height:7px;background:${CAM};font-size:0;line-height:0">&nbsp;</div></td></tr>
+            <tr><td style="font-size:15px;line-height:15px;letter-spacing:2.5px;color:#98A8C3;white-space:nowrap">RENT MANAGER</td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div style="font-size:17px;font-weight:700;color:#ffffff;margin-top:28px">Hoá đơn tiền trọ hàng tháng của bạn</div>
+    <div style="font-size:12px;color:#98A8C3;margin-top:5px">Xem chi tiết bên dưới hoặc thanh toán trực tiếp qua email</div>
   </td></tr>
 
   <tr><td style="padding:26px 32px 8px">
