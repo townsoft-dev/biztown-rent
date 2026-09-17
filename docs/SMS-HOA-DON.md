@@ -123,3 +123,48 @@ Mockup trực quan (kích thước ~390px chiều ngang, tối ưu xem trên đi
 - [ ] Sửa `send-notification/index.ts`: bỏ nhánh Zalo còn để `// TODO`, thêm bước gọi Edge Function sinh ảnh trước khi gửi SMS, dựng nội dung SMS theo mẫu mục 2 (bỏ dấu tự động).
 - [ ] Test gửi SMS hàng loạt qua eSMS (API `SendMultipleMessage_V4_post_json` đã dùng cho OTP có hỗ trợ gửi nhiều SĐT nội dung khác nhau/lần gọi — cần xác nhận lại đúng field cho trường hợp nội dung theo từng người, không phải 1 nội dung chung).
 - [ ] 2 màn hình minh hoạ trong Figma (SMS + ảnh chi tiết) — xem `DESIGN.md`/link Figma, thêm ở đợt này theo `DECISIONS.md` Đợt 51.
+
+---
+
+## 6. Mẫu KHÔNG DÙNG LINK (phương án chạy được ngay) — chốt 17/09/2026
+
+**Bối cảnh**: mẫu ở mục 2.2 phụ thuộc link tới trang tĩnh (bên ngoài đang dựng) và tên miền chưa mua. Mẫu dưới đây **không phụ thuộc gì cả**, gửi được ngay khi có Brandname.
+
+```
+BizTown: HD P{phong} ky {ky} la {tong_tien}d. CK {ngan_hang_va_stk} truoc {han}.
+```
+
+**Ví dụ với dữ liệu thật:**
+```
+BizTown: HD P.101 ky 15/09-14/10/2026 la 3.602.400d. CK Vietcombank 0071000123456 (NGUYEN THUY HUONG) truoc 21/09/2026.
+```
+(119 ký tự — **1 đoạn GSM-7**)
+
+**Đánh đổi**: mất mã QR (người thuê tự gõ số tài khoản) và mất bảng chi tiết điện/nước. Bù lại chạy được ngay, không chờ trang tĩnh.
+
+### 6.1 ⚠️ Bẫy chi phí: một ký tự sai bảng mã làm đắt gấp 3
+
+Bản tiếng Anh trên Figma dùng **dấu gạch dài `–` (en dash)** trong `15/09–14/10/2026`. Ký tự đó **không nằm trong GSM-7**, nên kéo cả tin sang UCS-2, giới hạn tụt từ 160 xuống 70 ký tự/đoạn:
+
+| Mẫu | Mã hoá | Ký tự | Đoạn | 66 tin/tháng |
+|---|---|---|---|---|
+| Nguyên văn design (gạch dài `–`) | UCS-2 | 154 | **3** | **79.200đ** |
+| Y hệt, đổi thành gạch thường `-` | GSM-7 | 154 | **1** | 26.400đ |
+| Tiếng Việt không dấu | GSM-7 | 119 | **1** | 26.400đ |
+| Tiếng Việt có dấu | UCS-2 | 129 | 2 | 52.800đ |
+
+**Quy tắc bắt buộc khi dựng chuỗi**: chỉ dùng `-` thường, không dùng `–`/`—`; không dùng `…`, `"` cong, `₫`. dungtv chốt 17/09/2026: **bỏ dấu hoàn toàn, ưu tiên chi phí**.
+
+### 6.2 Quy định nhà mạng về link trong template (đã tra, 17/09/2026)
+
+Link **được phép**, nhưng theo đúng khuôn: **phần cố định của template phải đăng ký sẵn đường link gốc**, phần tham biến chỉ được là **phần mở rộng** của link đó và **không chứa khoảng trắng**.
+
+→ Thiết kế hiện tại (`https://btr.vn/i/` cố định + mã tra cứu 12 ký tự) **đã đúng khuôn này**, không phải đổi gì.
+
+Ngoài ra: tên thương hiệu **bắt buộc xuất hiện trong nội dung tin** (áp dụng từ 12/08/2024). Mẫu của mình mở đầu bằng `BizTown:` nên đã thoả.
+
+**Chưa xác nhận được**: một nguồn ghi Vinaphone giới hạn **tối đa 3 tham số** mỗi template. Mẫu hoá đơn có tới 6-7 chỗ thay đổi. Nhưng mẫu thật của brandname demo `Baotrixemay` quan sát được có tới 5 tham số, nên giới hạn này có thể chỉ áp cho một nhà mạng hoặc đã cũ. **Phải hỏi nhà cung cấp trước khi nộp hồ sơ**; nếu đúng 3 thì gộp `Vietcombank 0071000123456 (NGUYEN THUY HUONG)` thành MỘT tham số thay vì ba.
+
+### 6.3 Không mượn được mẫu của bên khác
+
+Đã tra danh sách template của brandname demo `Baotrixemay` qua API `GetTemplate` — **21 mẫu, không mẫu nào có link, không mẫu nào hợp nghiệp vụ hoá đơn** (toàn mẫu tiệm xe máy: xe đã sửa xong, tới hạn bảo trì, chúc sinh nhật, mã xác minh). Mẫu gắn chết với từng brandname, **không có kho mẫu dùng chung để mượn**. Muốn gửi hoá đơn thì bắt buộc đăng ký brandname riêng.
