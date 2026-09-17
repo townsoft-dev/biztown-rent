@@ -30,7 +30,9 @@
     "retry": "Thử lại",
     "phoneRequired": "Vui lòng nhập số điện thoại",
     "phoneInvalid": "Số điện thoại không hợp lệ (VD: 0912345678)",
-    "fieldRequired": "Vui lòng nhập thông tin này"
+    "fieldRequired": "Vui lòng nhập thông tin này",
+    "emailRequired": "Vui lòng nhập email.",
+    "emailInvalid": "Email không hợp lệ."
   },
   "bottomNav": {
     "home": "Trang chủ",
@@ -448,7 +450,7 @@
     "duplicateHint": "Nếu SĐT đã có hồ sơ trong nhà này, hệ thống sẽ cảnh báo và gợi ý mở hồ sơ cũ.",
     "sex": "Giới tính",
     "dateOfBirth": "Ngày sinh",
-    "email": "Email",
+    "email": "Email *",
     "idNumber": "Số CCCD/CMND *",
     "sectionIdPhotos": "ẢNH CCCD/CMND * · CẦN CẢ 2 MẶT",
     "note": "Ghi chú",
@@ -714,9 +716,8 @@
     "sendInvoiceSheetTitle": "Gửi hoá đơn",
     "sendInvoiceSheetTo": "Tới {name} · {phone}",
     "channelSms": "SMS",
-    "channelSmsHint": "Gửi qua số điện thoại · luôn gửi được",
+    "channelSmsHint": "Gửi tới {phone} · số tiền kèm link mã QR",
     "channelZalo": "Zalo",
-    "channelBoth": "Cả hai",
     "channelComingSoon": "Sắp có",
     "messagePreview": "Xem trước tin nhắn",
     "sendNow": "Gửi ngay",
@@ -724,7 +725,10 @@
     "batchSendChannelSubtitle": "Gửi {count} hoá đơn",
     "batchProcessing": "Đang tạo & gửi hoá đơn, vui lòng đợi...",
     "batchDraftSuccess": "Đã tạo {count} hoá đơn nháp",
-    "batchSentSuccess": "Đã tạo và gửi {count} hoá đơn"
+    "batchSentSuccess": "Đã tạo và gửi {count} hoá đơn",
+    "channelEmail": "Email",
+    "channelEmailHint": "Gửi tới {email}",
+    "channelEmailNone": "Người thuê chưa có email"
   },
   "forgotPassword": {
     "topBarTitleStep1": "Quên mật khẩu?",

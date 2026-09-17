@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../core/app_strings.dart';
+import '../core/email_validation.dart';
 import '../core/enum_labels.dart';
 import '../core/locale_provider.dart';
 import '../core/providers.dart';
@@ -222,9 +223,7 @@ class _TenantFormScreenState extends ConsumerState<TenantFormScreen> {
         phone: phone,
         sex: _sex,
         dateOfBirth: _dateOfBirth,
-        mail: _emailController.text.trim().isEmpty
-            ? null
-            : _emailController.text.trim(),
+        mail: _emailController.text.trim(),
         idNumber: _idNumberController.text.trim().isEmpty
             ? null
             : _idNumberController.text.trim(),
@@ -418,6 +417,7 @@ class _TenantFormScreenState extends ConsumerState<TenantFormScreen> {
                     label: AppStrings.t('tenantForm.email'),
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    validator: (v) => validateEmail(v),
                   ),
                   const SizedBox(height: 10),
                   AppTextField(

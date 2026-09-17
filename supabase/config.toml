@@ -445,3 +445,15 @@ entrypoint = "./functions/send-otp-sms/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/send-otp-sms/*.html" ]
+
+[functions.invoice-qr]
+# Trang xem hoá đơn cho người thuê — họ không có tài khoản nên không gửi được
+# JWT nào; tắt kiểm tra ở tầng nền tảng, hàm tự khai `auth: ["none"]`.
+verify_jwt = false
+import_map = "./functions/invoice-qr/deno.json"
+entrypoint = "./functions/invoice-qr/index.ts"
+
+[functions.send-invoice-email]
+verify_jwt = false
+import_map = "./functions/send-invoice-email/deno.json"
+entrypoint = "./functions/send-invoice-email/index.ts"

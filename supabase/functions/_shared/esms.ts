@@ -4,17 +4,33 @@
 // generate-invoice (mode "batchSend", tạo + gửi hàng loạt phía backend). Tách
 // ra đây vì cả 2 nơi cần đúng 1 logic gọi eSMS giống hệt nhau.
 //
-// SmsType "1" = tin thường qua đầu số/tổng đài dùng chung của eSMS — gửi
-// được nội dung TỰ DO ngay, không cần đăng ký/duyệt Brandname trước (dungtv
-// xác nhận CHƯA có Brandname CSKH riêng, 2026-09-14). Nâng cấp lên Brandname
-// CSKH thật (SmsType "8") sau chỉ cần đổi trong hàm này.
+// ⚠️ SmsType "1" (đầu số/tổng đài dùng chung) — eSMS NHẬN đơn nhưng NHÀ MẠNG
+// KHÔNG GIAO. Kiểm chứng thật 17/09/2026: gửi cùng lúc tới cùng một số bằng
+// cùng một tài khoản eSMS, tin SmsType "1" không tới máy, tin brandname
+// (SmsType "2" + "Baotrixemay") tới ngay. Vậy nên SMS hoá đơn hiện KHÔNG đến
+// được tay người thuê, dù hàm này trả về thành công.
+//
+// Ghi chú cũ ("gửi được nội dung TỰ DO ngay, không cần Brandname") là SAI —
+// nó dựa trên việc eSMS trả CodeResult 100, mà mã đó chỉ nghĩa là eSMS đã
+// nhận đơn.
+//
+// KHÔNG có đường vòng: brandname demo "Baotrixemay" chỉ cho gửi đúng một mẫu
+// nội dung cố định của eSMS, không nhét được nội dung hoá đơn. Muốn gửi hoá
+// đơn thật phải ĐĂNG KÝ BRANDNAME CSKH riêng rồi đổi sang SmsType "8" +
+// `Brandname` ở hàm này.
 
 // Supabase gửi SĐT dạng E.164 (+84...) — eSMS cần dạng nội địa (0...).
 function toLocalVnPhone(phone: string): string {
   return phone.startsWith("+84") ? `0${phone.slice(3)}` : phone;
 }
 
-export async function sendSmsViaEsms(phone: string, message: string): Promise<void> {
+/** Kết quả thô từ eSMS — `smsId` dùng để tra cứu tình trạng giao tin sau đó. */
+export interface EsmsSendResult {
+  smsId: string | null;
+  raw: Record<string, unknown>;
+}
+
+export async function sendSmsViaEsms(phone: string, message: string): Promise<EsmsSendResult> {
   const apiKey = Deno.env.get("ESMS_API_KEY");
   const secretKey = Deno.env.get("ESMS_SECRET_KEY");
   if (!apiKey || !secretKey) throw new Error("Thiếu secret ESMS_API_KEY/ESMS_SECRET_KEY");
@@ -36,4 +52,10 @@ export async function sendSmsViaEsms(phone: string, message: string): Promise<vo
   if (body.CodeResult !== "100") {
     throw new Error(`eSMS gửi thất bại: ${JSON.stringify(body)}`);
   }
+  // CHÚ Ý: "100" chỉ nghĩa là eSMS ĐÃ NHẬN đơn, KHÔNG phải nhà mạng đã giao
+  // tới máy người nhận. Trước 17/09/2026 hàm này vứt luôn phản hồi nên khi
+  // dungtv không nhận được tin, không còn gì để tra cứu — không biết tin có
+  // tồn tại trên hệ thống eSMS hay không. Trả `smsId` ra để tra tình trạng
+  // giao tin (và đối chiếu trong trang quản trị eSMS).
+  return { smsId: (body.SMSID ?? null) as string | null, raw: body };
 }

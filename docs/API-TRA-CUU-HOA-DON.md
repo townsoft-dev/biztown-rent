@@ -35,7 +35,17 @@ Người thuê **không đăng nhập**, **không cài gì**. Mở link là th�
 
 ## 2. Những điều cần nắm trước khi code
 
-**Mã nằm trong đường dẫn, không phải tham số truy vấn.** Link là `bill.<domain>/PNQF2YB2PBY4`, không phải `bill.<domain>/?code=...`. Viết vậy để tiết kiệm ký tự trong SMS.
+**Mã nằm trong đường dẫn, không phải tham số truy vấn.** Link là `bill.<domain>/PNQF2YB2PBY4`, không phải `bill.<domain>/?code=...`.
+
+⚠️ **Đây là ràng buộc BẮT BUỘC, không phải để cho đẹp hay tiết kiệm ký tự.** Kiểm chứng bằng SMS thật ngày 17/09/2026: gửi cùng một nội dung tới cùng một số, chỉ khác dạng link —
+
+| Link trong tin | Kết quả |
+|---|---|
+| `qr.sepay.vn/img?acc=9697354961&bank=970436` | ❌ nhà mạng **chặn**, tin không tới |
+| `qr.sepay.vn/img?...` (bỏ cả `https://`) | ❌ vẫn bị chặn |
+| `btr.vn/i/98A31YT6Q1W0` | ✅ tới nơi, bấm được |
+
+Nhà mạng chặn tin chứa `?` và `&`. Dùng link dạng `?code=...` thì **toàn bộ SMS hoá đơn sẽ không tới tay người thuê**, dù trang có chạy hoàn hảo. Tin bị chặn vẫn bị trừ tiền.
 
 Hệ quả: host phải được cấu hình **trả cùng một file HTML cho mọi đường dẫn**, nếu không sẽ ra lỗi 404 của host vì nó đi tìm file tên `PNQF2YB2PBY4`.
 
@@ -238,3 +248,18 @@ Lưu ý khi làm:
 ## 7. Liên hệ khi vướng
 
 Tài liệu này mô tả API đã chạy thật. Nếu cần thêm trường dữ liệu hoặc gặp phản hồi không khớp mô tả, báo lại phía BizTown để chỉnh Edge Function `supabase/functions/invoice-public/`.
+
+
+---
+
+## Phụ lục — endpoint ảnh QR sẵn có (tuỳ chọn)
+
+Ngoài API trả JSON ở trên, backend còn có sẵn một endpoint trả **thẳng ảnh PNG mã QR**:
+
+```
+GET https://rrtppoibjprlvasnbvwr.supabase.co/functions/v1/invoice-qr/PNQF2YB2PBY4
+```
+
+Trang tĩnh **không bắt buộc dùng** — có thể tự vẽ QR từ `payment.qrPayload` trong JSON (gọn hơn, không phải gọi thêm request). Endpoint này sinh ra để gửi thẳng link trong SMS khi trang tĩnh chưa sẵn sàng.
+
+**Lưu ý cho bên làm trang**: Supabase Edge Function **không phục vụ được trang HTML** — cổng của nó ép mọi phản hồi HTML về `Content-Type: text/plain` kèm CSP `default-src 'none'; sandbox`, trình duyệt sẽ hiện mã nguồn thay vì trang. Đó là lý do trang chi tiết bắt buộc đặt ở host tĩnh riêng, không gộp vào Supabase được.

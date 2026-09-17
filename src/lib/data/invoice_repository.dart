@@ -227,6 +227,18 @@ class InvoiceRepository {
     await updateStatus(invoiceId, InvoiceStatus.sent);
   }
 
+  /// B-05 kênh Email — gọi Edge Function `send-invoice-email`. Nội dung thư do
+  /// backend dựng (mẫu của Hường), app chỉ cần đưa `invoiceId`.
+  Future<void> sendEmail({required String invoiceId}) async {
+    final res = await _client.functions
+        .invoke('send-invoice-email', body: {'invoiceId': invoiceId});
+    final data = res.data as Map<String, dynamic>?;
+    if (data?['error'] != null) {
+      throw Exception(data!['error'] as String);
+    }
+    await updateStatus(invoiceId, InvoiceStatus.sent);
+  }
+
   /// Thêm 1 dòng phí phát sinh vào hoá đơn đang Draft (B-02 "+ Add other
   /// fee") — cộng dồn vào `otherFees` + `totalAmount`. Chỉ hợp lý khi hoá
   /// đơn còn Draft (chưa gửi); không tự kiểm tra ở đây, màn gọi tự đảm bảo.

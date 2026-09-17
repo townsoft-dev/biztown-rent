@@ -1044,7 +1044,31 @@ Plugin `firebase_messaging` gọi hàm này trong hook `didFinishLaunchingWithOp
 
 **Đã verify thật**: `tb_device_token` có đủ 2 dòng `ios` + `android` của `84356123970`; gọi `send-notification` trả `{"recipientCount":2,"sent":2}`.
 
-## 2026-09-17 (Đợt 57) — Bổ sung tính năng gửi hoá đơn qua Email + rule chặn khi Tenant chưa có email
+## 2026-09-17 (Đợt 57) — SMS hoá đơn KHÔNG gửi được nếu chưa có Brandname: đầu số dùng chung bị nhà mạng chặn
+
+**Triệu chứng**: backend báo gửi SMS hoá đơn thành công nhưng máy dungtv không nhận được tin nào.
+
+**Kiểm chứng tách bạch** (cùng một số nhận, cùng một tài khoản eSMS, cách nhau vài phút):
+
+| Cách gửi | eSMS nhận đơn | Máy nhận được |
+|---|---|---|
+| `SmsType "1"` — đầu số/tổng đài dùng chung | `CodeResult 100` | **KHÔNG** |
+| `SmsType "2"` + Brandname `Baotrixemay` | `CodeResult 100` | **CÓ** |
+
+**Kết luận**: `CodeResult 100` chỉ nghĩa là **eSMS đã nhận đơn**, không phải nhà mạng đã giao. Đầu số dùng chung bị chặn. Ghi chú cũ trong `_shared/esms.ts` ("SmsType 1 gửi được nội dung tự do ngay, không cần Brandname") là **SAI** — đã sửa lại trong code.
+
+**Hệ quả**: **SMS hoá đơn hiện không đến được tay người thuê.** Không có đường vòng — brandname demo `Baotrixemay` chỉ cho gửi đúng một mẫu nội dung cố định của eSMS, không nhét được nội dung hoá đơn. Muốn chạy thật thì **bắt buộc đăng ký Brandname CSKH riêng**, rồi đổi sang `SmsType "8"` + `Brandname` trong `_shared/esms.ts` (đúng một hàm, không đụng chỗ khác).
+
+**Loại trừ được các nghi phạm khác trong lúc truy**:
+- **Không phải sai tài khoản**: khoá eSMS trên server là của Dream, không khớp khoá của dungtv (đối chiếu bằng SHA-256 — có tự kiểm chứng phương pháp trước bằng một secret biết trước giá trị). Nhưng gửi bằng tài khoản dungtv vẫn không tới, nên tài khoản không phải nguyên nhân.
+- **Không phải hết tiền**: số dư tài khoản dungtv 1.720đ, còn gửi được.
+- **Không phải do nội dung có dấu hay có link**: tin thử không dấu, không link cũng không tới.
+
+**Cũng khép lại câu hỏi eSMS hay SpeedSMS**: cả hai đều đòi Brandname để gửi nội dung tự do — đúng cái rào đã loại SpeedSMS ở Đợt 14. Nay eSMS cũng vướng đúng rào đó, nên lý do chọn eSMS ngày xưa (có brandname demo để test ngay) đã hết hiệu lực. So lại từ đầu là hợp lý; chi phí đổi bên thấp vì chỉ 2 file chạm tới eSMS.
+
+**Việc chỉ dungtv làm được**: đăng ký Brandname CSKH với eSMS (hoặc SpeedSMS) — cần giấy tờ doanh nghiệp, chờ duyệt. Trước khi có, mọi test SMS hoá đơn tới người thuê đều vô nghĩa.
+
+## 2026-09-17 (Đợt 58) — Bổ sung tính năng gửi hoá đơn qua Email + rule chặn khi Tenant chưa có email
 
 Dream yêu cầu (qua Cowork, không phải phiên Claude Code trên repo) bổ sung tính năng **gửi hoá đơn qua Email** bên cạnh kênh SMS hiện có (Đợt 51 đã bỏ Zalo OA, chỉ còn SMS qua eSMS), kèm 1 rule cụ thể: nếu Tenant chưa điền email thì lúc chọn kênh gửi Email phải hiện thông báo cảnh báo. Quyết định ở đợt này thuần tài liệu/thiết kế, chưa code:
 
@@ -1061,9 +1085,9 @@ Dream yêu cầu (qua Cowork, không phải phiên Claude Code trên repo) bổ 
 
 **Chưa làm:** code (validate ở Flutter/Edge Function, tích hợp dịch vụ email, Edge Function sinh nội dung/gửi email); cập nhật Figma (mục 4 ở trên); chưa thêm cột/field email nào mới vào schema (`tb_tenant.email` đã tồn tại sẵn, optional — dùng lại, không cần migration).
 
-## 2026-09-17 (Đợt 58) — Tạo mockup giao diện Email hoá đơn (MOCK-EMAIL) trên Figma, tinh chỉnh bố cục theo 2 email thật tham khảo
+## 2026-09-17 (Đợt 59) — Tạo mockup giao diện Email hoá đơn (MOCK-EMAIL) trên Figma, tinh chỉnh bố cục theo 2 email thật tham khảo
 
-Tiếp nối Đợt 57 (bổ sung tính năng gửi hoá đơn qua Email). Khác với Đợt 57 (thuần tài liệu/business rule), đợt này Dream làm việc trực tiếp qua phiên Cowork có **quyền ghi vào Figma** (`use_figma`), nên dựng được bản mockup **nội dung email hoá đơn** thực nhận — tách biệt với việc cập nhật control chọn kênh gửi ở màn B-05 (Send Invoice Sheet), việc đó vẫn còn `TBD` như đã ghi ở Đợt 57 mục 4.
+Tiếp nối Đợt 58 (bổ sung tính năng gửi hoá đơn qua Email). Khác với Đợt 58 (thuần tài liệu/business rule), đợt này Dream làm việc trực tiếp qua phiên Cowork có **quyền ghi vào Figma** (`use_figma`), nên dựng được bản mockup **nội dung email hoá đơn** thực nhận — tách biệt với việc cập nhật control chọn kênh gửi ở màn B-05 (Send Invoice Sheet), việc đó vẫn còn `TBD` như đã ghi ở Đợt 58 mục 4.
 
 **1. Tạo frame mới `MOCK-EMAIL — Email hoá đơn chi tiết kèm QR` (node `584:2524`, trang "MVP Wireframes", file BizTown Rent-Manager — MVP Wireframes).**
 
@@ -1075,10 +1099,10 @@ Tham khảo bố cục/màu sắc/thương hiệu từ `MOCK-IMG — Ảnh chi t
 - Tăng khoảng cách dọc giữa các khối nội dung (18px → 26px) và giữa các dòng chi tiết phí (10px → 14px) để đỡ dồn cụm, dễ đọc hơn khi xem trên điện thoại.
 - Thêm viền nhẹ cho khối "Tổng cộng" và viền trên của Footer để tách bạch từng phần rõ ràng hơn, giống cách các mail thật phân vùng theo khối.
 
-**3. Chưa làm (còn lại từ Đợt 57 + phát sinh mới):**
+**3. Chưa làm (còn lại từ Đợt 58 + phát sinh mới):**
 - Cập nhật control chọn kênh gửi (SMS/Email/Cả hai) tại chính màn B-05 (Send Invoice Sheet) trên Figma — vẫn `TBD`, MOCK-EMAIL chỉ là mockup **nội dung email nhận được**, không phải màn hình app.
 - Chưa thiết kế trạng thái cảnh báo/banner hiện khi Tenant thiếu email lúc chọn kênh Email tại B-05 (rule `BR-NOTI-09`) — MOCK-EMAIL hiện giả định Tenant đã có email hợp lệ.
-- Chưa chốt nhà cung cấp dịch vụ email, nội dung/template chính thức (subject, có đính kèm PDF hay chỉ hiển thị như mockup) — vẫn `TBD` như Đợt 57.
+- Chưa chốt nhà cung cấp dịch vụ email, nội dung/template chính thức (subject, có đính kèm PDF hay chỉ hiển thị như mockup) — vẫn `TBD` như Đợt 58.
 - Chưa code bất kỳ phần nào (validate, tích hợp email, Edge Function) — thuần thiết kế.
 
 **Đã sửa:**
