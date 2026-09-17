@@ -343,8 +343,16 @@ class _ContractCard extends StatelessWidget {
               chips: row.chips,
               visibleCount: 5,
               showLegend: false,
-              onTapPeriod: (periodStart) => context.push(
-                  '/tenant/contracts/${row.contract.id}/invoice-schedule?period=${DateFormat('yyyy-MM-dd').format(periodStart)}'),
+              // Kỳ đã có hoá đơn thật thì mở thẳng HOÁ ĐƠN (B-04) để còn gửi
+              // được; chưa có thì mới mở màn xem trước. Trước 17/09/2026 luôn
+              // mở xem trước nên hoá đơn Nháp không bao giờ mở được (chip của
+              // hoá đơn Nháp vẽ giống hệt kỳ chưa có hoá đơn).
+              onTapPeriod: (chip) => context.push(
+                chip.invoiceId != null
+                    ? '/bills/invoices/${chip.invoiceId}'
+                    : '/tenant/contracts/${row.contract.id}/invoice-schedule'
+                        '?period=${DateFormat('yyyy-MM-dd').format(chip.periodStart)}',
+              ),
             ),
           ],
         ),

@@ -166,8 +166,14 @@ class ContractDetailScreen extends ConsumerWidget {
                             const [];
                         return InvoiceScheduleStrip(
                           chips: buildInvoiceScheduleChips(version, invoices),
-                          onTapPeriod: (periodStart) => context.push(
-                              '/tenant/contracts/$contractId/invoice-schedule?period=${DateFormat('yyyy-MM-dd').format(periodStart)}'),
+                          // Cùng quy tắc với B-01: có hoá đơn thật thì mở
+                          // hoá đơn, chưa có mới mở màn xem trước.
+                          onTapPeriod: (chip) => context.push(
+                            chip.invoiceId != null
+                                ? '/bills/invoices/${chip.invoiceId}'
+                                : '/tenant/contracts/$contractId/invoice-schedule'
+                                    '?period=${DateFormat('yyyy-MM-dd').format(chip.periodStart)}',
+                          ),
                         );
                       }),
                     ],
