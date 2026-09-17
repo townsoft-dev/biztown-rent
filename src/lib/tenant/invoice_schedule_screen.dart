@@ -154,6 +154,11 @@ class InvoiceScheduleScreen extends ConsumerWidget {
                     AppBanner(
                         message: AppStrings.t('invoiceSchedule.previewBanner'),
                         tone: AppBannerTone.preview),
+                    // 10px theo đúng Figma (node 220:4076) — đo thẳng trên bản
+                    // render: 14px giữa thanh tiêu đề và khối "chỉ xem trước",
+                    // rồi 10px giữa khối đó và thẻ thông tin. Bản cũ thiếu hẳn
+                    // khoảng này nên 2 khối dính sát nhau (dungtv báo 17/09/2026).
+                    const SizedBox(height: 10),
                     DetailBlock(children: [
                       DetailRow(
                           label: AppStrings.t('invoiceSchedule.house'),
