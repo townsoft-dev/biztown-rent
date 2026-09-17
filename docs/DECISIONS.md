@@ -1109,3 +1109,20 @@ Tham khảo bố cục/màu sắc/thương hiệu từ `MOCK-IMG — Ảnh chi t
 - `docs/SCREEN-SPEC.md` — B-05: thêm ghi chú trỏ tới mockup MOCK-EMAIL, làm rõ đây là mockup nội dung email chứ chưa phải cập nhật control màn B-05.
 
 Link Figma: https://www.figma.com/design/AElzfTBuL8YyA8OJ85f7aX/BizTown-Rent-Manager-%E2%80%94-MVP-Wireframes?node-id=584-2524
+
+## 2026-09-17 (Đợt 60) — Kênh Email đã code và chạy thật; 2 điểm lệch với Đợt 59 cần Dream xác nhận
+
+Entry Đợt 59 (Dream, thuần thiết kế) ghi *"chưa chốt nhà cung cấp dịch vụ email"* và *"chưa code bất kỳ phần nào"*. **Hai điều đó nay đã xong** trong cùng ngày — ghi lại đây để đọc Đợt 59 không hiểu nhầm là còn bỏ ngỏ.
+
+**Đã chốt và đã chạy thật** (chi tiết: `docs/EMAIL-HOA-DON.md`, `changelog/2026-09-17.md`):
+- Nhà cung cấp: **Brevo**. Chọn vì gửi được ngay khi **chưa xác thực tên miền** (chỉ cần một địa chỉ đã xác thực bằng mã 6 số) — Resend bắt buộc có tên miền nên không dùng được lúc này. Miễn phí 300 thư/ngày, dự án cần ~66 thư/tháng.
+- **Không dùng SMTP được**: Edge Function chạy trên Deno Deploy vốn chặn cổng 25 và 587. Gọi HTTP API là đường duy nhất ổn định.
+- Edge Function `send-invoice-email` + `invoice-qr` (trả ảnh PNG mã QR), màn B-05 đổi thành 3 kênh **SMS / Email / Zalo (khoá)**, email người thuê thành trường bắt buộc.
+- Verify thật: thư vào Hộp thư đến (không phải Spam), mã QR hiển thị, dungtv xác nhận bằng ảnh chụp.
+
+**2 điểm lệch giữa mô tả Đợt 59 và bản render Figma thật** — dựng theo **bản render**, chờ Dream xác nhận:
+
+1. **Nút CTA "Xem hoá đơn & Thanh toán ngay"**: Đợt 59 mô tả có, nhưng đọc pixel trên bản render `MOCK-EMAIL` thì **không có nút nào** — sau "Hạn thanh toán" là thẳng tới dòng *"Hoặc quét mã QR bên dưới để chuyển khoản trực tiếp"* rồi khối QR. Đã dựng theo bản render. Nếu Dream muốn có nút thì cần chốt **nút trỏ đi đâu** — hiện chưa có trang chi tiết hoá đơn nào để trỏ tới (trang tĩnh bên ngoài chưa dựng xong).
+2. **Dòng "Mã hợp đồng"**: mẫu có, nhưng **schema chưa có trường này**. Đã bỏ, giữ "Mã hoá đơn" (mã tra cứu 12 ký tự, cũng dùng làm nội dung chuyển khoản).
+
+**Cũng đã làm, khớp `BR-NOTI-09`**: B-05 tự **khoá kênh Email** kèm phụ đề "Người thuê chưa có email" khi hồ sơ thiếu email, thay vì để bấm rồi mới báo lỗi.
