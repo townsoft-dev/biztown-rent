@@ -306,14 +306,7 @@
     "logOut": "로그아웃",
     "logOutConfirmTitle": "BizTown Rent-Manager에서 로그아웃할까요?",
     "logOutConfirmDescription": "다시 로그인하려면 전화번호와 비밀번호가 필요합니다.",
-    "version": "버전 {version} · 빌드 {build}",
-    "pushStatus": "알림: {status}",
-    "pushNotSignedIn": "로그인 안 됨",
-    "pushPermissionDenied": "권한 없음",
-    "pushNoApnsToken": "Apple APNs 코드 없음",
-    "pushNoFcmToken": "Firebase 기기 코드 없음",
-    "pushSaveFailed": "기기 코드 저장 실패",
-    "pushReady": "준비됨"
+    "version": "버전 {version} · 빌드 {build}"
   },
   "personalProfile": {
     "title": "개인 프로필",

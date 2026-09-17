@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/app_strings.dart';
 import '../core/locale_provider.dart';
 import '../core/providers.dart';
-import '../data/push_repository.dart';
 import '../core/theme.dart';
 import '../shared/app_chip.dart';
 import '../shared/avatar.dart';
@@ -181,17 +180,6 @@ class ProfileScreen extends ConsumerWidget {
                         fontSize: 12, color: AppColors.textTertiary),
                   ),
                 ),
-                // Trạng thái push — hiện ngay dưới số phiên bản để dungtv nhìn
-                // là biết push hỏng ở bước nào, khỏi phải đọc log máy (bản
-                // TestFlight không đọc được log, xem `PushStatus`).
-                Center(
-                  child: Text(
-                    _pushStatusText(ref.watch(pushStatusProvider).valueOrNull),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.textTertiary),
-                  ),
-                ),
                 const SizedBox(height: 8),
               ],
             ),
@@ -200,28 +188,6 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
-
-  /// Dòng trạng thái push, kèm nguyên văn lỗi Apple trả về nếu có — cái đó mới
-  /// là thứ khoanh được lỗi, tên trạng thái chỉ nói chết ở bước nào.
-  String _pushStatusText(PushDiagnosis? diagnosis) {
-    final line = AppStrings.t(
-        'profile.pushStatus', {'status': _pushStatusLabel(diagnosis?.status)});
-    final detail = diagnosis?.apnsDetail;
-    if (detail == null || detail == 'ok') return line;
-    return '$line\nAPNs: $detail';
-  }
-
-  /// `null` = đang kiểm tra (chưa có kết quả).
-  String _pushStatusLabel(PushStatus? status) => switch (status) {
-        null => '…',
-        PushStatus.notSignedIn => AppStrings.t('profile.pushNotSignedIn'),
-        PushStatus.permissionDenied =>
-          AppStrings.t('profile.pushPermissionDenied'),
-        PushStatus.noApnsToken => AppStrings.t('profile.pushNoApnsToken'),
-        PushStatus.noFcmToken => AppStrings.t('profile.pushNoFcmToken'),
-        PushStatus.saveFailed => AppStrings.t('profile.pushSaveFailed'),
-        PushStatus.ready => AppStrings.t('profile.pushReady'),
-      };
 
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final confirmed = await ConfirmDialog.show(

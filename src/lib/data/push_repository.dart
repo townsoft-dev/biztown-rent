@@ -1,46 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/supabase_client.dart';
-
-/// Kết quả chẩn đoán push, hiện thẳng ở cuối tab Hồ sơ.
-///
-/// Có cái này vì push hỏng RẤT khó truy: mọi lỗi đều bị nuốt có chủ ý để không
-/// chặn đăng nhập, log `debugPrint` thì không đọc được trên bản TestFlight, và
-/// macOS đời mới bỏ luôn khả năng đọc log iPhone qua mạng. Ngày 17/09/2026 mất
-/// gần cả buổi mới khoanh được vùng chỉ vì không nhìn thấy nó chết ở bước nào.
-enum PushStatus {
-  /// Chưa đăng nhập nên chưa đăng ký gì — không phải lỗi.
-  notSignedIn,
-
-  /// Người dùng chưa cấp quyền thông báo (hoặc đã từ chối).
-  permissionDenied,
-
-  /// iOS: Apple chưa cấp APNs token. Thường là app chưa đăng ký được với APNs.
-  noApnsToken,
-
-  /// FCM không trả về device token.
-  noFcmToken,
-
-  /// Lấy được token nhưng lưu xuống `tb_device_token` thất bại.
-  saveFailed,
-
-  /// Đủ điều kiện nhận push.
-  ready,
-}
-
-/// Trạng thái push + lý do thô từ tầng iOS (nếu có).
-class PushDiagnosis {
-  final PushStatus status;
-
-  /// Nguyên văn lỗi Apple trả về khi đăng ký APNs thất bại, do
-  /// `AppDelegate.swift` ghi lại. `null` khi không có/không phải iOS.
-  final String? apnsDetail;
-
-  const PushDiagnosis(this.status, {this.apnsDetail});
-}
 
 /// Đăng ký device token (FCM) vào `tb_device_token` — điều kiện để nhận Push
 /// khi app đang tắt/nền (khác Realtime chỉ chạy khi app đang mở, xem
@@ -51,41 +13,6 @@ class PushDiagnosis {
 class PushRepository {
   final SupabaseClient _client;
   PushRepository(this._client);
-
-  /// Chạy lại đúng các bước của `registerDeviceToken()` nhưng TRẢ VỀ lý do
-  /// thất bại thay vì nuốt. Gọi khi mở tab Hồ sơ — vừa chẩn đoán, vừa là một
-  /// lần thử đăng ký lại (lưu token luôn nếu lấy được).
-  Future<PushDiagnosis> diagnose() async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) return const PushDiagnosis(PushStatus.notSignedIn);
-    try {
-      final messaging = FirebaseMessaging.instance;
-      final settings = await messaging
-          .requestPermission()
-          .timeout(const Duration(seconds: 15));
-      if (settings.authorizationStatus != AuthorizationStatus.authorized &&
-          settings.authorizationStatus != AuthorizationStatus.provisional) {
-        return const PushDiagnosis(PushStatus.permissionDenied);
-      }
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        if (await _waitForApnsToken(messaging) == null) {
-          return PushDiagnosis(PushStatus.noApnsToken,
-              apnsDetail: await _apnsNativeStatus());
-        }
-      }
-      final token =
-          await messaging.getToken().timeout(const Duration(seconds: 15));
-      if (token == null) {
-        return PushDiagnosis(PushStatus.noFcmToken,
-            apnsDetail: await _apnsNativeStatus());
-      }
-      await _upsert(userId, token);
-      return const PushDiagnosis(PushStatus.ready);
-    } catch (e) {
-      debugPrint('diagnose() lỗi: $e');
-      return PushDiagnosis(PushStatus.saveFailed, apnsDetail: '$e');
-    }
-  }
 
   Future<void> registerDeviceToken() async {
     final userId = _client.auth.currentUser?.id;
@@ -120,18 +47,6 @@ class PushRepository {
       await _upsert(userId, token);
     } catch (e) {
       debugPrint('registerDeviceToken() lỗi, bỏ qua: $e');
-    }
-  }
-
-  /// Nguyên văn kết quả đăng ký APNs do `AppDelegate.swift` ghi lại —
-  /// `"ok"` nếu Apple đã cấp, còn lại là domain + mã + mô tả lỗi của Apple.
-  /// `null` khi chưa có callback nào chạy (thường là chưa gọi đăng ký).
-  Future<String?> _apnsNativeStatus() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('push.apnsNativeStatus');
-    } catch (e) {
-      return null;
     }
   }
 

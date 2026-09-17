@@ -17,7 +17,6 @@ import '../data/models/room.dart';
 import '../data/models/tenant.dart';
 import '../data/models/user_profile.dart';
 import '../data/notification_repository.dart';
-import '../data/push_repository.dart';
 import '../data/reading_repository.dart';
 import '../data/room_repository.dart';
 import '../data/tenant_repository.dart';
@@ -60,11 +59,6 @@ final currentUserNameProvider = FutureProvider<String?>((ref) {
 /// iPhone còn kẹt ở build cũ, nhìn ngay trong app thì biết liền.
 final packageInfoProvider =
     FutureProvider<PackageInfo>((ref) => PackageInfo.fromPlatform());
-
-/// Chẩn đoán push hiện ở cuối tab Hồ sơ — xem `PushStatus`. Mỗi lần mở tab là
-/// một lần thử đăng ký lại, nên nó vừa là chẩn đoán vừa là đường tự chữa.
-final pushStatusProvider =
-    FutureProvider<PushDiagnosis>((ref) => pushRepository.diagnose());
 
 final userRepositoryProvider =
     Provider<UserRepository>((ref) => userRepository);
