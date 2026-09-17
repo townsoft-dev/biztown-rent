@@ -34,22 +34,33 @@ class _SendInvoiceSheet extends ConsumerStatefulWidget {
   ConsumerState<_SendInvoiceSheet> createState() => _SendInvoiceSheetState();
 }
 
+/// Kênh gửi hoá đơn CHỌN ĐƯỢC. Zalo vẫn hiện trong danh sách nhưng khoá lại
+/// (chờ công ty mua gói Zalo OA — dungtv, 17/09/2026) nên cố tình không có
+/// trong enum này: không chọn được thì không cần trạng thái.
+enum _SendChannel { sms, email }
+
 class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
+  _SendChannel _channel = _SendChannel.sms;
   bool _sending = false;
   String? _errorText;
 
-  Future<void> _send(Invoice invoice, String phone, String message) async {
+  Future<void> _send(Invoice invoice, String? phone, String message) async {
     setState(() {
       _sending = true;
       _errorText = null;
     });
     try {
-      await ref.read(invoiceRepositoryProvider).sendSms(
-            invoiceId: invoice.id,
-            houseId: invoice.houseId,
-            phone: phone,
-            message: message,
-          );
+      final repo = ref.read(invoiceRepositoryProvider);
+      if (_channel == _SendChannel.email) {
+        await repo.sendEmail(invoiceId: invoice.id);
+      } else {
+        await repo.sendSms(
+          invoiceId: invoice.id,
+          houseId: invoice.houseId,
+          phone: phone!,
+          message: message,
+        );
+      }
       ref.invalidate(invoiceProvider(invoice.id));
       // `billsHouseGroupsProvider`/T-05 đọc hoá đơn qua `contractInvoicesProvider`
       // (family theo contractId) — phải invalidate riêng, nếu không B-01/T-05
@@ -87,14 +98,15 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
   }
 
   Widget _buildSheet(BuildContext context, Invoice invoice) {
-    final house = ref.watch(houseProvider(invoice.houseId)).valueOrNull;
     final contractAsync = ref.watch(contractProvider(invoice.contractId));
-    final phone = contractAsync.maybeWhen(
+    final tenant = contractAsync.maybeWhen(
       data: (contract) =>
-          ref.watch(tenantProvider(contract.tenantId)).valueOrNull?.phone,
+          ref.watch(tenantProvider(contract.tenantId)).valueOrNull,
       orElse: () => null,
     );
-    final message = buildInvoiceSmsMessage(invoice, house);
+    final phone = tenant?.phone;
+    final email = (tenant?.mail ?? '').trim();
+    final message = buildInvoiceSmsMessage(invoice);
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -133,22 +145,30 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
           ChannelOption(
             icon: Symbols.sms_rounded,
             title: AppStrings.t('bills.channelSms'),
-            subtitle: AppStrings.t('bills.channelSmsHint'),
-            selected: true,
+            subtitle:
+                AppStrings.t('bills.channelSmsHint', {'phone': phone ?? '—'}),
+            selected: _channel == _SendChannel.sms,
             enabled: true,
+            onTap: () => setState(() => _channel = _SendChannel.sms),
+          ),
+          const SizedBox(height: 8),
+          ChannelOption(
+            icon: Symbols.mail_rounded,
+            title: AppStrings.t('bills.channelEmail'),
+            // Email người thuê nay là trường bắt buộc, nhưng hồ sơ tạo trước
+            // 17/09/2026 có thể còn trống — khoá kênh này lại thay vì để bấm
+            // rồi mới báo lỗi.
+            subtitle: email.isEmpty
+                ? AppStrings.t('bills.channelEmailNone')
+                : AppStrings.t('bills.channelEmailHint', {'email': email}),
+            selected: _channel == _SendChannel.email,
+            enabled: email.isNotEmpty,
+            onTap: () => setState(() => _channel = _SendChannel.email),
           ),
           const SizedBox(height: 8),
           ChannelOption(
             icon: Symbols.chat_rounded,
             title: AppStrings.t('bills.channelZalo'),
-            subtitle: AppStrings.t('bills.channelComingSoon'),
-            selected: false,
-            enabled: false,
-          ),
-          const SizedBox(height: 8),
-          ChannelOption(
-            icon: Symbols.done_all_rounded,
-            title: AppStrings.t('bills.channelBoth'),
             subtitle: AppStrings.t('bills.channelComingSoon'),
             selected: false,
             enabled: false,
@@ -181,7 +201,7 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
             Text(_errorText!,
                 style: const TextStyle(fontSize: 12, color: AppColors.error)),
           ],
-          if (phone == null) ...[
+          if (_channel == _SendChannel.sms && phone == null) ...[
             const SizedBox(height: 8),
             Text(AppStrings.t('bills.tenantPhoneMissing'),
                 style: const TextStyle(fontSize: 12, color: AppColors.error)),
@@ -202,7 +222,11 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
                 child: AppButton(
                   label: AppStrings.t('bills.sendNow'),
                   style: AppButtonStyle.accent,
-                  onPressed: _sending || phone == null
+                  // SMS cần SĐT, Email cần email — thiếu thứ tương ứng thì
+                  // khoá nút thay vì để bấm rồi mới báo lỗi.
+                  onPressed: _sending ||
+                          (_channel == _SendChannel.sms && phone == null) ||
+                          (_channel == _SendChannel.email && email.isEmpty)
                       ? null
                       : () => _send(invoice, phone, message),
                 ),

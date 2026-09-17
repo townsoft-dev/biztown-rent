@@ -452,3 +452,8 @@ entrypoint = "./functions/send-otp-sms/index.ts"
 verify_jwt = false
 import_map = "./functions/invoice-qr/deno.json"
 entrypoint = "./functions/invoice-qr/index.ts"
+
+[functions.send-invoice-email]
+verify_jwt = false
+import_map = "./functions/send-invoice-email/deno.json"
+entrypoint = "./functions/send-invoice-email/index.ts"

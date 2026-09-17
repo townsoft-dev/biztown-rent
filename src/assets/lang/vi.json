@@ -716,9 +716,8 @@
     "sendInvoiceSheetTitle": "Gửi hoá đơn",
     "sendInvoiceSheetTo": "Tới {name} · {phone}",
     "channelSms": "SMS",
-    "channelSmsHint": "Gửi qua số điện thoại · luôn gửi được",
+    "channelSmsHint": "Gửi tới {phone} · số tiền kèm link mã QR",
     "channelZalo": "Zalo",
-    "channelBoth": "Cả hai",
     "channelComingSoon": "Sắp có",
     "messagePreview": "Xem trước tin nhắn",
     "sendNow": "Gửi ngay",
@@ -726,7 +725,10 @@
     "batchSendChannelSubtitle": "Gửi {count} hoá đơn",
     "batchProcessing": "Đang tạo & gửi hoá đơn, vui lòng đợi...",
     "batchDraftSuccess": "Đã tạo {count} hoá đơn nháp",
-    "batchSentSuccess": "Đã tạo và gửi {count} hoá đơn"
+    "batchSentSuccess": "Đã tạo và gửi {count} hoá đơn",
+    "channelEmail": "Email",
+    "channelEmailHint": "Gửi tới {email}",
+    "channelEmailNone": "Người thuê chưa có email"
   },
   "forgotPassword": {
     "topBarTitleStep1": "Quên mật khẩu?",

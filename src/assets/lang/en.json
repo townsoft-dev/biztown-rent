@@ -716,9 +716,8 @@
     "sendInvoiceSheetTitle": "Send invoice",
     "sendInvoiceSheetTo": "To {name} · {phone}",
     "channelSms": "SMS",
-    "channelSmsHint": "Sent via phone number · always delivered",
+    "channelSmsHint": "Send to {phone} · amount and payment QR link",
     "channelZalo": "Zalo",
-    "channelBoth": "Both",
     "channelComingSoon": "Coming soon",
     "messagePreview": "Message preview",
     "sendNow": "Send now",
@@ -726,7 +725,10 @@
     "batchSendChannelSubtitle": "Send {count} invoices",
     "batchProcessing": "Creating & sending invoices, please wait...",
     "batchDraftSuccess": "Created {count} draft invoices",
-    "batchSentSuccess": "Created and sent {count} invoices"
+    "batchSentSuccess": "Created and sent {count} invoices",
+    "channelEmail": "Email",
+    "channelEmailHint": "Send to {email}",
+    "channelEmailNone": "Tenant has no email yet"
   },
   "forgotPassword": {
     "topBarTitleStep1": "Forgot password?",

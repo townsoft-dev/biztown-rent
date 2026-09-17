@@ -97,6 +97,11 @@ class Invoice {
   final DateTime? sentAt;
   final DateTime? collectedAt;
 
+  /// Mã tra cứu công khai (12 ký tự) — dùng dựng link xem hoá đơn/mã QR gửi
+  /// cho người thuê, xem `core/invoice_message.dart` và Edge Function
+  /// `invoice-qr`. `null` với hoá đơn tạo trước khi có cột này.
+  final String? publicCode;
+
   const Invoice({
     required this.id,
     required this.contractId,
@@ -118,6 +123,7 @@ class Invoice {
     required this.createdAt,
     this.sentAt,
     this.collectedAt,
+    this.publicCode,
   });
 
   /// Overdue là trạng thái SUY RA (BR-BILL: không lưu DB) — còn `Sent` mà đã
@@ -157,6 +163,7 @@ class Invoice {
       collectedAt: map['collected_at'] == null
           ? null
           : DateTime.parse(map['collected_at'] as String),
+      publicCode: map['public_code'] as String?,
     );
   }
 }
