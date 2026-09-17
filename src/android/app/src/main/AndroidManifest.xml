@@ -33,6 +33,23 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Push (FCM) — 3 khai báo dưới đây quyết định thông báo TRÔNG thế nào
+             khi app đang tắt/nền, lúc đó chính Android vẽ thông báo chứ không
+             phải code Dart. Thiếu chúng thì (phát hiện khi test push thật
+             17/09/2026): icon bẹt thành ô vuông đặc, màu xám mặc định, và log
+             cảnh báo "Missing Default Notification Channel metadata" vì Android
+             phải tự chế một kênh dự phòng — âm báo/độ ưu tiên khi đó mỗi hãng
+             máy một kiểu. Kênh `biztown_default` được tạo thật trong
+             MainActivity.kt. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="biztown_default" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

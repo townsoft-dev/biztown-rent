@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Màu nền Android tô cho icon thông báo — dùng đúng cam thương hiệu
+         (AppColors.accentOrange trong lib/core/theme.dart). Không khai báo thì
+         hệ thống dùng màu xám mặc định, nhìn không ra app nào. -->
+    <color name="notification_color">#EF9F27</color>
+</resources>

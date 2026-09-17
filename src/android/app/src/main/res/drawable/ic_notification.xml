@@ -1,0 +1,24 @@
+<!--
+  Icon hiện trên thanh thông báo Android.
+
+  Android BẮT BUỘC icon thông báo là hình khối đặc một màu (chỉ dùng kênh alpha,
+  hệ thống tự tô màu đè lên) — đưa thẳng logo nhiều màu vào sẽ bị bẹt thành một
+  ô vuông đặc, đúng hiện tượng dungtv thấy khi test push 17/09/2026. Vì vậy đây
+  là bản rút gọn của biểu tượng BizTown: 3 cột biểu đồ, giữ đúng tỉ lệ cao–thấp
+  của logo gốc, vẽ toàn màu trắng.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M4,13h4v7h-4z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10,6h4v14h-4z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M16,10h4v10h-4z" />
+</vector>
