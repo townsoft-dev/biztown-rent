@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'invoice_period.dart';
@@ -16,6 +17,7 @@ import '../data/models/room.dart';
 import '../data/models/tenant.dart';
 import '../data/models/user_profile.dart';
 import '../data/notification_repository.dart';
+import '../data/push_repository.dart';
 import '../data/reading_repository.dart';
 import '../data/room_repository.dart';
 import '../data/tenant_repository.dart';
@@ -52,6 +54,17 @@ final currentUserNameProvider = FutureProvider<String?>((ref) {
   ref.watch(currentUserIdProvider);
   return ref.watch(authRepositoryProvider).currentFullName();
 });
+
+/// Version + build number đọc thật từ bản đang chạy — hiện ở cuối tab Hồ sơ.
+/// dungtv yêu cầu 17/09/2026: lúc test TestFlight mất khá lâu mới phát hiện
+/// iPhone còn kẹt ở build cũ, nhìn ngay trong app thì biết liền.
+final packageInfoProvider =
+    FutureProvider<PackageInfo>((ref) => PackageInfo.fromPlatform());
+
+/// Chẩn đoán push hiện ở cuối tab Hồ sơ — xem `PushStatus`. Mỗi lần mở tab là
+/// một lần thử đăng ký lại, nên nó vừa là chẩn đoán vừa là đường tự chữa.
+final pushStatusProvider =
+    FutureProvider<PushStatus>((ref) => pushRepository.diagnose());
 
 final userRepositoryProvider =
     Provider<UserRepository>((ref) => userRepository);

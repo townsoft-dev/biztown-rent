@@ -1,7 +1,7 @@
 name: rent_manager
 description: BizTown Rent-Manager - ung dung mobile quan ly nha cho thue
 publish_to: "none"
-version: 0.1.0+5
+version: 0.1.0+6
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -27,6 +27,10 @@ dependencies:
   # (tự thử lại khi gặp lỗi lệch đồng hồ PGRST303) — khai báo tường minh vì đã
   # import thẳng, không dựa vào việc supabase_flutter kéo theo.
   http: ^1.2.0
+  # Đọc version/build number thật từ pubspec lúc chạy — dungtv yêu cầu hiện ở
+  # cuối tab Hồ sơ để biết máy đang chạy bản nào khi test TestFlight (17/09/2026,
+  # mất khá lâu mới phát hiện iPhone còn kẹt ở build cũ).
+  package_info_plus: ^8.0.0
 
 dev_dependencies:
   flutter_test:

@@ -305,7 +305,15 @@
     "language": "Language",
     "logOut": "Log out",
     "logOutConfirmTitle": "Log out of BizTown Rent-Manager?",
-    "logOutConfirmDescription": "You will need your phone number and password to sign back in."
+    "logOutConfirmDescription": "You will need your phone number and password to sign back in.",
+    "version": "Version {version} · build {build}",
+    "pushStatus": "Notifications: {status}",
+    "pushNotSignedIn": "not signed in",
+    "pushPermissionDenied": "permission not granted",
+    "pushNoApnsToken": "no APNs code from Apple",
+    "pushNoFcmToken": "no device code from Firebase",
+    "pushSaveFailed": "could not save device code",
+    "pushReady": "ready"
   },
   "personalProfile": {
     "title": "Personal profile",

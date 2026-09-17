@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/app_strings.dart';
 import '../core/locale_provider.dart';
 import '../core/providers.dart';
+import '../data/push_repository.dart';
 import '../core/theme.dart';
 import '../shared/app_chip.dart';
 import '../shared/avatar.dart';
@@ -159,6 +160,41 @@ class ProfileScreen extends ConsumerWidget {
                   type: MenuRowType.danger,
                   onTap: () => _confirmLogout(context, ref),
                 ),
+                // Version + build number của bản đang chạy. dungtv yêu cầu
+                // 17/09/2026: khi test TestFlight, biết ngay máy đang chạy bản
+                // nào — lần này mất khá lâu mới phát hiện iPhone còn kẹt ở build
+                // cũ nên cứ tưởng bản vá không ăn.
+                const SizedBox(height: 20),
+                Center(
+                  child: Text(
+                    ref.watch(packageInfoProvider).valueOrNull == null
+                        ? ''
+                        : AppStrings.t('profile.version', {
+                            'version':
+                                ref.watch(packageInfoProvider).value!.version,
+                            'build': ref
+                                .watch(packageInfoProvider)
+                                .value!
+                                .buildNumber,
+                          }),
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textTertiary),
+                  ),
+                ),
+                // Trạng thái push — hiện ngay dưới số phiên bản để dungtv nhìn
+                // là biết push hỏng ở bước nào, khỏi phải đọc log máy (bản
+                // TestFlight không đọc được log, xem `PushStatus`).
+                Center(
+                  child: Text(
+                    AppStrings.t('profile.pushStatus', {
+                      'status': _pushStatusLabel(
+                          ref.watch(pushStatusProvider).valueOrNull),
+                    }),
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textTertiary),
+                  ),
+                ),
+                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -166,6 +202,18 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+
+  /// `null` = đang kiểm tra (chưa có kết quả).
+  String _pushStatusLabel(PushStatus? status) => switch (status) {
+        null => '…',
+        PushStatus.notSignedIn => AppStrings.t('profile.pushNotSignedIn'),
+        PushStatus.permissionDenied =>
+          AppStrings.t('profile.pushPermissionDenied'),
+        PushStatus.noApnsToken => AppStrings.t('profile.pushNoApnsToken'),
+        PushStatus.noFcmToken => AppStrings.t('profile.pushNoFcmToken'),
+        PushStatus.saveFailed => AppStrings.t('profile.pushSaveFailed'),
+        PushStatus.ready => AppStrings.t('profile.pushReady'),
+      };
 
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final confirmed = await ConfirmDialog.show(

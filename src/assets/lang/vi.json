@@ -305,7 +305,15 @@
     "language": "Ngôn ngữ",
     "logOut": "Đăng xuất",
     "logOutConfirmTitle": "Đăng xuất khỏi BizTown Rent-Manager?",
-    "logOutConfirmDescription": "Bạn sẽ cần số điện thoại và mật khẩu để đăng nhập lại."
+    "logOutConfirmDescription": "Bạn sẽ cần số điện thoại và mật khẩu để đăng nhập lại.",
+    "version": "Phiên bản {version} · bản dựng {build}",
+    "pushStatus": "Thông báo: {status}",
+    "pushNotSignedIn": "chưa đăng nhập",
+    "pushPermissionDenied": "chưa cấp quyền",
+    "pushNoApnsToken": "chưa lấy được mã APNs của Apple",
+    "pushNoFcmToken": "chưa lấy được mã thiết bị của Firebase",
+    "pushSaveFailed": "không lưu được mã thiết bị",
+    "pushReady": "sẵn sàng"
   },
   "personalProfile": {
     "title": "Hồ sơ cá nhân",
