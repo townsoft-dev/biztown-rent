@@ -8,11 +8,22 @@
 // KHOẢN (đăng ký, đặt lại mật khẩu), không gửi được email nghiệp vụ. Muốn gửi
 // hoá đơn phải tự gọi một nhà cung cấp email.
 //
-// Nhà cung cấp: Resend (`RESEND_API_KEY`). Chọn vì miễn phí ở quy mô dự án
-// (3.000 thư/tháng, mình cần ~100) và chỉ cần thêm vài bản ghi DNS để xác thực
-// tên miền. Đổi sang nhà cung cấp khác chỉ phải sửa `sendViaResend` bên dưới.
+// Nhà cung cấp: **Brevo** (`BREVO_API_KEY`). Chọn vì 2 lý do cụ thể:
+//   1. Gửi được NGAY khi CHƯA CÓ TÊN MIỀN — chỉ cần xác thực một địa chỉ Gmail
+//      bằng mã 6 số. Resend bắt buộc phải có tên miền nên không dùng được ở
+//      thời điểm này (dungtv chưa mua tên miền, 17/09/2026).
+//   2. Mức miễn phí rộng hơn: 300 thư/ngày (~9.000/tháng) so với 3.000/tháng
+//      của Resend. Dự án cần ~66 thư/tháng nên miễn phí vĩnh viễn.
 //
-// ⚠️ CHƯA CHẠY ĐƯỢC cho tới khi có đủ 2 secret `RESEND_API_KEY` và
+// Vì sao KHÔNG dùng SMTP cho gọn: Edge Function chạy trên Deno Deploy, môi
+// trường này **chặn kết nối ra cổng 25 và 587** — đúng 2 cổng SMTP chuẩn — và
+// thư viện SMTP cho Deno chạy chập chờn trong Edge Function. Gọi HTTP API là
+// đường duy nhất ổn định.
+//
+// Đổi sang nhà cung cấp khác chỉ phải sửa `sendViaBrevo` bên dưới; mọi thứ còn
+// lại (đọc hoá đơn, kiểm quyền, dựng nội dung thư) không phụ thuộc nhà cung cấp.
+//
+// ⚠️ CHƯA CHẠY ĐƯỢC cho tới khi có đủ 2 secret `BREVO_API_KEY` và
 // `INVOICE_EMAIL_FROM` — hàm tự trả lỗi rõ ràng thay vì âm thầm bỏ qua.
 //
 // Mẫu email: Hường đang thiết kế. `renderInvoiceEmail()` bên dưới là bản tối
@@ -74,26 +85,32 @@ function renderInvoiceEmail(inv: {
 </div></body></html>`;
 }
 
-async function sendViaResend(to: string, subject: string, html: string) {
-  const key = Deno.env.get("RESEND_API_KEY");
+async function sendViaBrevo(to: string, subject: string, html: string) {
+  const key = Deno.env.get("BREVO_API_KEY");
   const from = Deno.env.get("INVOICE_EMAIL_FROM");
   if (!key || !from) {
     throw new Error(
-      "Thiếu secret RESEND_API_KEY hoặc INVOICE_EMAIL_FROM — chưa cấu hình gửi email",
+      "Thiếu secret BREVO_API_KEY hoặc INVOICE_EMAIL_FROM — chưa cấu hình gửi email",
     );
   }
-  const res = await fetch("https://api.resend.com/emails", {
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
+      "api-key": key,
+      "content-type": "application/json",
+      accept: "application/json",
     },
-    body: JSON.stringify({ from, to, subject, html }),
+    body: JSON.stringify({
+      sender: { email: from, name: Deno.env.get("INVOICE_EMAIL_FROM_NAME") ?? "BizTown" },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
   });
   if (!res.ok) {
-    throw new Error(`Resend tu choi: ${res.status} ${await res.text()}`);
+    throw new Error(`Brevo tu choi: ${res.status} ${await res.text()}`);
   }
-  return (await res.json())?.id ?? null;
+  return (await res.json())?.messageId ?? null;
 }
 
 export default {
@@ -138,7 +155,7 @@ export default {
     });
 
     try {
-      const id = await sendViaResend(
+      const id = await sendViaBrevo(
         to,
         `Hoa don tien nha phong ${rooms} - ky ${day(invoice.period_start)}`,
         html,
