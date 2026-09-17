@@ -1067,3 +1067,45 @@ Plugin `firebase_messaging` gọi hàm này trong hook `didFinishLaunchingWithOp
 **Cũng khép lại câu hỏi eSMS hay SpeedSMS**: cả hai đều đòi Brandname để gửi nội dung tự do — đúng cái rào đã loại SpeedSMS ở Đợt 14. Nay eSMS cũng vướng đúng rào đó, nên lý do chọn eSMS ngày xưa (có brandname demo để test ngay) đã hết hiệu lực. So lại từ đầu là hợp lý; chi phí đổi bên thấp vì chỉ 2 file chạm tới eSMS.
 
 **Việc chỉ dungtv làm được**: đăng ký Brandname CSKH với eSMS (hoặc SpeedSMS) — cần giấy tờ doanh nghiệp, chờ duyệt. Trước khi có, mọi test SMS hoá đơn tới người thuê đều vô nghĩa.
+
+## 2026-09-17 (Đợt 58) — Bổ sung tính năng gửi hoá đơn qua Email + rule chặn khi Tenant chưa có email
+
+Dream yêu cầu (qua Cowork, không phải phiên Claude Code trên repo) bổ sung tính năng **gửi hoá đơn qua Email** bên cạnh kênh SMS hiện có (Đợt 51 đã bỏ Zalo OA, chỉ còn SMS qua eSMS), kèm 1 rule cụ thể: nếu Tenant chưa điền email thì lúc chọn kênh gửi Email phải hiện thông báo cảnh báo. Quyết định ở đợt này thuần tài liệu/thiết kế, chưa code:
+
+1. **Thêm Email làm kênh gửi hoá đơn thứ 2** tại màn Gửi hoá đơn (B-05, dùng chung B-02 đơn lẻ/B-03 hàng loạt): người dùng chọn SMS, Email, hoặc cả hai — không thay thế SMS, chỉ bổ sung thêm lựa chọn.
+2. **Rule validate (đã CHỐT theo yêu cầu Dream, không phải TBD):** nếu hồ sơ Tenant chưa có email (`tb_tenant.email` rỗng/null) mà người dùng chọn "Email"/"Cả hai" tại B-05 → hệ thống phải hiện thông báo cảnh báo ngay khi chọn (không chờ tới lúc bấm "Gửi" mới báo lỗi) và chặn gửi qua kênh Email cho tới khi hồ sơ được bổ sung email (sửa tại T-04 — Tenant Create/Edit, trường Email vốn đã có sẵn, optional).
+3. **Chưa chốt (cần Dream xác nhận ở đợt sau):** độ ưu tiên chính thức (Must/Should/Could) của tính năng Email; nhà cung cấp dịch vụ gửi email (transactional email — Resend/SendGrid/Supabase SMTP...); nội dung/template email cụ thể (subject, có đính kèm PDF hay chỉ ảnh như SMS không); hành vi khi gửi hàng loạt (B-03) mà trong lô có Tenant thiếu email lẫn Tenant đủ email — có chặn cả lô hay chỉ báo riêng từng dòng thiếu.
+4. **Chưa cập nhật Figma** ở đợt này — Send Invoice Sheet trên Figma hiện vẫn vẽ theo bản cũ (đã lỗi thời, từng ghi "SMS/Zalo/Cả hai" dù Zalo đã bỏ từ Đợt 51). Cần Dream (hoặc Claude qua phiên có Figma MCP kết nối, phiên repo này không có quyền chỉnh sửa/ghi vào file Figma, chỉ đọc được qua Dev Mode MCP) cập nhật lại control chọn kênh thành SMS/Email/Cả hai, và thêm trạng thái cảnh báo (banner/dialog) khi chọn Email lúc thiếu dữ liệu.
+
+**Đã sửa (docs):**
+- `docs/BUSINESS-RULES.md` — thêm `BR-NOTI-08` (bổ sung kênh Email) và `BR-NOTI-09` (rule chặn + thông báo khi thiếu email); `BR-NOTI-01` thêm ghi chú trỏ tới 2 rule mới.
+- `docs/REQUIREMENTS.md` — thêm `FR-NOTI-05` (yêu cầu tính năng Email, kèm rule validate) và `INT-07` (tích hợp dịch vụ email, chưa chọn nhà cung cấp); `FR-NOTI-02` thêm ghi chú SMS không còn là kênh duy nhất.
+- `docs/SCREEN-SPEC.md` — B-05: đổi "SMS/Zalo/Cả hai" (lỗi thời) → "SMS/Email/Cả hai"; thêm edge case cảnh báo thiếu email + để ngỏ hành vi gửi hàng loạt khi thiếu email.
+- `docs/CHANGELOG.md` — thêm entry ngày 17/09/2026 tóm tắt các thay đổi trên.
+
+**Chưa làm:** code (validate ở Flutter/Edge Function, tích hợp dịch vụ email, Edge Function sinh nội dung/gửi email); cập nhật Figma (mục 4 ở trên); chưa thêm cột/field email nào mới vào schema (`tb_tenant.email` đã tồn tại sẵn, optional — dùng lại, không cần migration).
+
+## 2026-09-17 (Đợt 59) — Tạo mockup giao diện Email hoá đơn (MOCK-EMAIL) trên Figma, tinh chỉnh bố cục theo 2 email thật tham khảo
+
+Tiếp nối Đợt 58 (bổ sung tính năng gửi hoá đơn qua Email). Khác với Đợt 58 (thuần tài liệu/business rule), đợt này Dream làm việc trực tiếp qua phiên Cowork có **quyền ghi vào Figma** (`use_figma`), nên dựng được bản mockup **nội dung email hoá đơn** thực nhận — tách biệt với việc cập nhật control chọn kênh gửi ở màn B-05 (Send Invoice Sheet), việc đó vẫn còn `TBD` như đã ghi ở Đợt 58 mục 4.
+
+**1. Tạo frame mới `MOCK-EMAIL — Email hoá đơn chi tiết kèm QR` (node `584:2524`, trang "MVP Wireframes", file BizTown Rent-Manager — MVP Wireframes).**
+
+Tham khảo bố cục/màu sắc/thương hiệu từ `MOCK-IMG — Ảnh chi tiết hoá đơn kèm QR (mở từ link SMS)` (node `526:2485`) để giữ nhất quán hình ảnh giữa 2 kênh SMS/Email. Cấu trúc: thanh meta email giả lập (Từ/Đến/Chủ đề/Ngày) → card nội dung HTML email (banner logo + tiêu đề nền navy → lời chào → khối trạng thái "Chưa thanh toán" + mã hợp đồng/mã hoá đơn → bảng chi tiết các khoản phí → khối Tổng cộng → hạn thanh toán → nút CTA "Xem hoá đơn & Thanh toán ngay" → mã QR VietQR kèm thông tin ngân hàng → dòng disclaimer email tự động → footer công ty).
+
+**2. Tinh chỉnh bố cục theo 2 ảnh email thật Dream gửi để tham khảo cách trình bày** (chỉ xem cấu trúc/bố cục, không dùng lại nội dung; 2 ảnh không được lưu vào Figma/docs, chỉ dùng tạm trong phiên làm việc rồi bỏ): 1 ảnh hoá đơn điện tử Uniqlo mở trên Gmail mobile app (dark mode), 1 ảnh email xác nhận đơn hàng AeonEshop mở trên Gmail web (desktop, light mode). Từ 2 ví dụ này, các điều chỉnh đã áp dụng vào MOCK-EMAIL:
+- Thêm nền xám nhạt bao quanh card + viền mảnh + đổ bóng nhẹ cho card, mô phỏng cách email "nổi" thành khối rõ ràng trong khung ứng dụng mail web (theo cách AeonEshop hiển thị trên Gmail web).
+- Thêm dải màu nhấn (cam) mỏng ở mép trên cùng của card — lấy cảm hứng từ thanh màu nhấn phía trên tiêu đề hoá đơn trong email Uniqlo.
+- Tăng khoảng cách dọc giữa các khối nội dung (18px → 26px) và giữa các dòng chi tiết phí (10px → 14px) để đỡ dồn cụm, dễ đọc hơn khi xem trên điện thoại.
+- Thêm viền nhẹ cho khối "Tổng cộng" và viền trên của Footer để tách bạch từng phần rõ ràng hơn, giống cách các mail thật phân vùng theo khối.
+
+**3. Chưa làm (còn lại từ Đợt 58 + phát sinh mới):**
+- Cập nhật control chọn kênh gửi (SMS/Email/Cả hai) tại chính màn B-05 (Send Invoice Sheet) trên Figma — vẫn `TBD`, MOCK-EMAIL chỉ là mockup **nội dung email nhận được**, không phải màn hình app.
+- Chưa thiết kế trạng thái cảnh báo/banner hiện khi Tenant thiếu email lúc chọn kênh Email tại B-05 (rule `BR-NOTI-09`) — MOCK-EMAIL hiện giả định Tenant đã có email hợp lệ.
+- Chưa chốt nhà cung cấp dịch vụ email, nội dung/template chính thức (subject, có đính kèm PDF hay chỉ hiển thị như mockup) — vẫn `TBD` như Đợt 58.
+- Chưa code bất kỳ phần nào (validate, tích hợp email, Edge Function) — thuần thiết kế.
+
+**Đã sửa:**
+- `docs/SCREEN-SPEC.md` — B-05: thêm ghi chú trỏ tới mockup MOCK-EMAIL, làm rõ đây là mockup nội dung email chứ chưa phải cập nhật control màn B-05.
+
+Link Figma: https://www.figma.com/design/AElzfTBuL8YyA8OJ85f7aX/BizTown-Rent-Manager-%E2%80%94-MVP-Wireframes?node-id=584-2524

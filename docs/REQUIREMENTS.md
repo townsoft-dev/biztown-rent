@@ -101,9 +101,10 @@
 | ID | Requirement | Priority | Ghi chú |
 |---|---|---|---|
 | FR-NOTI-01 | Push notification cho người có quyền trên Nhà/Dãy trọ liên quan (hoá đơn mới tạo, đến hạn ghi chỉ số định kỳ, hợp đồng sắp hết hạn) | Must | "Đến hạn ghi chỉ số" điều hướng đúng tới màn Ghi chỉ số (không phải màn Tạo hoá đơn) — xem BR-NOTI-05 |
-| FR-NOTI-02 | Gửi SMS (qua eSMS) cho Tenant khi có hoá đơn mới (kèm link ảnh chi tiết + QR) và khi nhắc thanh toán | Must (phần "hoá đơn mới"); Could (phần "nhắc thanh toán" — hạ 16/09/2026 Đợt 49, xem FR-BILL-09/BR-PAY-04) | Kênh duy nhất tiếp cận Tenant. Đổi từ "SMS/Zalo" sang chỉ **SMS qua eSMS** (16/09/2026, Đợt 51 — bỏ Zalo OA cho Phase 1 vì cơ chế vận hành phức tạp hơn cần thiết), xem `docs/SMS-HOA-DON.md` cho mẫu nội dung + thiết kế ảnh chi tiết. **Nội dung cố định tiếng Việt ở Phase 1** (không song ngữ Anh+Việt — tránh tăng độ dài tin nhắn, đội chi phí gửi tin) — không theo ngôn ngữ hiển thị của người tạo hoá đơn (sửa lại 09/09/2026 đợt 5, xem `BR-NOTI-07`) |
+| FR-NOTI-02 | Gửi SMS (qua eSMS) cho Tenant khi có hoá đơn mới (kèm link ảnh chi tiết + QR) và khi nhắc thanh toán | Must (phần "hoá đơn mới"); Could (phần "nhắc thanh toán" — hạ 16/09/2026 Đợt 49, xem FR-BILL-09/BR-PAY-04) | Đổi từ "SMS/Zalo" sang chỉ **SMS qua eSMS** (16/09/2026, Đợt 51 — bỏ Zalo OA cho Phase 1 vì cơ chế vận hành phức tạp hơn cần thiết), xem `docs/SMS-HOA-DON.md` cho mẫu nội dung + thiết kế ảnh chi tiết. **Nội dung cố định tiếng Việt ở Phase 1** (không song ngữ Anh+Việt — tránh tăng độ dài tin nhắn, đội chi phí gửi tin) — không theo ngôn ngữ hiển thị của người tạo hoá đơn (sửa lại 09/09/2026 đợt 5, xem `BR-NOTI-07`). **Cập nhật 17/09/2026:** không còn là kênh duy nhất — xem FR-NOTI-05 (bổ sung kênh Email) |
 | FR-NOTI-03 | Trung tâm thông báo (notification inbox) trong app | Must | |
 | FR-NOTI-04 | Thông báo khi được mời làm quản lý 1 Nhà/Dãy trọ | Should | Xem BR-NOTI-06 |
+| FR-NOTI-05 | **Bổ sung tính năng gửi hoá đơn qua Email** — thêm Email làm kênh gửi hoá đơn cho Tenant tại màn Gửi hoá đơn (B-05), chọn SMS/Email/Cả hai | **Đề xuất mới (17/09/2026)** — cần Dream xác nhận Must/Should/Could | Gửi tới `tb_tenant.email`; cần INT-07 (dịch vụ email) chưa tích hợp. **Validate bắt buộc:** nếu Tenant chưa có email mà chọn kênh Email/Cả hai → chặn gửi, hiện thông báo yêu cầu bổ sung email trước (đã CHỐT, không phải TBD) — xem `BUSINESS-RULES.md` BR-NOTI-08/09, `SCREEN-SPEC.md` B-05 |
 
 ### 2.10 Quản lý quyền truy cập theo Nhà/Dãy trọ (Profile)
 | ID | Requirement | Priority | Ghi chú |
@@ -140,6 +141,7 @@
 | INT-04 | Push notification (Firebase Cloud Messaging / APNs) | Xác nhận lại ở [ARCHITECTURE](ARCHITECTURE.md) |
 | INT-05 | Cổng thanh toán online (VNPay/Momo/ZaloPay) | Ngoài phạm vi Phase 1 — Phase 1 chỉ sinh mã QR chuyển khoản tĩnh (VietQR/NAPAS-247), không xử lý thanh toán trong app |
 | INT-06 | Lưu trữ ảnh (hồ sơ, CCCD, ảnh phòng, ảnh công tơ) — Cloud storage (Supabase Storage) | |
+| INT-07 | Dịch vụ gửi Email (transactional email) cho kênh gửi hoá đơn qua Email mới (`FR-NOTI-05`/`BR-NOTI-08`) | **Đề xuất mới (17/09/2026)** — chưa chọn nhà cung cấp (VD: Resend, SendGrid, Supabase built-in SMTP...), chưa tích hợp. Cần Dream xác nhận trước khi code |
 
 ---
 
