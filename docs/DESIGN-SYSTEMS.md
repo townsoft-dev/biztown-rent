@@ -16,15 +16,31 @@
 
 ### 1.1 Logo (`design/Logo/`)
 
+> **Cập nhật 18/09/2026 — Dream gửi bộ logo thương hiệu mới, đã áp dụng đồng loạt.** Chốt lại rõ 2 tầng tên:
+> - **Thương hiệu (brand): "BizTown"** — luôn hiển thị **icon đi kèm wordmark "BizTown" trong cùng 1 khối** (không dùng icon trần một mình ở bất kỳ đâu).
+> - **Sản phẩm (product): "Rent Manager"** — wordmark riêng, tách khỏi logo thương hiệu, chỉ ghép lại với nhau ở **Splash (S-00)**: logo thương hiệu ở trên, wordmark "RENT MANAGER" ở dưới (xem [SCREEN-SPEC.md](SCREEN-SPEC.md) S-00). Ở các màn khác (VD S-01 Login) chỉ dùng logo thương hiệu, không lặp lại tên sản phẩm vì màn đã có tiêu đề riêng.
+>
+> Bộ icon-wordmark mới có 4 biến thể theo module trong bộ ứng dụng BizTown (cột màu khác nhau: Rent = cam, Invoice = san hô, Staff = ngọc, Inventory = tím) — app này dùng **bản "Rent"**. Có 2 file `biztown-rent-icon-wordmark.png` (chữ "BIZTOWN" viết hoa toàn bộ) và `...-alt.png` (chữ "BizTown" viết hoa/thường, khớp đúng kiểu chữ dùng ở 3 module còn lại và khớp cách viết "BizTown" trong mọi tài liệu/README) — **đã chọn dùng bản `-alt`** để đồng bộ; `NEEDS INPUT` nếu Dream muốn bản chữ hoa toàn bộ thay vào đó. File nguồn hiện chỉ có PNG (không có bản vector đi kèm như các icon glyph cũ) — `TBD` xin bản SVG/vector nếu cần scale lớn hơn sau này (marketing, in ấn).
+
 | File | Dùng cho |
 |---|---|
-| [`biztown-rent-manager-lockup.svg`](../design/Logo/biztown-rent-manager-lockup.svg) | Logo lockup chính (nền sáng) |
-| [`biztown-rent-manager-lockup-on-navy.svg`](../design/Logo/biztown-rent-manager-lockup-on-navy.svg) | Logo lockup trên nền navy (dark) |
-| [`biztown-rent-manager-lockup-reversed.svg`](../design/Logo/biztown-rent-manager-lockup-reversed.svg) | Logo lockup đảo màu — dùng trên nền tối/ảnh, biến thể ngoài 2 bản trên |
+| [`biztown-rent-icon-wordmark-alt.png`](../design/Logo/biztown-rent-icon-wordmark-alt.png) | **Logo thương hiệu chính thức (18/09/2026)** — icon "Rent" (cột cam) + wordmark "BizTown", đã copy vào `src/assets/logo/`, dùng ở Splash (S-00) và Login (S-01) |
+| [`biztown-rent-icon-wordmark.png`](../design/Logo/biztown-rent-icon-wordmark.png) | Biến thể chữ "BIZTOWN" viết hoa toàn bộ — **không dùng**, giữ lại để đối chiếu nếu Dream muốn đổi lại |
+| [`biztown-invoice-icon-wordmark.png`](../design/Logo/biztown-invoice-icon-wordmark.png) / [`biztown-staff-icon-wordmark.png`](../design/Logo/biztown-staff-icon-wordmark.png) / [`biztown-inventory-icon-wordmark.png`](../design/Logo/biztown-inventory-icon-wordmark.png) | Icon-wordmark của 3 module khác trong bộ BizTown (Invoice/Staff/Inventory) — chưa dùng trong app này, giữ tham khảo cho nhất quán bộ nhận diện |
+| [`rentmanager-wordmark-white.png`](../design/Logo/rentmanager-wordmark-white.png) | Wordmark "RENT MANAGER" chữ trắng, nền trong suốt — đã copy vào `src/assets/logo/`, dùng ở Splash (dưới logo thương hiệu, trên nền navy) |
+| [`rentmanager-wordmark-navy.png`](../design/Logo/rentmanager-wordmark-navy.png) / `-orange.png` / `-slate.png` / `-lavender.png` | Wordmark "RENT MANAGER" các màu khác — chưa dùng, để sẵn nếu cần trên nền sáng |
+| [`rentmanager-wordmark-bg-*.png`](../design/Logo/) | Wordmark "RENT MANAGER" có nền liền (card/banner) — dùng ngoài app (marketing), không dùng trong Flutter |
+| [`rentmanager-2line-cover-navy.png`](../design/Logo/rentmanager-2line-cover-navy.png) / `-lightgray.png` | Cover "RENT MANAGER" 2 dòng full-bleed — banner/cover dùng ngoài app, không phải asset trong Flutter |
+| [`brand.png`](../design/Logo/brand.png) | Ảnh chụp nhanh lockup cũ (icon + "BizTown" + "RENT MANAGER" gộp 1 khối) — bản cũ, **đã thay thế**, giữ tham khảo lịch sử |
+| [`biztown-rent-manager-lockup.svg`](../design/Logo/biztown-rent-manager-lockup.svg) | Logo lockup cũ (nền sáng) — **đã thay thế** ở S-01 Login, không còn dùng trong code |
+| [`biztown-rent-manager-lockup-on-navy.svg`](../design/Logo/biztown-rent-manager-lockup-on-navy.svg) | Logo lockup cũ trên nền navy — **đã thay thế** ở S-00 Splash, không còn dùng trong code |
+| [`biztown-rent-manager-lockup-reversed.svg`](../design/Logo/biztown-rent-manager-lockup-reversed.svg) | Logo lockup đảo màu — biến thể ngoài 2 bản trên, chưa từng dùng trong code |
 | [`biztown-rent-manager-banner.svg`](../design/Logo/biztown-rent-manager-banner.svg) | Banner |
-| [`biztown-wordmark.svg`](../design/Logo/biztown-wordmark.svg) | Wordmark — chỉ chữ "BizTown Rent Manager", không kèm icon |
-| [`biztown-rent-icon.svg`](../design/Logo/biztown-rent-icon.svg) | Icon glyph — biểu tượng "Rent" (cột màu cam) |
+| [`biztown-wordmark.svg`](../design/Logo/biztown-wordmark.svg) | Wordmark cũ — chỉ chữ "BizTown", không kèm icon — chưa từng dùng trong code |
+| [`biztown-rent-icon.svg`](../design/Logo/biztown-rent-icon.svg) | Icon glyph trần — biểu tượng "Rent" (cột màu cam), không kèm wordmark — theo quy tắc mới (icon luôn đi kèm wordmark) **không dùng để hiển thị độc lập** trong app, chỉ còn hợp lệ làm app icon OS (`src/assets/icon/app_icon.png`, xem lưu ý dưới) |
 | [`biztown-invoice-icon.svg`](../design/Logo/biztown-invoice-icon.svg) | Icon glyph — biểu tượng "Invoice/Hoá đơn" (cột màu cam đất/san hô) |
+
+> **Lưu ý app icon (OS home screen):** `src/assets/icon/app_icon.png` (dùng bởi `flutter_launcher_icons` trong `pubspec.yaml`) là icon **trần, không chữ** — đây là ngoại lệ hợp lý cho quy tắc "icon luôn kèm wordmark": icon màn hình chính OS quá nhỏ (thậm chí 20×20px) để chữ còn đọc được, theo chuẩn iOS/Android. Không đổi app icon theo bộ asset mới trong lần này — `NEEDS INPUT` nếu Dream muốn xác nhận lại rule này.
 
 ### 1.2 Mockup bố cục tham khảo (`design/mockups/`) — Mới 2026-09-08
 
