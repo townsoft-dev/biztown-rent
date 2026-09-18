@@ -475,3 +475,9 @@ entrypoint = "./functions/i/index.ts"
 verify_jwt = false
 import_map = "./functions/invoice/deno.json"
 entrypoint = "./functions/invoice/index.ts"
+
+[functions.zalo-miniapp-webhook]
+# Zalo gọi từ máy chủ của họ, không mang JWT nào — tắt kiểm tra ở tầng nền tảng.
+verify_jwt = false
+import_map = "./functions/zalo-miniapp-webhook/deno.json"
+entrypoint = "./functions/zalo-miniapp-webhook/index.ts"
