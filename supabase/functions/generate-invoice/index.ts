@@ -524,7 +524,7 @@ export default {
                 .select("phone")
                 .eq("id", contract.tenant_id)
                 .single();
-              const message = buildInvoiceSmsMessage(result.invoice, house);
+              const message = buildInvoiceSmsMessage(result.invoice);
               await sendSmsViaEsms(tenant.phone, message);
               await ctx.supabaseAdmin
                 .from("tb_invoice")
