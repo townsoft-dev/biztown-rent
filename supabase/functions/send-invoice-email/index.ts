@@ -117,7 +117,12 @@ function renderInvoiceEmail(d: InvoiceEmailData): string {
   <tr><td style="height:4px;background:${CAM};font-size:0;line-height:0">&nbsp;</td></tr>
 
   <tr><td style="background:${NAVY};padding:40px 32px 34px">
-    <!-- Cụm logo (biểu tượng 3 cột + chữ) dựng bằng ô bảng có nền màu thay vì
+    <!-- ⚠️ Đây là LOCKUP CŨ dựng lại, đang dùng CÓ CHỦ Ý — đừng thay bằng bộ
+         logo mới của mr Han: logo mới là ô vuông nền navy trùng màu nền header
+         này nên tan vào nền. dungtv chốt 18/09/2026 tạm giữ; gỡ khi có bản
+         logo nền trong suốt (docs/DECISIONS.md Đợt 65).
+
+         Cụm logo (biểu tượng 3 cột + chữ) dựng bằng ô bảng có nền màu thay vì
          ảnh: nhiều hộp thư chặn ảnh mặc định, dùng ảnh thì logo biến mất hẳn.
          Hình học + màu đo từng pixel trên bản render Figma MOCK-EMAIL (node
          584:2524) va doi chieu design/Logo/biztown-rent-manager-lockup-on-navy.svg:

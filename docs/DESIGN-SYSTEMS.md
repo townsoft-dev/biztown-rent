@@ -32,15 +32,21 @@
 | [`rentmanager-wordmark-bg-*.png`](../design/Logo/) | Wordmark "RENT MANAGER" có nền liền (card/banner) — dùng ngoài app (marketing), không dùng trong Flutter |
 | [`rentmanager-2line-cover-navy.png`](../design/Logo/rentmanager-2line-cover-navy.png) / `-lightgray.png` | Cover "RENT MANAGER" 2 dòng full-bleed — banner/cover dùng ngoài app, không phải asset trong Flutter |
 | [`brand.png`](../design/Logo/brand.png) | Ảnh chụp nhanh lockup cũ (icon + "BizTown" + "RENT MANAGER" gộp 1 khối) — bản cũ, **đã thay thế**, giữ tham khảo lịch sử |
-| [`biztown-rent-manager-lockup.svg`](../design/Logo/biztown-rent-manager-lockup.svg) | Logo lockup cũ (nền sáng) — **đã thay thế** ở S-01 Login, không còn dùng trong code |
-| [`biztown-rent-manager-lockup-on-navy.svg`](../design/Logo/biztown-rent-manager-lockup-on-navy.svg) | Logo lockup cũ trên nền navy — **đã thay thế** ở S-00 Splash, không còn dùng trong code |
+| [`biztown-rent-manager-lockup.svg`](../design/Logo/biztown-rent-manager-lockup.svg) | Logo lockup cũ (nền sáng) — đã thay thế ở S-01 Login. Không còn dùng trong `src/lib/`. |
+| [`biztown-rent-manager-lockup-on-navy.svg`](../design/Logo/biztown-rent-manager-lockup-on-navy.svg) | Logo lockup cũ trên nền navy — đã thay thế ở S-00 Splash, nhưng **VẪN ĐANG DÙNG THẬT** ở backend: nhúng vào `supabase/functions/_shared/invoice_image_logo.ts` để vẽ header **ảnh hoá đơn gửi người thuê**, và được dựng lại bằng ô bảng trong **email hoá đơn**. dungtv chốt 18/09/2026 tạm giữ nguyên — xem [DECISIONS.md](DECISIONS.md) Đợt 65. **Đừng xoá file này.** |
 | [`biztown-rent-manager-lockup-reversed.svg`](../design/Logo/biztown-rent-manager-lockup-reversed.svg) | Logo lockup đảo màu — biến thể ngoài 2 bản trên, chưa từng dùng trong code |
 | [`biztown-rent-manager-banner.svg`](../design/Logo/biztown-rent-manager-banner.svg) | Banner |
 | [`biztown-wordmark.svg`](../design/Logo/biztown-wordmark.svg) | Wordmark cũ — chỉ chữ "BizTown", không kèm icon — chưa từng dùng trong code |
 | [`biztown-rent-icon.svg`](../design/Logo/biztown-rent-icon.svg) | Icon glyph trần — biểu tượng "Rent" (cột màu cam), không kèm wordmark — theo quy tắc mới (icon luôn đi kèm wordmark) **không dùng để hiển thị độc lập** trong app, chỉ còn hợp lệ làm app icon OS (`src/assets/icon/app_icon.png`, xem lưu ý dưới) |
 | [`biztown-invoice-icon.svg`](../design/Logo/biztown-invoice-icon.svg) | Icon glyph — biểu tượng "Invoice/Hoá đơn" (cột màu cam đất/san hô) |
 
-> **Lưu ý app icon (OS home screen):** `src/assets/icon/app_icon.png` (dùng bởi `flutter_launcher_icons` trong `pubspec.yaml`) là icon **trần, không chữ** — đây là ngoại lệ hợp lý cho quy tắc "icon luôn kèm wordmark": icon màn hình chính OS quá nhỏ (thậm chí 20×20px) để chữ còn đọc được, theo chuẩn iOS/Android. Không đổi app icon theo bộ asset mới trong lần này — `NEEDS INPUT` nếu Dream muốn xác nhận lại rule này.
+> **Lưu ý app icon (OS home screen) — CẬP NHẬT 18/09/2026, đảo lại ghi chú cũ:** `src/assets/icon/app_icon.png` nay **là bản CÓ CHỮ** (`biztown-rent-icon-wordmark-alt.png`), và tên app rút còn **"Rent Manager"**. Khách hàng yêu cầu vì tên "BizTown Rent Manager" bị cắt trên iPhone. Lập luận cũ ("icon OS quá nhỏ để chữ đọc được") đã được kiểm chứng lại bằng cách kết xuất icon ở đúng cỡ hiển thị thật — 180×180 trên iPhone, 192×192 trên Android — **chữ "BizTown" đọc rõ**. Xem [DECISIONS.md](DECISIONS.md) Đợt 64.
+
+> ### ⚠️ Logo ở tài liệu gửi RA NGOÀI chưa đồng bộ với app (18/09/2026)
+>
+> **App** (Splash, Login, icon OS) dùng bộ logo mới. **Ảnh hoá đơn và email gửi người thuê vẫn dùng lockup cũ.** dungtv chốt tạm chấp nhận lệch — lý do kỹ thuật: logo mới là **ô vuông bo góc nền navy `#23305E`**, trùng đúng màu nền header của ảnh hoá đơn (`#23305E`) và email (`#1E2A51`), dán vào là ô vuông tan vào nền.
+>
+> **Việc cần làm để gỡ:** xin mr Han bản logo **nền trong suốt** (chỉ 3 cột + chữ "BizTown", bỏ ô vuông navy). Có bản đó thì thay được cả 2 chỗ mà không phá bố cục Hường đã thiết kế.
 
 ### 1.2 Mockup bố cục tham khảo (`design/mockups/`) — Mới 2026-09-08
 

@@ -1195,3 +1195,25 @@ Sáng nay (mục 08:12 trong `changelog/2026-09-18.md`) đã chốt **giữ nguy
 **Vì sao hợp lý về mặt thương hiệu**: tên thương hiệu **BizTown** nằm trên icon, tên sản phẩm **Rent Manager** nằm dưới icon — cộng lại người dùng vẫn đọc ra đầy đủ "BizTown · Rent Manager" mà không chữ nào bị cắt. Trùng đúng định hướng "thương hiệu BizTown / sản phẩm Rent Manager" mà Dream đã chốt sáng nay, chỉ khác chỗ đặt.
 
 **Verify**: `aapt2 dump badging` trên APK thật trả `application-label: 'Rent Manager'`; mở icon 180px và 192px xem bằng mắt, chữ đọc được.
+
+## 2026-09-18 (Đợt 65) — Tạm giữ logo CŨ ở ảnh hoá đơn và email, chấp nhận lệch với app
+
+**Bối cảnh**: sau khi đổi icon OS và tên app theo yêu cầu khách (Đợt 64), dungtv hỏi hoá đơn và email gửi đi đã đồng bộ chưa. Rà lại thì **chưa**:
+
+| Nơi | Logo |
+|---|---|
+| App (Splash, Login), icon OS | Bộ mới của mr Han (17/09) |
+| Ảnh hoá đơn gửi người thuê | **Lockup cũ** (nhúng vector, `_shared/invoice_image_logo.ts`) |
+| Email hoá đơn | **Lockup cũ** (dựng lại bằng ô bảng) |
+
+`docs/DESIGN-SYSTEMS.md` ghi 2 file lockup cũ *"không còn dùng trong code"* — **sai**, vì lần rà đó chỉ quét `src/lib/`, bỏ qua `supabase/functions/`. Đã sửa lại bảng.
+
+**Quyết định của dungtv: tạm giữ nguyên lockup cũ ở 2 chỗ đó.**
+
+**Vì sao không thay ngay được** — không phải lười, mà là vướng kỹ thuật thật: logo mới `biztown-rent-icon-wordmark-alt.png` là một **ô vuông bo góc nền navy `#23305E`**, trùng **đúng** màu nền header của ảnh hoá đơn (`#23305E`) và sát màu nền header email (`#1E2A51`). Dán vào là ô vuông tan vào nền, chỉ còn 3 cột và chữ "BizTown" trôi lơ lửng không khung.
+
+**Còn một mâu thuẫn thiết kế chưa gỡ**: quy tắc thương hiệu mới (Đợt trước cùng ngày) nói *"tên sản phẩm RENT MANAGER tách riêng, chỉ ghép với logo thương hiệu ở Splash"*, tức header hoá đơn lẽ ra phải **bỏ dòng "RENT MANAGER"**. Nhưng `MOCK-IMG` và `MOCK-EMAIL` của Hường — bản dungtv đã duyệt — lại vẽ nguyên lockup cũ **có** "RENT MANAGER". Hai nguồn thiết kế chỏi nhau, chưa ai chốt.
+
+**Việc cần làm để gỡ hẳn**: xin mr Han bản logo **nền trong suốt** (chỉ 3 cột + chữ "BizTown", bỏ ô vuông navy). Có bản đó thì thay được cả 2 chỗ mà không phá bố cục Hường đã thiết kế, và lúc đó chốt luôn có giữ "RENT MANAGER" hay không.
+
+**Đã cắm cảnh báo ngay trong code** ở `_shared/invoice_image_logo.ts` và `send-invoice-email/index.ts` để phiên sau không "sửa giúp" nhầm — vì đọc tài liệu sẽ tưởng bộ cũ đã bỏ hẳn.
