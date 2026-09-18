@@ -725,6 +725,8 @@
     "batchSendChannelSubtitle": "Send {count} invoices",
     "batchProcessing": "Creating & sending invoices, please wait...",
     "batchDraftSuccess": "Created {count} draft invoices",
+    "sentSuccessSms": "Invoice sent by SMS to {phone}",
+    "sentSuccessEmail": "Invoice sent by email to {email}",
     "batchSentSuccess": "Created and sent {count} invoices",
     "channelEmail": "Email",
     "channelEmailHint": "Send to {email}",

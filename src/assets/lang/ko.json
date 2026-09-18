@@ -725,6 +725,8 @@
     "batchSendChannelSubtitle": "{count}건의 청구서 발송",
     "batchProcessing": "청구서 생성 및 발송 중입니다...",
     "batchDraftSuccess": "임시저장 청구서 {count}건 생성 완료",
+    "sentSuccessSms": "{phone} 번호로 청구서를 SMS로 보냈습니다",
+    "sentSuccessEmail": "{email} 주소로 청구서를 이메일로 보냈습니다",
     "batchSentSuccess": "청구서 {count}건 생성 및 발송 완료",
     "channelEmail": "이메일",
     "channelEmailHint": "{email} 로 보내기",

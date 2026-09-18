@@ -74,8 +74,13 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
   }
 
   Future<void> _sendOrResend() async {
-    await showSendInvoiceSheet(context, ref, widget.invoiceId);
+    final sentMessage =
+        await showSendInvoiceSheet(context, ref, widget.invoiceId);
     _invalidateAll();
+    if (sentMessage != null && mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(sentMessage)));
+    }
   }
 
   Future<void> _deleteDraft() async {

@@ -458,6 +458,13 @@ verify_jwt = false
 import_map = "./functions/send-invoice-email/deno.json"
 entrypoint = "./functions/send-invoice-email/index.ts"
 
+[functions.i]
+# Ảnh hoá đơn — đường dẫn CHÍNH gửi trong SMS. Tên một chữ là cố ý: link ngắn
+# đi 6 ký tự kéo tin nhắn từ 166 xuống 160, tức từ 2 đoạn SMS xuống 1.
+verify_jwt = false
+import_map = "./functions/i/deno.json"
+entrypoint = "./functions/i/index.ts"
+
 [functions.invoice]
 # Ảnh hoá đơn cho người thuê — họ không có tài khoản nên không gửi được JWT
 # nào; tắt kiểm tra ở tầng nền tảng, hàm tự khai `auth: ["none"]`.
