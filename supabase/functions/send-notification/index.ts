@@ -126,7 +126,7 @@ export default {
           const { data: invoice, error } = await ctx.supabaseAdmin
             .from("tb_invoice")
             .select(
-              "house_name, room_nos, period_start, rent_amount, utility_lines, service_fee_amount, recurring_fees, other_fees, total_amount",
+              "house_name, room_nos, tenant_name, public_code, period_start, rent_amount, utility_lines, service_fee_amount, recurring_fees, other_fees, total_amount",
             )
             .eq("id", payload.zalo.invoiceId)
             .single();

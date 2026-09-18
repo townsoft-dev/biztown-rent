@@ -178,9 +178,25 @@ export async function forceRefreshZaloToken(supabaseAdmin: any): Promise<{ expir
  * tiết" trên tin đó (webhook chỉ trả về Zalo UID, không trả SĐT).
  */
 // deno-lint-ignore no-explicit-any
+/**
+ * Giá trị một tham số ZNS. PHẢI cho phép cả `number`, không chỉ `string`.
+ *
+ * Mẫu hoá đơn `638179` khai 7 tham số kiểu **number** (`tien_phong`, `so_kwh`,
+ * `tien_dien`, `so_khoi_nuoc`, `tien_nuoc`, `phi_khac`, `tong_cong`) và 1 kiểu
+ * **date** (`so_ky`) — xem bảng "Loại dữ liệu" trong trang chi tiết mẫu. Bản
+ * trước khai `Record<string, string>` nên mọi giá trị bị bọc trong dấu nháy;
+ * cảnh báo này đã ghi ở `docs/ZALO-MESSAGING.md` mục 0 từ 15/09/2026 nhưng
+ * chưa ai sửa vì lúc đó chưa có mẫu thật để đối chiếu.
+ */
+export type ZnsParamValue = string | number;
+
 export async function sendZns(
   supabaseAdmin: any,
-  opts: { phone: string; templateId: string; templateData: Record<string, string> },
+  opts: {
+    phone: string;
+    templateId: string;
+    templateData: Record<string, ZnsParamValue>;
+  },
 ): Promise<{ msgId: string | null; raw: unknown }> {
   const accessToken = await getValidZaloAccessToken(supabaseAdmin);
   const res = await fetch(ZALO_ZNS_SEND_URL, {

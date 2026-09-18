@@ -1,17 +1,30 @@
 // _shared/zns_invoice.ts
 //
-// Map 1 hoá đơn (`tb_invoice`) sang đúng 10 tham số của ZNS template ĐÃ ĐƯỢC
-// ZALO DUYỆT: "BizTown Rent-Manager : Hóa đơn định kỳ 2" (ID `636461`, loại
-// "Mẫu phản hồi nhanh" — có nút "Chi tiết").
+// Map 1 hoá đơn (`tb_invoice`) sang đúng 13 tham số của mẫu ZBS "Hóa đơn định
+// kỳ" — **ID `638179`**, gửi qua OA "Townsoft Vina - BizTown", nút thao tác
+// "Chi tiết hóa đơn" mở Zalo Mini App (+0đ).
 //
-// Ghi chú kiểm duyệt của Zalo ghi rõ: "mẫu thông báo hóa đơn, không quảng
-// cáo, KHÔNG MÃ QR BARCODE" — nên mã QR thanh toán KHÔNG được nằm trong tin
-// ZNS này. QR sẽ gửi ở tin tư vấn riêng sau khi người thuê bấm "Chi tiết"
-// (xem docs/DECISIONS.md Đợt 48).
+// Thay cho mẫu cũ `636461` (10 tham số): mẫu đó thiếu cặp định danh khách
+// hàng nên Zalo TỪ CHỐI với mã `[CT_13]` — bắt buộc phải có TÊN KHÁCH HÀNG
+// kèm một MÃ (đơn hàng/khách hàng/hợp đồng), mỗi tham số có chữ dẫn phía
+// trước. Nay thêm `ten_khach_hang` + `ma_hoa_don`, và `ma_tra_cuu` cho nút
+// CTA (xem docs/DECISIONS.md Đợt 66).
 //
-// Giới hạn độ dài do Zalo đặt ra cho từng tham số (lấy từ bảng "Tham số"
-// trong trang chi tiết template): ten_nha/ten_phong tối đa 30 ký tự, các
-// tham số số tiền/số lượng tối đa 20 ký tự.
+// Zalo CẤM mã QR trong mẫu ZBS — đó là lý do dùng Mini App: người thuê bấm
+// nút, Mini App đọc `?code=<ma_tra_cuu>` rồi hiện ảnh hoá đơn kèm QR.
+//
+// Giới hạn và KIỂU DỮ LIỆU lấy từ bảng "Tham số" trong trang chi tiết mẫu:
+//   string : ten_nha(30) ten_phong(30) ten_khach_hang(30) ma_hoa_don(30)
+//            ma_tra_cuu(URL 200)
+//   date   : so_ky(20)
+//   number : tien_phong so_kwh tien_dien so_khoi_nuoc tien_nuoc phi_khac
+//            tong_cong  (đều 20)
+//
+// ⚠️ 7 tham số kiểu `number` phải gửi đi là SỐ trong JSON, không bọc nháy.
+// Bản trước trả mọi giá trị dạng chuỗi — cảnh báo này đã ghi ở
+// `docs/ZALO-MESSAGING.md` mục 0 từ 15/09/2026, nay mới có mẫu thật để chốt.
+
+import type { ZnsParamValue } from "./zalo.ts";
 
 interface UtilityLine {
   utilityType: "electricity" | "water";
@@ -27,6 +40,8 @@ interface FeeLine {
 export interface ZnsInvoice {
   house_name: string;
   room_nos: string[];
+  tenant_name: string | null;
+  public_code: string | null;
   period_start: string;
   rent_amount: number;
   utility_lines: UtilityLine[] | null;
@@ -40,10 +55,10 @@ function truncate(value: string, maxLength: number): string {
   return value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}…`;
 }
 
-// Tham số kiểu "Số lượng / Số tiền" của Zalo: gửi CHỮ SỐ THUẦN, không chấm/phẩy
-// phân cách — Zalo tự định dạng lúc hiển thị cho người nhận.
-function plainNumber(value: number | null | undefined): string {
-  return String(Math.round(value ?? 0));
+// Tham số kiểu "Số lượng / Số tiền" khai `number` trong mẫu — trả về số
+// nguyên thật, để Zalo tự định dạng dấu phân cách lúc hiển thị.
+function plainNumber(value: number | null | undefined): number {
+  return Math.round(value ?? 0);
 }
 
 function sumUtility(
@@ -72,7 +87,9 @@ function periodLabel(periodStart: string): string {
   return `${mm}/${d.getUTCFullYear()}`;
 }
 
-export function buildZnsInvoiceData(invoice: ZnsInvoice): Record<string, string> {
+export function buildZnsInvoiceData(
+  invoice: ZnsInvoice,
+): Record<string, ZnsParamValue> {
   const otherFees = (invoice.service_fee_amount ?? 0) +
     sumFees(invoice.recurring_fees) +
     sumFees(invoice.other_fees);
@@ -88,5 +105,11 @@ export function buildZnsInvoiceData(invoice: ZnsInvoice): Record<string, string>
     tien_nuoc: plainNumber(sumUtility(invoice.utility_lines, "water", "totalAmount")),
     phi_khac: plainNumber(otherFees),
     tong_cong: plainNumber(invoice.total_amount),
+    ten_khach_hang: truncate(invoice.tenant_name ?? "", 30),
+    ma_hoa_don: invoice.public_code ?? "",
+    // Cùng giá trị với `ma_hoa_don` nhưng PHẢI là tham số riêng: Zalo quy định
+    // "các tham số trong CTA phải có tên khác với tham số trong nội dung".
+    // Mã chỉ gồm A-Z và 0-9 nên không cần mã hoá URL.
+    ma_tra_cuu: invoice.public_code ?? "",
   };
 }
