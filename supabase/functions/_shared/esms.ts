@@ -4,20 +4,29 @@
 // generate-invoice (mode "batchSend", tạo + gửi hàng loạt phía backend). Tách
 // ra đây vì cả 2 nơi cần đúng 1 logic gọi eSMS giống hệt nhau.
 //
-// ⚠️ SmsType "1" (đầu số/tổng đài dùng chung) — eSMS NHẬN đơn nhưng NHÀ MẠNG
-// KHÔNG GIAO. Kiểm chứng thật 17/09/2026: gửi cùng lúc tới cùng một số bằng
-// cùng một tài khoản eSMS, tin SmsType "1" không tới máy, tin brandname
-// (SmsType "2" + "Baotrixemay") tới ngay. Vậy nên SMS hoá đơn hiện KHÔNG đến
-// được tay người thuê, dù hàm này trả về thành công.
+// ⚠️ PHẢI gửi bằng BRANDNAME (`SmsType "2"` + `Brandname`), KHÔNG dùng
+// SmsType "1" (đầu số/tổng đài dùng chung): eSMS nhận đơn và VẪN TRỪ TIỀN,
+// nhưng nhà mạng KHÔNG GIAO. Kiểm chứng 2 lần: 17/09/2026 (gửi song song tới
+// cùng một số, tin SmsType "1" không tới, tin brandname tới ngay) và
+// 18/09/2026 (dungtv báo không nhận được tin hoá đơn nào, trong khi OTP —
+// vốn đã dùng brandname ở `send-otp-sms` — vẫn tới bình thường).
 //
-// Ghi chú cũ ("gửi được nội dung TỰ DO ngay, không cần Brandname") là SAI —
-// nó dựa trên việc eSMS trả CodeResult 100, mà mã đó chỉ nghĩa là eSMS đã
-// nhận đơn.
+// Nội dung đã được nắn theo đúng mẫu của brandname mượn "Baotrixemay" ở
+// `src/lib/core/invoice_message.dart`; trước 18/09 phần nội dung nắn đúng mẫu
+// nhưng chỗ GỬI lại vẫn để SmsType "1" nên công nắn mẫu thành vô ích.
 //
-// KHÔNG có đường vòng: brandname demo "Baotrixemay" chỉ cho gửi đúng một mẫu
-// nội dung cố định của eSMS, không nhét được nội dung hoá đơn. Muốn gửi hoá
-// đơn thật phải ĐĂNG KÝ BRANDNAME CSKH riêng rồi đổi sang SmsType "8" +
-// `Brandname` ở hàm này.
+// `IsUnicode` phải là "0": nội dung hoá đơn cố tình viết KHÔNG DẤU để nằm
+// trong bảng mã GSM-7 (160 ký tự/đoạn). Để "1" là ép sang UCS-2, tụt xuống
+// 70 ký tự/đoạn, tin 199 ký tự nhảy từ 2 lên 3 đoạn — trả tiền gấp rưỡi cho
+// đúng một nội dung không có lấy một dấu tiếng Việt.
+//
+// Khi đăng ký được BRANDNAME CSKH riêng thì đổi `ESMS_BRANDNAME` bên dưới và
+// viết lại nội dung theo mẫu mới đã duyệt.
+
+// Brandname đang MƯỢN của eSMS (mẫu demo nhắc bảo trì xe máy) — giống hệt
+// `send-otp-sms`. Đổi ở đây là đổi cho cả SMS hoá đơn đơn lẻ lẫn gửi hàng loạt.
+const ESMS_BRANDNAME = "Baotrixemay";
+const ESMS_SMS_TYPE = "2";
 
 // Supabase gửi SĐT dạng E.164 (+84...) — eSMS cần dạng nội địa (0...).
 function toLocalVnPhone(phone: string): string {
@@ -43,8 +52,9 @@ export async function sendSmsViaEsms(phone: string, message: string): Promise<Es
       SecretKey: secretKey,
       Phone: toLocalVnPhone(phone),
       Content: message,
-      SmsType: "1",
-      IsUnicode: "1", // nội dung tiếng Việt có dấu (BR-NOTI-07)
+      Brandname: ESMS_BRANDNAME,
+      SmsType: ESMS_SMS_TYPE,
+      IsUnicode: "0", // nội dung viết không dấu để ở lại GSM-7, xem đầu file
     }),
   });
   const body = await res.json();

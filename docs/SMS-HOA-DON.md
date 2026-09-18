@@ -186,3 +186,19 @@ Gửi thật tới máy dungtv, cùng brandname `Baotrixemay`, cùng mẫu, ch�
 **Hệ quả cho thiết kế**: mẫu `https://btr.vn/i/{ma_tra_cuu}` đã chọn từ trước **đúng dạng đi lọt** — không phải đổi gì. Ngược lại, **không được dùng link kiểu `?code=...`** (VD link ảnh QR của SePay) vì sẽ bị loại.
 
 **Lưu ý chi phí**: tin thất bại **vẫn bị trừ tiền** như tin thành công.
+
+### 6.5 Tài khoản eSMS dùng để gửi — chốt 18/09/2026
+
+Mọi tin nhắn của dự án (hoá đơn **và** OTP đăng nhập/đăng ký) đi qua **tài khoản eSMS của Dream**, `UserID 314094`. dungtv chốt: *"nhớ dùng key sms này của dream nhé không dùng của tôi nữa"* — trước đó đang tạm dùng tài khoản cá nhân của dungtv để gỡ bí lúc truy lỗi SMS.
+
+Hai thứ dùng **chung** một cặp secret `ESMS_API_KEY` / `ESMS_SECRET_KEY` (qua `supabase/functions/_shared/esms.ts`), nên đổi một lần là đổi cả hai — không có cách tách riêng tiền OTP và tiền hoá đơn nếu vẫn dùng chung cặp secret này.
+
+**Bẫy khi nhận key qua chat**: API key và secret key của eSMS đều dài **đúng 30 ký tự hex**. Lần này chuỗi secret dán sang bị dính thêm `16:31` ở cuối — đó là **dấu thời gian của khung chat**, không phải phần của key. Luôn kiểm tra độ dài và thử cặp key trước khi ghi vào secret:
+
+```
+GET https://rest.esms.vn/MainService.svc/json/GetBalance/{ApiKey}/{SecretKey}
+```
+
+Đúng thì trả `CodeResponse: "100"` kèm số dư; sai thì trả `"Authorize Failed"`.
+
+**Giá thực đo (18/09/2026)**: một tin hoá đơn 199 ký tự (2 đoạn SMS) trừ **1.830đ**, tức khoảng 915đ/đoạn. Rút link xuống dưới 1 đoạn (cần tên miền riêng) là giảm nửa tiền — xem `docs/DECISIONS.md` Đợt 63.

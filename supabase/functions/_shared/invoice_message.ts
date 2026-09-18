@@ -43,24 +43,42 @@ function formatDdMm(dateStr: string): string {
   return `${dd}/${mm}`;
 }
 
-function formatDdMmYyyy(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00Z");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  return `${dd}/${mm}/${d.getUTCFullYear()}`;
-}
-
+/// Nội dung SMS hoá đơn gửi hàng loạt (B-03 → `generate-invoice` mode
+/// "batchSend"). PHẢI giống hệt bản gửi đơn lẻ ở `src/lib/core/invoice_message.dart`
+/// — cùng một mẫu, cùng một brandname.
+///
+/// Bản trước 18/09/2026 dựng một câu hoàn toàn khác ("BizTown Rent Manager:
+/// Hoá đơn phòng ..."), hỏng hai đường cùng lúc:
+///   1. Không khớp mẫu của brandname mượn "Baotrixemay" → eSMS trả
+///      `CodeResult 146 — Sai template`, không tin nào ra khỏi hệ thống.
+///   2. Viết CÓ DẤU và có dấu gạch ngang `–` (U+2013) → bị đẩy sang UCS-2,
+///      70 ký tự/đoạn thay vì 160, tiền tin nhắn tăng gấp bội. Đây đúng là cái
+///      bẫy đã ghi ở `docs/SMS-HOA-DON.md` mục 6.1 mà chính chỗ này vẫn dính.
+///
+/// Tham số `_house` giữ lại cho khỏi phải sửa nơi gọi; mẫu brandname không có
+/// chỗ nhét thông tin ngân hàng — người thuê xem trong ảnh hoá đơn mở từ link.
 export function buildInvoiceSmsMessage(
-  invoice: { room_nos: string[]; period_start: string; period_end: string; total_amount: number; due_date: string },
-  house: { bank_bin?: string | null; bank_account_number?: string | null; bank_account_name?: string | null } | null,
+  invoice: {
+    room_nos: string[];
+    period_start: string;
+    total_amount: number;
+    due_date: string;
+    public_code?: string | null;
+  },
+  _house?: unknown,
 ): string {
-  const bank = bankByBin(house?.bank_bin);
-  const rooms = (invoice.room_nos ?? []).join(", ");
-  const period = `${formatDdMm(invoice.period_start)}–${formatDdMmYyyy(invoice.period_end)}`;
-  const amount = `${formatVndNumber(invoice.total_amount)} VND`;
-  const due = formatDdMmYyyy(invoice.due_date);
-  const payTo = bank && house?.bank_account_number
-    ? ` Chuyển khoản ${bank.name} ${house.bank_account_number}${house.bank_account_name ? ` (${house.bank_account_name})` : ""}.`
-    : "";
-  return `BizTown Rent Manager: Hoá đơn phòng ${rooms}, kỳ ${period} là ${amount}.${payTo} Hạn thanh toán ${due}.`;
+  const ky = invoice.period_start.slice(5, 7) + "/" +
+    invoice.period_start.slice(0, 4);
+  const host = (Deno.env.get("SUPABASE_URL") ?? "").replace(/^https?:\/\//, "");
+  const link = invoice.public_code
+    ? `${host}/functions/v1/invoice/${invoice.public_code}`
+    : host;
+  const phong = (invoice.room_nos ?? []).join(",");
+  const tien = formatVndNumber(invoice.total_amount);
+  const han = formatDdMm(invoice.due_date);
+  let tomTat = `BizTown P${phong} ${tien}d han ${han}`;
+  if (tomTat.length > 50) tomTat = `BizTown ${tien}d han ${han}`;
+
+  return `Quy khach da den thoi gian bao tri lan ${ky} xe ${link}. ` +
+    `Vui long lien he ${tomTat} de duoc huong dan. Tran trong.`;
 }

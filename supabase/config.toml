@@ -457,3 +457,14 @@ entrypoint = "./functions/invoice-qr/index.ts"
 verify_jwt = false
 import_map = "./functions/send-invoice-email/deno.json"
 entrypoint = "./functions/send-invoice-email/index.ts"
+
+[functions.invoice]
+# Ảnh hoá đơn cho người thuê — họ không có tài khoản nên không gửi được JWT
+# nào; tắt kiểm tra ở tầng nền tảng, hàm tự khai `auth: ["none"]`.
+#
+# Tên hàm cố tình NGẮN: link đi vào ô tham số của mẫu eSMS vốn tối đa 70 ký
+# tự. Tên "invoice-image" cho ra link 72 ký tự — eSMS từ chối. "invoice" cho
+# ra 66, còn dư 4. Đừng đổi thành tên dài hơn nếu chưa có tên miền riêng.
+verify_jwt = false
+import_map = "./functions/invoice/deno.json"
+entrypoint = "./functions/invoice/index.ts"

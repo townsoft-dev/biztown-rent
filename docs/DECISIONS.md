@@ -1155,3 +1155,27 @@ Entry Đợt 59 (Dream, thuần thiết kế) ghi *"chưa chốt nhà cung cấp
 **`#7F7F7F` cố ý để riêng** thành `AppColors.menuDivider` chứ không gộp vào token viền nào: nó không có trong bảng token ở `docs/DESIGN-SYSTEMS.md`, gộp vào là mất dấu vết và lần sau lại sửa nhầm.
 
 **Bài học quy trình**: khi Figma MCP không dùng được, ảnh chụp đủ để thấy **cái gì sai** (nét liền lẽ ra là nét chấm, gạch cụt lẽ ra chạy suốt) nhưng **không đủ để lấy giá trị chính xác** (mã màu, bước chấm). Với giá trị số, phải chờ đo được trên node thật rồi mới chốt, hoặc ghi rõ đó là số tạm.
+
+## 2026-09-18 (Đợt 63) — Ảnh hoá đơn dựng bằng SVG + resvg-wasm ngay trong Edge Function
+
+**Bối cảnh**: link SMS hiện chỉ mở ra một ô mã QR trơ trọi (`invoice-qr`), dungtv nhận xét "cùi" và từng tính hướng dựng trang tĩnh trên host riêng có tên miền. dungtv hỏi liệu code có tự sinh được ảnh hoá đơn như frame `MOCK-IMG` không.
+
+**Quyết định: có, và làm ngay trong Supabase — không cần host riêng, không cần tên miền.**
+
+Cách: ghép chuỗi **SVG** rồi rasterise sang **PNG** bằng `@resvg/resvg-wasm` (thuần WASM nên chạy được trên Deno Deploy, khác `node-canvas` cần native). Font Be Vietnam Pro tải từ Google Fonts lúc khởi động rồi giữ trong isolate.
+
+**Vì sao phải là PNG**: cổng Supabase ép mọi phản hồi về `text/plain` kèm CSP `default-src 'none'; sandbox`. HTML hiện ra mã nguồn, SVG mở ra trắng trơn. PNG là ảnh thuần nên thoát CSP — đây là ràng buộc đã kiểm chứng từ 17/09, không phải phỏng đoán.
+
+**So sánh 2 hướng**:
+
+| | Ảnh PNG (chốt) | Trang tĩnh + tên miền |
+|---|---|---|
+| Hạ tầng | Không cần gì thêm | Cần host + tên miền |
+| Người thuê | Lưu được về máy, xem offline | Bấm nút, copy số tài khoản, phóng to chữ |
+| Chi phí | 0 | Tiền tên miền + host |
+
+Chọn ảnh PNG cho Phase 1. Trang tĩnh để ngỏ cho sau, khi đã mua tên miền (dù sao cũng cần cho link SMS ngắn và email không vào spam).
+
+**Bài học kỹ thuật cần nhớ**: `resvg` **không làm đậm giả**. Khai `font-weight="700"` mà chỉ nạp file nét 400 thì chữ vẫn ra nét thường, không báo lỗi gì. Phải nạp đủ từng nét định dùng.
+
+**Chưa chốt**: có đổi link trong SMS từ `invoice-qr` sang `invoice-image` không (dài thêm 3 ký tự).
