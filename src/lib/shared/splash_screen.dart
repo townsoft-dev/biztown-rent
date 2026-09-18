@@ -53,8 +53,11 @@ class _SplashScreenState extends State<SplashScreen> {
             // Tên sản phẩm "RENT MANAGER" tách riêng khỏi logo thương hiệu ở
             // trên (trước đây gộp chung 1 lockup) — theo yêu cầu Dream
             // 18/09/2026: Splash chỉ đẩy logo thương hiệu lên trên, tên sản
-            // phẩm ở dưới.
-            Image.asset('assets/logo/rentmanager-wordmark-white.png',
+            // phẩm ở dưới. Dùng bản **chữ đậm** (`-bold-white`) — Dream gửi
+            // thêm 2 file wordmark chữ đậm cùng ngày và chọn dùng bản này
+            // thay cho bản chữ thường trước đó, xem docs/DESIGN-SYSTEMS.md
+            // mục 1.1.
+            Image.asset('assets/logo/rentmanager-wordmark-bold-white.png',
                 width: 188),
             const SizedBox(height: 14),
             Text(

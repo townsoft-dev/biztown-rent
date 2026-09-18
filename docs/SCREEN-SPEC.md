@@ -90,7 +90,7 @@
 
 ### S-00 — Splash
 - **Mục đích:** Màn hình mở app, kiểm tra session hiện có.
-- **Thành phần chính:** Nền navy. **Xếp theo chiều dọc, tách riêng 2 tầng** (cập nhật 18/09/2026, bộ logo mới — xem `docs/DESIGN-SYSTEMS.md` mục 1.1): (1) **logo thương hiệu BizTown** (icon + wordmark "BizTown" gộp sẵn trong 1 khối, bản "Rent" cột cam) ở trên; (2) **wordmark tên sản phẩm "RENT MANAGER"** riêng ở dưới logo thương hiệu; (3) tagline dưới cùng. Trước đây 2 tầng (1)+(2) gộp chung 1 lockup — nay tách ra theo đúng 2 tầng brand/product.
+- **Thành phần chính:** Nền navy. **Xếp theo chiều dọc, tách riêng 2 tầng** (cập nhật 18/09/2026, bộ logo mới — xem `docs/DESIGN-SYSTEMS.md` mục 1.1): (1) **logo thương hiệu BizTown** (icon + wordmark "BizTown" gộp sẵn trong 1 khối, bản "Rent" cột cam) ở trên; (2) **wordmark tên sản phẩm "RENT MANAGER"**, **chữ đậm**, riêng ở dưới logo thương hiệu (đổi từ chữ thường sang chữ đậm cùng ngày, theo bộ file Dream gửi thêm); (3) tagline dưới cùng. Trước đây 2 tầng (1)+(2) gộp chung 1 lockup — nay tách ra theo đúng 2 tầng brand/product.
 - **Trạng thái:** Đang kiểm tra session (hiển thị greeting).
 - **Hành động & điều hướng:** Không có session/hết hạn → S-01. Có session hợp lệ → H-01 (Home).
 - **Edge cases:** Mạng chậm → timeout hợp lý (10s), không treo màn hình.

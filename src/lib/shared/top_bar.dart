@@ -245,9 +245,14 @@ class _ActionPopupRow extends StatelessWidget {
     // hàng tháng" dài hơn hẳn, trông như lỗi vỡ layout chứ không phải đường
     // kẻ ngăn cách (dungtv báo 18/09/2026). Cho rộng vô hạn thì cả 3 dòng
     // cùng bằng bề ngang menu, gạch chạy suốt như Figma.
+    //
+    // Padding ngang/dọc 5px — Dream yêu cầu tăng kích thước từng dòng trong
+    // menu này (18/09/2026) vì bản cũ chỉ có padding dọc 2px, vùng bấm quá
+    // sát chữ. `PopupMenuItem` cha vẫn giữ `padding: EdgeInsets.zero` +
+    // `height: 0` để không cộng dồn 2 lớp padding.
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
       decoration: showDivider
           // Màu `#7F7F7F` đo pixel trực tiếp trên node Figma `400:2652`
           // (18/09/2026). KHÔNG phải `borderSubtle` (#EEF0F5, gần như vô hình
