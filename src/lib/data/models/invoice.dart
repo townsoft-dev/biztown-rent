@@ -88,6 +88,11 @@ class Invoice {
   final DateTime dueDate;
   final num rentAmount;
   final List<UtilityLine> utilityLines;
+
+  /// Kênh đã gửi hoá đơn (`sms` / `email` / `zalo`), `null` khi chưa gửi —
+  /// hoặc khi hoá đơn được gửi TRƯỚC 18/09/2026, lúc hệ thống chưa ghi nhận
+  /// kênh. Màn B-01 tự lùi về dạng chỉ hiện ngày gửi trong trường hợp đó.
+  final String? sentChannel;
   final num serviceFeeAmount;
   final List<RecurringFee> recurringFees;
   final List<RecurringFee> otherFees;
@@ -115,6 +120,7 @@ class Invoice {
     required this.dueDate,
     required this.rentAmount,
     required this.utilityLines,
+    this.sentChannel,
     required this.serviceFeeAmount,
     required this.recurringFees,
     required this.otherFees,
@@ -144,6 +150,7 @@ class Invoice {
       periodEnd: DateTime.parse(map['period_end'] as String),
       dueDate: DateTime.parse(map['due_date'] as String),
       rentAmount: map['rent_amount'] as num,
+      sentChannel: map['sent_channel'] as String?,
       utilityLines: (map['utility_lines'] as List)
           .map((e) => UtilityLine.fromMap(e as Map<String, dynamic>))
           .toList(),
