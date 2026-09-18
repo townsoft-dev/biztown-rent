@@ -719,6 +719,8 @@
     "sendInvoiceSheetTo": "{name} · {phone}에게",
     "channelSms": "SMS",
     "channelSmsHint": "{phone} 로 보내기 · 금액과 결제 QR 링크",
+    "channelZaloHint": "{phone} 번호로 발송 · 청구서 열기 버튼 포함",
+    "sentSuccessZalo": "{phone} 번호로 청구서를 Zalo로 보냈습니다",
     "channelZalo": "Zalo",
     "channelComingSoon": "출시 예정",
     "messagePreview": "메시지 미리보기",

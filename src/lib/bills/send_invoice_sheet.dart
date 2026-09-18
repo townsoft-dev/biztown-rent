@@ -41,10 +41,9 @@ class _SendInvoiceSheet extends ConsumerStatefulWidget {
   ConsumerState<_SendInvoiceSheet> createState() => _SendInvoiceSheetState();
 }
 
-/// Kênh gửi hoá đơn CHỌN ĐƯỢC. Zalo vẫn hiện trong danh sách nhưng khoá lại
-/// (chờ công ty mua gói Zalo OA — dungtv, 17/09/2026) nên cố tình không có
-/// trong enum này: không chọn được thì không cần trạng thái.
-enum _SendChannel { sms, email }
+/// Kênh gửi hoá đơn. Zalo mở từ 18/09/2026 — công ty đã mua gói OA và mẫu ZBS
+/// `638179` đã được Zalo duyệt.
+enum _SendChannel { sms, email, zalo }
 
 class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
   _SendChannel _channel = _SendChannel.sms;
@@ -61,6 +60,12 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
       final repo = ref.read(invoiceRepositoryProvider);
       if (_channel == _SendChannel.email) {
         await repo.sendEmail(invoiceId: invoice.id);
+      } else if (_channel == _SendChannel.zalo) {
+        await repo.sendZalo(
+          invoiceId: invoice.id,
+          houseId: invoice.houseId,
+          phone: phone!,
+        );
       } else {
         await repo.sendSms(
           invoiceId: invoice.id,
@@ -77,9 +82,14 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
       ref.invalidate(billsHouseGroupsProvider);
       ref.invalidate(invoicesProvider);
       if (mounted) {
-        Navigator.of(context).pop(_channel == _SendChannel.email
-            ? AppStrings.t('bills.sentSuccessEmail', {'email': email})
-            : AppStrings.t('bills.sentSuccessSms', {'phone': phone!}));
+        Navigator.of(context).pop(switch (_channel) {
+          _SendChannel.email =>
+            AppStrings.t('bills.sentSuccessEmail', {'email': email}),
+          _SendChannel.zalo =>
+            AppStrings.t('bills.sentSuccessZalo', {'phone': phone!}),
+          _SendChannel.sms =>
+            AppStrings.t('bills.sentSuccessSms', {'phone': phone!}),
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -186,9 +196,14 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
           ChannelOption(
             icon: Symbols.chat_rounded,
             title: AppStrings.t('bills.channelZalo'),
-            subtitle: AppStrings.t('bills.channelComingSoon'),
-            selected: false,
-            enabled: false,
+            // Zalo gửi theo SỐ ĐIỆN THOẠI, không cần người thuê kết bạn hay
+            // quan tâm OA trước — đó là điểm của tin mẫu ZBS.
+            subtitle: phone == null
+                ? AppStrings.t('bills.tenantPhoneMissing')
+                : AppStrings.t('bills.channelZaloHint', {'phone': phone}),
+            selected: _channel == _SendChannel.zalo,
+            enabled: phone != null,
+            onTap: () => setState(() => _channel = _SendChannel.zalo),
           ),
           // Khối "Xem trước tin nhắn" CHỈ dành cho kênh SMS — đó là nội dung
           // app tự dựng và gửi thẳng. Thư điện tử do backend dựng theo mẫu
@@ -249,7 +264,7 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
                   // SMS cần SĐT, Email cần email — thiếu thứ tương ứng thì
                   // khoá nút thay vì để bấm rồi mới báo lỗi.
                   onPressed: _sending ||
-                          (_channel == _SendChannel.sms && phone == null) ||
+                          (_channel != _SendChannel.email && phone == null) ||
                           (_channel == _SendChannel.email && email.isEmpty)
                       ? null
                       : () => _send(invoice, phone, email, message),

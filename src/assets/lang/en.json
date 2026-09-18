@@ -719,6 +719,8 @@
     "sendInvoiceSheetTo": "To {name} · {phone}",
     "channelSms": "SMS",
     "channelSmsHint": "Send to {phone} · amount and payment QR link",
+    "channelZaloHint": "Send to {phone} · with a button to open the invoice",
+    "sentSuccessZalo": "Invoice sent by Zalo to {phone}",
     "channelZalo": "Zalo",
     "channelComingSoon": "Coming soon",
     "messagePreview": "Message preview",

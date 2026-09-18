@@ -227,6 +227,38 @@ class InvoiceRepository {
     await updateStatus(invoiceId, InvoiceStatus.sent, channel: 'sms');
   }
 
+  /// B-05 kênh Zalo — gửi tin mẫu ZBS đã được Zalo duyệt (mẫu `638179`, xem
+  /// `docs/ZALO-MESSAGING.md`). Nội dung do backend dựng từ 13 tham số của
+  /// mẫu; app chỉ đưa `invoiceId` và số điện thoại.
+  ///
+  /// Tin mang nút "Chi tiết hóa đơn" mở Zalo Mini App kèm mã tra cứu — người
+  /// thuê bấm vào là thấy ảnh hoá đơn đầy đủ kèm mã QR. Zalo CẤM mã QR ngay
+  /// trong tin mẫu, nên phải đi đường Mini App.
+  ///
+  /// Rẻ hơn SMS đáng kể: 300đ/tin qua số điện thoại (210đ nếu người thuê đã
+  /// quan tâm OA) so với 820đ/tin của eSMS.
+  Future<void> sendZalo({
+    required String invoiceId,
+    required String houseId,
+    required String phone,
+  }) async {
+    final res = await _client.functions.invoke('send-notification', body: {
+      'houseId': houseId,
+      'event': 'invoice_created',
+      'title': 'Hoá đơn mới',
+      'body': '',
+      'push': false,
+      'zalo': {'phone': phone, 'invoiceId': invoiceId},
+    });
+    final data = res.data as Map<String, dynamic>?;
+    final zalo = data?['zalo'] as Map<String, dynamic>?;
+    if (data?['error'] != null) throw Exception(data!['error'] as String);
+    if (zalo != null && zalo['sent'] != true) {
+      throw Exception(zalo['reason'] ?? 'Gửi Zalo thất bại');
+    }
+    await updateStatus(invoiceId, InvoiceStatus.sent, channel: 'zalo');
+  }
+
   /// B-05 kênh Email — gọi Edge Function `send-invoice-email`. Nội dung thư do
   /// backend dựng (mẫu của Hường), app chỉ cần đưa `invoiceId`.
   Future<void> sendEmail({required String invoiceId}) async {

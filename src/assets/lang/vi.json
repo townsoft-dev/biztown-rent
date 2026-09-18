@@ -719,6 +719,8 @@
     "sendInvoiceSheetTo": "Tới {name} · {phone}",
     "channelSms": "SMS",
     "channelSmsHint": "Gửi tới {phone} · số tiền kèm link mã QR",
+    "channelZaloHint": "Gửi tới {phone} · kèm nút mở hoá đơn chi tiết",
+    "sentSuccessZalo": "Đã gửi hoá đơn qua Zalo tới {phone}",
     "channelZalo": "Zalo",
     "channelComingSoon": "Sắp có",
     "messagePreview": "Xem trước tin nhắn",
