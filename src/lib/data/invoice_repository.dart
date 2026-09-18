@@ -224,7 +224,7 @@ class InvoiceRepository {
     if (data?['error'] != null) {
       throw Exception(data!['error'] as String);
     }
-    await updateStatus(invoiceId, InvoiceStatus.sent);
+    await updateStatus(invoiceId, InvoiceStatus.sent, channel: 'sms');
   }
 
   /// B-05 kênh Email — gọi Edge Function `send-invoice-email`. Nội dung thư do
@@ -236,7 +236,7 @@ class InvoiceRepository {
     if (data?['error'] != null) {
       throw Exception(data!['error'] as String);
     }
-    await updateStatus(invoiceId, InvoiceStatus.sent);
+    await updateStatus(invoiceId, InvoiceStatus.sent, channel: 'email');
   }
 
   /// Thêm 1 dòng phí phát sinh vào hoá đơn đang Draft (B-02 "+ Add other
@@ -257,11 +257,16 @@ class InvoiceRepository {
     return Invoice.fromMap(row);
   }
 
-  Future<void> updateStatus(String invoiceId, InvoiceStatus status) async {
+  /// [channel] chỉ truyền khi [status] là `sent` — ghi lại đã gửi bằng kênh
+  /// nào để B-01 hiện được "đã gửi 05/09 qua SMS" đúng như thiết kế.
+  Future<void> updateStatus(String invoiceId, InvoiceStatus status,
+      {String? channel}) async {
     final now = DateTime.now().toIso8601String();
     await _client.from('tb_invoice').update({
       'status': status.dbValue,
       if (status == InvoiceStatus.sent) 'sent_at': now,
+      if (status == InvoiceStatus.sent && channel != null)
+        'sent_channel': channel,
       if (status == InvoiceStatus.collected) 'collected_at': now,
     }).eq('id', invoiceId);
   }

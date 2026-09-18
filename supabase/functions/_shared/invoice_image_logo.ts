@@ -5,6 +5,14 @@
 //
 // viewBox gốc: 0 0 279.589 93.986 — giữ nguyên để đặt vào ảnh chỉ cần lồng
 // trong <svg> có viewBox này là tự co đúng tỉ lệ.
+//
+// ⚠️ ĐÂY LÀ LOCKUP CŨ, VÀ ĐANG DÙNG CÓ CHỦ Ý — đừng thay bằng bộ logo mới
+// (`biztown-rent-icon-wordmark-alt.png`, mr Han 17/09/2026) dù tài liệu nói bộ
+// mới đã thay thế bộ cũ trong app. Lý do: logo mới là **ô vuông bo góc nền
+// navy `#23305E`**, trùng đúng màu nền header của ảnh hoá đơn, dán vào là ô
+// vuông tan vào nền, chỉ còn 3 cột và chữ trôi lơ lửng. dungtv chốt 18/09/2026
+// tạm giữ lockup cũ ở đây. Gỡ được khi xin được bản logo NỀN TRONG SUỐT —
+// xem docs/DECISIONS.md Đợt 65.
 export const LOGO_VIEWBOX = "0 0 279.589 93.986";
 
 export const LOGO_ON_NAVY = String.raw`

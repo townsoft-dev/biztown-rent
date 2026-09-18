@@ -528,7 +528,13 @@ export default {
               await sendSmsViaEsms(tenant.phone, message);
               await ctx.supabaseAdmin
                 .from("tb_invoice")
-                .update({ status: "Sent", sent_at: new Date().toISOString() })
+                // `sent_channel` để B-01 hiện được "đã gửi 05/09 qua SMS"
+                // đúng thiết kế — gửi hàng loạt hiện chỉ có kênh SMS.
+                .update({
+                  status: "Sent",
+                  sent_at: new Date().toISOString(),
+                  sent_channel: "sms",
+                })
                 .eq("id", result.invoice.id);
               sentCount++;
             } catch (e) {

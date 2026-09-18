@@ -646,6 +646,8 @@
     "filterCollected": "Đã thu ({count})",
     "filterOverdue": "Quá hạn ({count})",
     "groupContractsCount": "{count} hợp đồng",
+    "statusNoReadingYet": "chưa ghi chỉ số cho kỳ này",
+    "statusSentVia": "đã gửi {date} qua {channel}",
     "statusNoInvoiceYet": "chưa tạo hoá đơn cho kỳ này",
     "statusDraft": "Nháp — chưa gửi",
     "statusSent": "đã gửi {date}",

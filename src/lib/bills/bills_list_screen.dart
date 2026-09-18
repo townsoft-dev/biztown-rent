@@ -360,8 +360,26 @@ class _ContractCard extends StatelessWidget {
     );
   }
 
+  /// Chữ phụ dưới tên phòng, khớp 5 trạng thái thiết kế vẽ ở B-01.
+  ///
+  /// Thứ tự ưu tiên có chủ ý: **thiếu chỉ số điện/nước được báo TRƯỚC** trạng
+  /// thái gửi, vì đó là việc chủ trọ phải làm ngay — hoá đơn thiếu chỉ số là
+  /// hoá đơn tính sai tiền. Đúng như Figma vẽ: hàng P.101 mang nhãn "Sent"
+  /// nhưng chữ phụ vẫn là "no reading for this period yet".
+  /// Tên kênh hiện cho người dùng. Không qua i18n: đây là tên riêng
+  /// (SMS/Email/Zalo), giống nhau ở cả 3 ngôn ngữ.
+  String _channelLabel(String channel) => switch (channel) {
+        'sms' => 'SMS',
+        'email' => 'Email',
+        'zalo' => 'Zalo',
+        _ => channel,
+      };
+
   String _subtitleFor(Invoice? invoice) {
     if (invoice == null) return AppStrings.t('bills.statusNoInvoiceYet');
+    if (invoice.utilityLines.any((l) => l.usageAmount == null)) {
+      return AppStrings.t('bills.statusNoReadingYet');
+    }
     return switch (invoice.status) {
       InvoiceStatus.draft => AppStrings.t('bills.statusDraft'),
       InvoiceStatus.collected => AppStrings.t('bills.statusCollected', {
@@ -373,10 +391,18 @@ class _ContractCard extends StatelessWidget {
               'month': '${invoice.periodStart.month}',
               'days': '${DateTime.now().difference(invoice.dueDate).inDays}',
             })
-          : AppStrings.t('bills.statusSent', {
-              'date': DateFormat('dd/MM')
-                  .format(invoice.sentAt ?? invoice.createdAt)
-            }),
+          // Hoá đơn gửi trước 18/09/2026 không có `sentChannel` (lúc đó chưa
+          // có cột) — lùi về câu chỉ có ngày thay vì hiện "qua null".
+          : invoice.sentChannel == null
+              ? AppStrings.t('bills.statusSent', {
+                  'date': DateFormat('dd/MM')
+                      .format(invoice.sentAt ?? invoice.createdAt)
+                })
+              : AppStrings.t('bills.statusSentVia', {
+                  'date': DateFormat('dd/MM')
+                      .format(invoice.sentAt ?? invoice.createdAt),
+                  'channel': _channelLabel(invoice.sentChannel!),
+                }),
     };
   }
 }

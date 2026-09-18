@@ -646,6 +646,8 @@
     "filterCollected": "Collected ({count})",
     "filterOverdue": "Overdue ({count})",
     "groupContractsCount": "{count} contracts",
+    "statusNoReadingYet": "no reading for this period yet",
+    "statusSentVia": "sent {date} via {channel}",
     "statusNoInvoiceYet": "invoice not created yet for this period",
     "statusDraft": "Draft — not sent yet",
     "statusSent": "sent {date}",
