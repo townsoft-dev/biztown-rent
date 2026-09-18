@@ -83,8 +83,13 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SvgPicture.asset('assets/logo/biztown-rent-manager-lockup.svg',
-                    width: 200),
+                // Logo thương hiệu BizTown (icon + wordmark) — bộ asset mới
+                // 18/09/2026, đổi đồng loạt theo docs/DESIGN-SYSTEMS.md mục
+                // 1.1. Trước đây dùng lockup gộp cả "RENT MANAGER"; ở đây bỏ
+                // phần đó vì màn đã có tiêu đề "Login" riêng ngay dưới, tránh
+                // lặp tên sản phẩm 2 lần.
+                Image.asset('assets/logo/biztown-rent-icon-wordmark-alt.png',
+                    width: 72),
                 const SizedBox(height: 40),
                 Text(AppStrings.t('login.title'),
                     style: GoogleFonts.inter(

@@ -44,10 +44,20 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SvgPicture.asset(
-                'assets/logo/biztown-rent-manager-lockup-on-navy.svg',
-                width: 280),
-            const SizedBox(height: 12),
+            // Logo thương hiệu BizTown (icon + wordmark "BizTown", luôn đi
+            // cùng nhau — không dùng icon trần) — bộ asset mới Dream gửi
+            // 18/09/2026, xem docs/DESIGN-SYSTEMS.md mục 1.1. Bản "Rent" (cột
+            // cam) vì app này là Rent Manager trong bộ ứng dụng BizTown.
+            Image.asset('assets/logo/biztown-rent-icon-wordmark-alt.png',
+                width: 116),
+            const SizedBox(height: 18),
+            // Tên sản phẩm "RENT MANAGER" tách riêng khỏi logo thương hiệu ở
+            // trên (trước đây gộp chung 1 lockup) — theo yêu cầu Dream
+            // 18/09/2026: Splash chỉ đẩy logo thương hiệu lên trên, tên sản
+            // phẩm ở dưới.
+            Image.asset('assets/logo/rentmanager-wordmark-white.png',
+                width: 188),
+            const SizedBox(height: 14),
             Text(
               AppStrings.t('splash.tagline'),
               style: const TextStyle(
