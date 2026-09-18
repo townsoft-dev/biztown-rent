@@ -98,7 +98,13 @@ List<InvoiceScheduleChipData> buildInvoiceScheduleChips(
     final state = invoice != null
         ? switch (invoice.status) {
             InvoiceStatus.collected => InvoiceChipState.collected,
-            InvoiceStatus.sent => period.dueDate.isBefore(today)
+            // Hạn lấy từ CHÍNH hoá đơn, không lấy hạn tính lại từ điều khoản
+            // hợp đồng: hoá đơn chốt hạn tại thời điểm phát hành, còn điều
+            // khoản có thể đổi sau (gia hạn/sửa hợp đồng đổi ngày thanh toán).
+            // Dùng hạn tính lại thì chip vẽ ĐỎ trong khi nhãn vẫn "Đã gửi" —
+            // hai chỗ cùng một hoá đơn mà nói khác nhau (thấy khi test
+            // 18/09/2026). Nhãn ở B-01 vốn đã dùng `invoice.isOverdue`.
+            InvoiceStatus.sent => invoice.dueDate.isBefore(today)
                 ? InvoiceChipState.overdue
                 : InvoiceChipState.sent,
             InvoiceStatus.draft => InvoiceChipState.current,

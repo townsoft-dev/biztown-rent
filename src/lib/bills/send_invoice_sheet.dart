@@ -4,6 +4,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../core/app_strings.dart';
 import '../core/invoice_message.dart';
+import '../core/locale_provider.dart';
 import '../core/providers.dart';
 import '../core/theme.dart';
 import '../data/models/invoice.dart';
@@ -92,6 +93,11 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // Bắt buộc theo quy tắc dự án: widget nào gọi `AppStrings.t()` phải tự
+    // theo dõi `languageProvider`, vì `AppStrings.t()` không phải nguồn dữ
+    // liệu Riverpod nên thiếu dòng này thì đổi ngôn ngữ không vẽ lại — bug im
+    // lặng. Sheet này mở mới mỗi lần nên hiếm khi lộ, nhưng vẫn phải có.
+    ref.watch(languageProvider);
     final invoiceAsync = ref.watch(invoiceProvider(widget.invoiceId));
     return SafeArea(
       top: false,

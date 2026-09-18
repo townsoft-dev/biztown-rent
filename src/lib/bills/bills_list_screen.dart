@@ -158,7 +158,18 @@ class _BillsListScreenState extends ConsumerState<BillsListScreen> {
 
   Widget _buildBody(List<BillsHouseGroup> groups) {
     final houses = ref.watch(housesProvider).valueOrNull ?? const [];
-    final allRows = groups.expand((g) => g.rows).toList();
+
+    // Lọc theo NHÀ trước, rồi mới tính số đếm và 2 ô tổng tiền — bộ lọc nhà
+    // phải chi phối toàn bộ màn, không riêng danh sách bên dưới.
+    //
+    // Trước 18/09/2026 số đếm và tổng tiền tính trên `groups` gốc (mọi nhà)
+    // trong khi danh sách lại lọc theo nhà, nên chọn 1 nhà xong vẫn thấy số
+    // của tất cả: chip ghi "Quá hạn (3)" mà bấm vào thì danh sách trống, vì 3
+    // hoá đơn quá hạn đó nằm ở nhà khác (dungtv yêu cầu rà lại màn này).
+    final houseGroups = groups
+        .where((g) => _houseId == null || g.house.id == _houseId)
+        .toList();
+    final allRows = houseGroups.expand((g) => g.rows).toList();
     final counts = {
       for (final f in _StatusFilter.values)
         f: allRows.where((r) => _matchesStatus(r, f)).length,
@@ -174,8 +185,7 @@ class _BillsListScreenState extends ConsumerState<BillsListScreen> {
                 ? r.selectedPeriodInvoice!.totalAmount
                 : 0));
 
-    final filteredGroups = groups
-        .where((g) => _houseId == null || g.house.id == _houseId)
+    final filteredGroups = houseGroups
         .map((g) => BillsHouseGroup(
             house: g.house,
             rows: g.rows
