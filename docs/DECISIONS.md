@@ -1179,3 +1179,19 @@ Chọn ảnh PNG cho Phase 1. Trang tĩnh để ngỏ cho sau, khi đã mua tên
 **Bài học kỹ thuật cần nhớ**: `resvg` **không làm đậm giả**. Khai `font-weight="700"` mà chỉ nạp file nét 400 thì chữ vẫn ra nét thường, không báo lỗi gì. Phải nạp đủ từng nét định dùng.
 
 **Chưa chốt**: có đổi link trong SMS từ `invoice-qr` sang `invoice-image` không (dài thêm 3 ký tự).
+
+## 2026-09-18 (Đợt 64) — Đưa chữ "BizTown" vào icon OS, rút tên app còn "Rent Manager"
+
+**Yêu cầu của khách hàng (Hàn Quốc, qua dungtv)**: cài app lên iPhone thì tên "BizTown Rent Manager" quá dài nên bị cắt; đề nghị **đưa tên thương hiệu BizTown vào trong icon**, còn **tên app để là "Rent Manager"**.
+
+**Quyết định: làm theo khách — đảo lại quyết định của Đợt trước cùng ngày.**
+
+Sáng nay (mục 08:12 trong `changelog/2026-09-18.md`) đã chốt **giữ nguyên icon OS không chữ**, lập luận rằng "chữ không đọc được ở size nhỏ". Lập luận đó **không đứng vững khi kiểm chứng**: kết xuất icon ở đúng cỡ hiển thị thật trên iPhone (180×180) và Android (192×192) thì chữ "BizTown" vẫn đọc rõ — bộ icon của mr Han đặt chữ đủ lớn và đủ tương phản trên nền navy.
+
+**Đã đổi**:
+- `src/assets/icon/app_icon.png` ← `biztown-rent-icon-wordmark-alt.png` (bản viết hoa/thường, khớp 3 module còn lại và khớp cách viết trong mọi tài liệu), chạy lại `flutter_launcher_icons` sinh đủ bộ cho iOS + Android.
+- `CFBundleDisplayName` (iOS) và `android:label` (Android): `BizTown Rent Manager` → **`Rent Manager`**.
+
+**Vì sao hợp lý về mặt thương hiệu**: tên thương hiệu **BizTown** nằm trên icon, tên sản phẩm **Rent Manager** nằm dưới icon — cộng lại người dùng vẫn đọc ra đầy đủ "BizTown · Rent Manager" mà không chữ nào bị cắt. Trùng đúng định hướng "thương hiệu BizTown / sản phẩm Rent Manager" mà Dream đã chốt sáng nay, chỉ khác chỗ đặt.
+
+**Verify**: `aapt2 dump badging` trên APK thật trả `application-label: 'Rent Manager'`; mở icon 180px và 192px xem bằng mắt, chữ đọc được.
