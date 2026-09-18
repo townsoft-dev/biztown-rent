@@ -83,7 +83,8 @@
     "lockedMessage": "Bạn đã nhập sai mật khẩu quá nhiều lần. Vui lòng thử lại sau {minutes} phút.",
     "forgotPassword": "Quên mật khẩu?",
     "submit": "Đăng nhập",
-    "noAccount": "Chưa có tài khoản?  Đăng ký"
+    "noAccount": "Chưa có tài khoản?  Đăng ký",
+    "rememberMe": "Ghi nhớ đăng nhập"
   },
   "signup": {
     "topBarTitle": "Tạo tài khoản",
@@ -96,7 +97,7 @@
     "resendCodeCountdown": "Gửi lại mã  ·  {countdown}",
     "otpSendFailed": "Không gửi được mã xác minh. Vui lòng thử lại sau.",
     "otpExpired": "Mã đã hết hạn — bấm \"Gửi lại mã\" để nhận mã mới.",
-    "otpIncorrect": "Mã không đúng. Vui lòng thử lại.",
+    "otpIncorrect": "Mã OTP không chính xác. Vui lòng kiểm tra lại.",
     "otpIncorrectOrExpired": "Mã không đúng hoặc đã hết hạn.",
     "nextSetPassword": "Tiếp tục - Đặt mật khẩu",
     "step2Title": "Đặt mật khẩu",

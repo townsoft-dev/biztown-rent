@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/app_strings.dart';
 import '../core/supabase_client.dart';
 import '../core/theme.dart';
 import '../data/push_repository.dart';
@@ -47,25 +46,36 @@ class _SplashScreenState extends State<SplashScreen> {
             // cùng nhau — không dùng icon trần) — bộ asset mới Dream gửi
             // 18/09/2026, xem docs/DESIGN-SYSTEMS.md mục 1.1. Bản "Rent" (cột
             // cam) vì app này là Rent Manager trong bộ ứng dụng BizTown.
-            Image.asset('assets/logo/biztown-rent-icon-wordmark-alt.png',
-                width: 116),
-            const SizedBox(height: 18),
-            // Tên sản phẩm "RENT MANAGER" tách riêng khỏi logo thương hiệu ở
-            // trên (trước đây gộp chung 1 lockup) — theo yêu cầu Dream
-            // 18/09/2026: Splash chỉ đẩy logo thương hiệu lên trên, tên sản
-            // phẩm ở dưới. Dùng bản **chữ đậm** (`-bold-white`) — Dream gửi
-            // thêm 2 file wordmark chữ đậm cùng ngày và chọn dùng bản này
-            // thay cho bản chữ thường trước đó, xem docs/DESIGN-SYSTEMS.md
-            // mục 1.1.
-            Image.asset('assets/logo/rentmanager-wordmark-bold-white.png',
-                width: 188),
-            const SizedBox(height: 14),
-            Text(
-              AppStrings.t('splash.tagline'),
-              style: const TextStyle(
-                  color: Color(0xFFC9CEE0), fontSize: 13, height: 18 / 13),
-              textAlign: TextAlign.center,
+            // Icon 100×100 có ĐỔ BÓNG để nổi khỏi nền navy — nền splash và
+            // nền ô vuông icon cùng là `#23305E` nên không có bóng thì icon
+            // chìm hẳn vào nền (dungtv báo 18/09/2026).
+            //
+            // Thông số bóng đo pixel trên bản render Figma S-00 (node
+            // `220:2153`): chỉ đổ XUỐNG DƯỚI, lan ~9px, chỗ đậm nhất `#1B2548`
+            // trên nền `#23305E` — quy ra đen ~23%.
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.23),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                  'assets/logo/biztown-rent-icon-wordmark-alt.png',
+                  width: 100),
             ),
+            // 12px: khoảng hở đo trên Figma (đáy icon y=402.5 → đỉnh wordmark
+            // y=414.5).
+            const SizedBox(height: 12),
+            Image.asset('assets/logo/rentmanager-wordmark-bold-white.png',
+                width: 248),
+            // Figma ẩn hẳn dòng mô tả (`hidden="true"`) — dungtv: trang tải rất
+            // nhanh, không cần dòng giới thiệu. Chuỗi `splash.tagline` vẫn giữ
+            // trong 3 file ngôn ngữ phòng khi dùng lại chỗ khác.
           ],
         ),
       ),

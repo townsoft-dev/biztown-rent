@@ -13,6 +13,8 @@ import '../core/password_validation.dart';
 import '../core/phone_validation.dart';
 import '../data/auth_repository.dart';
 import 'field_label.dart';
+import 'password_field.dart';
+import 'password_requirements.dart';
 import 'send_otp_chip.dart';
 import 'signup_stepper.dart';
 import 'top_bar.dart';
@@ -129,12 +131,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await authRepository.verifyOtp(
           phone: _phoneController.text.trim(), token: _otp);
       setState(() => _otpVerified = true);
-    } on AuthApiException catch (e) {
-      setState(() => _errorText = e.code == 'otp_expired'
-          ? AppStrings.t('signup.otpExpired')
-          : AppStrings.t('signup.otpIncorrect'));
-    } catch (e) {
-      setState(() => _errorText = AppStrings.t('signup.otpIncorrectOrExpired'));
+    } on AuthApiException catch (_) {
+      // Supabase trả CÙNG mã lỗi `otp_expired` cho cả "nhập sai mã" lẫn "mã đã
+      // hết hạn", nên không phân biệt được bằng mã lỗi (dungtv báo 18/09/2026:
+      // gõ sai mã mà app báo "hết hạn").
+      //
+      // Dùng ĐỒNG HỒ ĐẾM NGƯỢC của chính màn này để phân biệt: còn đếm ngược
+      // nghĩa là mã chưa thể hết hạn ⇒ người dùng gõ sai.
+      setState(() => _errorText = _resendSecondsLeft > 0
+          ? AppStrings.t('signup.otpIncorrect')
+          : AppStrings.t('signup.otpExpired'));
+    } catch (_) {
+      setState(() => _errorText = _resendSecondsLeft > 0
+          ? AppStrings.t('signup.otpIncorrect')
+          : AppStrings.t('signup.otpExpired'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -317,7 +327,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               const SizedBox(width: 8),
               SendOtpChip(
                   loading: _isLoading && !_otpSent,
-                  onTap: _otpSent ? null : _sendOtp),
+                  // Mở lại khi đồng hồ đếm ngược về 0 — đây là nút gửi lại mã
+                  // duy nhất của màn.
+                  onTap: (_otpSent && _resendSecondsLeft > 0) || _isLoading
+                      ? null
+                      : _sendOtp),
             ],
           ),
         ),
@@ -337,6 +351,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             onChanged: (value) => _otp = value,
             onCompleted: (_) => _verifyOtp(),
             keyboardType: TextInputType.number,
+            // Tắt hiệu ứng trượt mặc định của gói: khi xoá, chữ số trượt xuống
+            // ĐÈ QUA viền ô làm viền trông như bị nứt một vạch (dungtv báo
+            // 18/09/2026). Đổi sang mờ dần thì số biến mất tại chỗ, viền
+            // nguyên vẹn.
+            animationType: AnimationType.fade,
+            animationDuration: const Duration(milliseconds: 120),
             pinTheme: PinTheme(
               shape: PinCodeFieldShape.box,
               borderRadius: BorderRadius.circular(AppRadii.inputField),
@@ -351,18 +371,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary),
           ),
-          const SizedBox(height: 12),
-          Center(
-            child: _resendSecondsLeft > 0
-                ? Text(
-                    AppStrings.t(
-                        'signup.resendCodeCountdown', {'countdown': _mmss}),
-                    style: GoogleFonts.inter(
-                        fontSize: 12, color: AppColors.secondaryLight))
-                : TextButton(
-                    onPressed: _isLoading ? null : _sendOtp,
-                    child: Text(AppStrings.t('signup.resendCode'))),
-          ),
+          // Trước 18/09/2026 chỗ này có THÊM một nút "Gửi lại mã" nữa, trong
+          // khi nút "Gửi mã OTP" ở trên lại khoá vĩnh viễn sau lần gửi đầu —
+          // hai nút cùng một việc, nút đúng chỗ thì chết. dungtv chốt: bỏ nút
+          // dưới, đồng hồ về 0 thì mở lại nút trên.
         ],
         if (_errorText != null) ...[
           const SizedBox(height: 8),
@@ -398,19 +410,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 color: AppColors.textPrimary)),
         const SizedBox(height: 12),
         FieldLabel(AppStrings.t('forgotPassword.newPassword')),
-        TextFormField(
+        PasswordField(
           controller: _passwordController,
-          obscureText: true,
-          style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
           onChanged: (_) =>
               _onConfirmPasswordChanged(_confirmPasswordController.text),
         ),
         const SizedBox(height: 12),
         FieldLabel(AppStrings.t('forgotPassword.confirmNewPassword')),
-        TextFormField(
+        PasswordField(
           controller: _confirmPasswordController,
-          obscureText: true,
-          style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
           onChanged: _onConfirmPasswordChanged,
           decoration: _confirmPasswordError == null
               ? null
@@ -425,6 +433,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           const BorderSide(color: AppColors.error, width: 1.5)),
                 ),
         ),
+        // Quy tắc mật khẩu hiện ngay dưới ô nhập, giống màn P-04 Đổi mật khẩu
+        // — trước 18/09/2026 màn này chỉ báo lỗi SAU khi bấm Lưu, người dùng
+        // phải đoán thiếu gì (dungtv báo).
+        const SizedBox(height: 12),
+        PasswordRequirements(password: _passwordController.text),
         if (_confirmPasswordError != null) ...[
           const SizedBox(height: 4),
           Text(_confirmPasswordError!,

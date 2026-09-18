@@ -13,6 +13,7 @@ import '../core/password_validation.dart';
 import '../core/phone_validation.dart';
 import '../data/auth_repository.dart';
 import 'field_label.dart';
+import 'password_field.dart';
 import 'send_otp_chip.dart';
 import 'signup_stepper.dart';
 import 'top_bar.dart';
@@ -125,15 +126,21 @@ class _SignupScreenState extends State<SignupScreen> {
       await authRepository.verifyOtp(
           phone: _phoneController.text.trim(), token: _otp);
       setState(() => _otpVerified = true);
-    } on AuthApiException catch (e) {
-      // GoTrue trả error_code "otp_expired" riêng cho trường hợp hết hạn (không phải
-      // sai mã) — các lỗi khác (sai mã, đã dùng...) gộp chung 1 thông báo vì GoTrue
-      // không tách rõ hơn được nữa. Xem SCREEN-SPEC.md edge case S-02.
-      setState(() => _errorText = e.code == 'otp_expired'
-          ? AppStrings.t('signup.otpExpired')
-          : AppStrings.t('signup.otpIncorrect'));
-    } catch (e) {
-      setState(() => _errorText = AppStrings.t('signup.otpIncorrectOrExpired'));
+    } on AuthApiException catch (_) {
+      // Ghi chú cũ nói GoTrue tách riêng `otp_expired` cho trường hợp hết hạn
+      // — KHÔNG ĐÚNG trên thực tế: gõ sai mã cũng trả về đúng mã lỗi đó, nên
+      // app báo "hết hạn" trong khi mã vẫn còn hiệu lực (dungtv báo
+      // 18/09/2026).
+      //
+      // Phân biệt bằng ĐỒNG HỒ ĐẾM NGƯỢC của chính màn này: còn đếm ngược thì
+      // mã chưa thể hết hạn ⇒ người dùng gõ sai.
+      setState(() => _errorText = _resendSecondsLeft > 0
+          ? AppStrings.t('signup.otpIncorrect')
+          : AppStrings.t('signup.otpExpired'));
+    } catch (_) {
+      setState(() => _errorText = _resendSecondsLeft > 0
+          ? AppStrings.t('signup.otpIncorrect')
+          : AppStrings.t('signup.otpExpired'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -313,7 +320,11 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(width: 8),
               SendOtpChip(
                   loading: _isLoading && !_otpSent,
-                  onTap: _otpSent ? null : _sendOtp),
+                  // Mở lại khi đồng hồ đếm ngược về 0 — đây là nút gửi lại mã
+                  // duy nhất của màn.
+                  onTap: (_otpSent && _resendSecondsLeft > 0) || _isLoading
+                      ? null
+                      : _sendOtp),
             ],
           ),
         ),
@@ -333,6 +344,12 @@ class _SignupScreenState extends State<SignupScreen> {
             onChanged: (value) => _otp = value,
             onCompleted: (_) => _verifyOtp(),
             keyboardType: TextInputType.number,
+            // Tắt hiệu ứng trượt mặc định của gói: khi xoá, chữ số trượt xuống
+            // ĐÈ QUA viền ô làm viền trông như bị nứt một vạch (dungtv báo
+            // 18/09/2026). Đổi sang mờ dần thì số biến mất tại chỗ, viền
+            // nguyên vẹn.
+            animationType: AnimationType.fade,
+            animationDuration: const Duration(milliseconds: 120),
             pinTheme: PinTheme(
               shape: PinCodeFieldShape.box,
               borderRadius: BorderRadius.circular(AppRadii.inputField),
@@ -347,18 +364,10 @@ class _SignupScreenState extends State<SignupScreen> {
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary),
           ),
-          const SizedBox(height: 12),
-          Center(
-            child: _resendSecondsLeft > 0
-                ? Text(
-                    AppStrings.t(
-                        'signup.resendCodeCountdown', {'countdown': _mmss}),
-                    style: GoogleFonts.inter(
-                        fontSize: 12, color: AppColors.secondaryLight))
-                : TextButton(
-                    onPressed: _isLoading ? null : _sendOtp,
-                    child: Text(AppStrings.t('signup.resendCode'))),
-          ),
+          // Trước 18/09/2026 chỗ này có THÊM một nút "Gửi lại mã" nữa, trong
+          // khi nút "Gửi mã OTP" ở trên lại khoá vĩnh viễn sau lần gửi đầu —
+          // hai nút cùng một việc, nút đúng chỗ thì chết. dungtv chốt: bỏ nút
+          // dưới, đồng hồ về 0 thì mở lại nút trên.
         ],
         if (_errorText != null) ...[
           const SizedBox(height: 8),
@@ -400,19 +409,15 @@ class _SignupScreenState extends State<SignupScreen> {
                 GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary)),
         const SizedBox(height: 12),
         FieldLabel(AppStrings.t('signup.password')),
-        TextFormField(
+        PasswordField(
           controller: _passwordController,
-          obscureText: true,
-          style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
           onChanged: (_) =>
               _onConfirmPasswordChanged(_confirmPasswordController.text),
         ),
         const SizedBox(height: 12),
         FieldLabel(AppStrings.t('signup.confirmPassword')),
-        TextFormField(
+        PasswordField(
           controller: _confirmPasswordController,
-          obscureText: true,
-          style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
           onChanged: _onConfirmPasswordChanged,
           decoration: _confirmPasswordError == null
               ? null

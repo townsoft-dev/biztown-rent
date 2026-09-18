@@ -25,7 +25,9 @@ import 'package:material_symbols_icons/symbols.dart';
 ///   P-06 dùng tông chữ nhạt hơn cho ghi chú, khác hẳn field dữ liệu chính).
 enum AppTextFieldTrailingIcon { none, select, date }
 
-class AppTextField extends StatelessWidget {
+/// Ô có `obscureText: true` sẽ TỰ mọc nút ẩn/hiện mật khẩu ở cuối ô — dùng ở
+/// P-04 Đổi mật khẩu. Các màn Auth dùng `PasswordField` riêng vì kiểu ô khác.
+class AppTextField extends StatefulWidget {
   final String label;
   final TextEditingController? controller;
   final String? initialValue;
@@ -64,13 +66,38 @@ class AppTextField extends StatelessWidget {
   });
 
   @override
+  State<AppTextField> createState() => _AppTextFieldState();
+}
+
+class _AppTextFieldState extends State<AppTextField> {
+  bool _hienMatKhau = false;
+
+  @override
   Widget build(BuildContext context) {
-    final isSelect = trailing == AppTextFieldTrailingIcon.select;
+    final isSelect = widget.trailing == AppTextFieldTrailingIcon.select;
     // "Readonly" thật sự (nền xám, không viền) chỉ áp dụng khi KHÔNG phải
-    // biến thể Select — Select luôn nền trắng có viền dù `readOnly` là gì.
-    final isMuted = readOnly && !isSelect;
-    final suffixIcon = suffixWidget ??
-        switch (trailing) {
+    // biến thể Select — Select luôn nền trắng có viền dù `widget.readOnly` là gì.
+    final isMuted = widget.readOnly && !isSelect;
+    // Ô mật khẩu tự mọc nút ẩn/hiện, trừ khi nơi gọi đã tự truyền
+    // `suffixWidget` riêng (không giành chỗ của họ).
+    final nutAnHien = widget.obscureText && widget.suffixWidget == null
+        ? IconButton(
+            icon: Icon(
+                _hienMatKhau
+                    ? Symbols.visibility_rounded
+                    : Symbols.visibility_off_rounded,
+                size: 20,
+                color: AppColors.textTertiary),
+            onPressed: () => setState(() => _hienMatKhau = !_hienMatKhau),
+            splashRadius: 20,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            padding: EdgeInsets.zero,
+          )
+        : null;
+
+    final suffixIcon = nutAnHien ??
+        widget.suffixWidget ??
+        switch (widget.trailing) {
           AppTextFieldTrailingIcon.select => const Icon(
               Symbols.expand_more_rounded,
               color: AppColors.textTertiary,
@@ -85,7 +112,7 @@ class AppTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
+        Text(widget.label,
             style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
@@ -93,26 +120,26 @@ class AppTextField extends StatelessWidget {
                 color: AppColors.textTertiary)),
         const SizedBox(height: 4),
         TextFormField(
-          controller: controller,
-          initialValue: controller == null ? initialValue : null,
-          readOnly: readOnly || onTap != null || isSelect,
-          onTap: onTap,
-          maxLines: obscureText ? 1 : maxLines,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          onChanged: onChanged,
-          validator: validator,
+          controller: widget.controller,
+          initialValue: widget.controller == null ? widget.initialValue : null,
+          readOnly: widget.readOnly || widget.onTap != null || isSelect,
+          onTap: widget.onTap,
+          maxLines: widget.obscureText ? 1 : widget.maxLines,
+          obscureText: widget.obscureText && !_hienMatKhau,
+          keyboardType: widget.keyboardType,
+          inputFormatters: widget.inputFormatters,
+          onChanged: widget.onChanged,
+          validator: widget.validator,
           style: GoogleFonts.inter(
               fontSize: 14,
-              color: isSelect || textarea
+              color: isSelect || widget.textarea
                   ? AppColors.textTertiary
                   : (isMuted
                       ? AppColors.textSecondary
                       : AppColors.textPrimary)),
           decoration: InputDecoration(
-            hintText: hintText,
-            errorText: errorText,
+            hintText: widget.hintText,
+            errorText: widget.errorText,
             errorMaxLines: 3,
             suffixIcon: suffixIcon,
             filled: true,
