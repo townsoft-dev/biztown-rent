@@ -1217,3 +1217,31 @@ Sáng nay (mục 08:12 trong `changelog/2026-09-18.md`) đã chốt **giữ nguy
 **Việc cần làm để gỡ hẳn**: xin mr Han bản logo **nền trong suốt** (chỉ 3 cột + chữ "BizTown", bỏ ô vuông navy). Có bản đó thì thay được cả 2 chỗ mà không phá bố cục Hường đã thiết kế, và lúc đó chốt luôn có giữ "RENT MANAGER" hay không.
 
 **Đã cắm cảnh báo ngay trong code** ở `_shared/invoice_image_logo.ts` và `send-invoice-email/index.ts` để phiên sau không "sửa giúp" nhầm — vì đọc tài liệu sẽ tưởng bộ cũ đã bỏ hẳn.
+
+## 2026-09-18 (Đợt 66) — Chốt Zalo OA cho hoá đơn hàng tháng: mẫu ZBS + nút mở Mini App, Mini App chỉ hiện ảnh
+
+**Dream chốt** (18/09/2026): dùng Zalo OA cho hoá đơn hàng tháng — gửi bằng **mẫu ZBS**, thêm **nút CTA điều hướng sang Mini App**, và phải dựng thêm Mini App rồi xin Zalo duyệt. Gói đã mua, API dùng được (**đã kiểm chứng**: làm mới access token thành công, hạn mới 19/09).
+
+Đây chính là **Phương án 2** đã phân tích sẵn ở `docs/ZALO-MESSAGING.md` mục 2.2 — gỡ được bế tắc từ 15/09 (Zalo **cấm QR trong mẫu ZBS**, nên không nhét mã QR thẳng vào tin được).
+
+**Quyết định về phạm vi Mini App: Mini App CHỈ hiện ảnh hoá đơn**, không dựng lại bố cục hoá đơn.
+
+Ảnh vẫn do Edge Function `i` sinh ra như đang dùng cho SMS. Lợi ích dungtv nêu và chốt: **sửa hoá đơn chỉ cần sửa phía Supabase, Mini App tự đổi theo** — không build lại, không xin Zalo duyệt lại. Ảnh cũng luôn phản ánh số tài khoản hiện tại của chủ nhà, đúng nguyên tắc đã có.
+
+**Mini App nhận biết đang xem hoá đơn nào bằng cách nào** (dungtv hỏi): **không cần biết người dùng là ai**. Mã tra cứu chính là danh tính — mỗi hoá đơn một mã ngẫu nhiên 12 ký tự đã gắn sẵn người thuê/phòng/kỳ.
+
+```
+Nút CTA trong tin ZBS  →  mở Mini App kèm ?code=<ma_tra_cuu>
+                       →  getRouteParams()  (zmp-sdk ≥ 2.11.0)
+                       →  hiện .../functions/v1/i/<ma_tra_cuu>
+```
+
+`getRouteParams()` trả `Record<string, string>` các tham số truy vấn — tra tại
+https://docs.zaloplatforms.com/docs/MA/api/routing/getRouteParams (đã đọc tài liệu chính chủ, không suy đoán).
+
+**Đã kiểm chứng phần cốt lõi**, dựng bản mô phỏng đúng logic (thay `getRouteParams()` bằng `URLSearchParams`) chạy trên trình duyệt thật: mã hợp lệ → hiện ảnh hoá đơn; mã sai/mã rác → endpoint trả 404 → Mini App vào nhánh báo lỗi. Endpoint **không đòi header xác thực** nên Mini App gọi thẳng được.
+
+**Còn thiếu để phát hành, cần Dream cung cấp**:
+1. **Mini App ID** — phải tạo bằng chính tài khoản sở hữu OA, nếu không nút CTA bị xếp nhóm phí cao hơn (vướng mắc #2 mục 2.1).
+2. **Mẫu ZBS cho hoá đơn**: mã mẫu + tên tham số. Hiện mới có `636121` (tin chào mừng hợp đồng) và `636478` (OTP).
+3. Chốt **gửi theo số điện thoại hay UID** — UID rẻ hơn nhưng người thuê phải quan tâm OA trước (Luồng A).
