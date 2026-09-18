@@ -457,3 +457,10 @@ entrypoint = "./functions/invoice-qr/index.ts"
 verify_jwt = false
 import_map = "./functions/send-invoice-email/deno.json"
 entrypoint = "./functions/send-invoice-email/index.ts"
+
+[functions.invoice-image]
+# Ảnh hoá đơn cho người thuê — họ không có tài khoản nên không gửi được JWT
+# nào; tắt kiểm tra ở tầng nền tảng, hàm tự khai `auth: ["none"]`.
+verify_jwt = false
+import_map = "./functions/invoice-image/deno.json"
+entrypoint = "./functions/invoice-image/index.ts"
