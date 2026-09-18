@@ -4,14 +4,23 @@ import '../data/models/invoice.dart';
 import 'number_format.dart';
 import 'supabase_client.dart';
 
-/// Link ảnh mã QR chuyển khoản của 1 hoá đơn — Edge Function `invoice-qr`.
+/// Link ẢNH HOÁ ĐƠN của 1 hoá đơn — Edge Function `invoice`.
+///
+/// Trỏ tới ảnh hoá đơn đầy đủ (dựng theo frame Figma `MOCK-IMG`) chứ không
+/// còn là ô mã QR trơ trọi của `invoice-qr` — dungtv chốt 18/09/2026. Hàm
+/// `invoice-qr` vẫn giữ trên server để những tin nhắn đã gửi trước đó không
+/// chết link.
 ///
 /// Dạng **đường dẫn sạch**, KHÔNG dùng `?code=...`: test thật 17/09/2026 cho
 /// thấy nhà mạng chặn tin nhắn chứa `?` hoặc `&` (xem `docs/SMS-HOA-DON.md`
 /// mục 6.4). Bỏ luôn `https://` cho ngắn — điện thoại vẫn nhận ra là link.
-String invoiceQrLink(Invoice invoice) {
+///
+/// ⚠️ Link phải **≤ 70 ký tự** vì lọt vào ô tham số `{P2,70}` của mẫu eSMS.
+/// Với tên miền Supabase hiện tại, link dài đúng 66 — chỉ còn dư 4 ký tự, nên
+/// ĐỪNG đổi tên hàm `invoice` thành tên dài hơn khi chưa có tên miền riêng.
+String invoiceImageLink(Invoice invoice) {
   final host = SupabaseConfig.url.replaceFirst(RegExp(r'^https?://'), '');
-  return '$host/functions/v1/invoice-qr/${invoice.publicCode}';
+  return '$host/functions/v1/invoice/${invoice.publicCode}';
 }
 
 /// Nội dung SMS gửi Tenant cho 1 hoá đơn. Dùng chung cho B-05 (gửi đơn lẻ) và
@@ -36,7 +45,7 @@ String invoiceQrLink(Invoice invoice) {
 /// tiền tin nhắn tăng gấp đôi gấp ba (xem `docs/SMS-HOA-DON.md` mục 6.1).
 String buildInvoiceSmsMessage(Invoice invoice) {
   final ky = DateFormat('MM/yyyy').format(invoice.periodStart); // ≤ 10
-  final link = invoiceQrLink(invoice); // ≤ 70
+  final link = invoiceImageLink(invoice); // ≤ 70
   final phong = invoice.roomNos.join(',');
   final tien = formatNumber(invoice.totalAmount);
   final han = DateFormat('dd/MM').format(invoice.dueDate);

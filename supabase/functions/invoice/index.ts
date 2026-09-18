@@ -1,8 +1,8 @@
-// invoice-image
+// invoice
 //
 // ẢNH hoá đơn chi tiết cho NGƯỜI THUÊ, mở bằng đúng một đường dẫn sạch:
 //
-//   GET /functions/v1/invoice-image/<ma_tra_cuu>
+//   GET /functions/v1/invoice/<ma_tra_cuu>
 //
 // Thay cho `invoice-qr` (chỉ trả mỗi ô mã QR trơ trọi — dungtv nhận xét
 // 17/09/2026 là "cùi"). Dựng theo frame Figma `MOCK-IMG` (node `526:2485`).
