@@ -725,6 +725,8 @@
     "batchSendChannelSubtitle": "Gửi {count} hoá đơn",
     "batchProcessing": "Đang tạo & gửi hoá đơn, vui lòng đợi...",
     "batchDraftSuccess": "Đã tạo {count} hoá đơn nháp",
+    "sentSuccessSms": "Đã gửi hoá đơn qua SMS tới {phone}",
+    "sentSuccessEmail": "Đã gửi hoá đơn qua email tới {email}",
     "batchSentSuccess": "Đã tạo và gửi {count} hoá đơn",
     "channelEmail": "Email",
     "channelEmailHint": "Gửi tới {email}",

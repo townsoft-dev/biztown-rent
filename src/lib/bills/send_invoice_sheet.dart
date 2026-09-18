@@ -16,9 +16,15 @@ import '../shared/channel_option.dart';
 /// vì CHƯA có Zalo OA/App ID/Access token/Template ZNS (dungtv xác nhận
 /// 2026-09-14 — chờ cung cấp, xem docs/DECISIONS.md Đợt 35). Bật lại 2 kênh
 /// này sau chỉ cần đổi state, không cần sửa layout.
-Future<bool?> showSendInvoiceSheet(
+/// Trả về **câu thông báo thành công** để màn gọi hiện SnackBar, `null` nếu
+/// người dùng huỷ hoặc gửi lỗi (lỗi đã hiện ngay trong sheet).
+///
+/// Trước 18/09/2026 hàm này trả `bool` mà cả 2 nơi gọi đều vứt đi: bấm "Gửi
+/// ngay" xong sheet đóng lại im lìm, chủ trọ không biết đã gửi được hay chưa —
+/// dungtv báo khi test thật. Màn gửi hàng loạt B-03 thì vẫn báo bình thường.
+Future<String?> showSendInvoiceSheet(
     BuildContext context, WidgetRef ref, String invoiceId) {
-  return showModalBottomSheet<bool>(
+  return showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -44,7 +50,8 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
   bool _sending = false;
   String? _errorText;
 
-  Future<void> _send(Invoice invoice, String? phone, String message) async {
+  Future<void> _send(
+      Invoice invoice, String? phone, String email, String message) async {
     setState(() {
       _sending = true;
       _errorText = null;
@@ -68,7 +75,11 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
       ref.invalidate(contractInvoicesProvider(invoice.contractId));
       ref.invalidate(billsHouseGroupsProvider);
       ref.invalidate(invoicesProvider);
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        Navigator.of(context).pop(_channel == _SendChannel.email
+            ? AppStrings.t('bills.sentSuccessEmail', {'email': email})
+            : AppStrings.t('bills.sentSuccessSms', {'phone': phone!}));
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -235,7 +246,7 @@ class _SendInvoiceSheetState extends ConsumerState<_SendInvoiceSheet> {
                           (_channel == _SendChannel.sms && phone == null) ||
                           (_channel == _SendChannel.email && email.isEmpty)
                       ? null
-                      : () => _send(invoice, phone, message),
+                      : () => _send(invoice, phone, email, message),
                 ),
               ),
             ],

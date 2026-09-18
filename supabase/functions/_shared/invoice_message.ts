@@ -44,41 +44,17 @@ function formatDdMm(dateStr: string): string {
 }
 
 /// Nội dung SMS hoá đơn gửi hàng loạt (B-03 → `generate-invoice` mode
-/// "batchSend"). PHẢI giống hệt bản gửi đơn lẻ ở `src/lib/core/invoice_message.dart`
-/// — cùng một mẫu, cùng một brandname.
-///
-/// Bản trước 18/09/2026 dựng một câu hoàn toàn khác ("BizTown Rent Manager:
-/// Hoá đơn phòng ..."), hỏng hai đường cùng lúc:
-///   1. Không khớp mẫu của brandname mượn "Baotrixemay" → eSMS trả
-///      `CodeResult 146 — Sai template`, không tin nào ra khỏi hệ thống.
-///   2. Viết CÓ DẤU và có dấu gạch ngang `–` (U+2013) → bị đẩy sang UCS-2,
-///      70 ký tự/đoạn thay vì 160, tiền tin nhắn tăng gấp bội. Đây đúng là cái
-///      bẫy đã ghi ở `docs/SMS-HOA-DON.md` mục 6.1 mà chính chỗ này vẫn dính.
-///
-/// Tham số `_house` giữ lại cho khỏi phải sửa nơi gọi; mẫu brandname không có
-/// chỗ nhét thông tin ngân hàng — người thuê xem trong ảnh hoá đơn mở từ link.
+/// "batchSend"). PHẢI giống hệt bản gửi đơn lẻ ở
+/// `src/lib/core/invoice_message.dart` — đọc giải thích ngân sách ký tự ở đó
+/// trước khi sửa một ký tự nào trong chuỗi dưới đây. Tin dài ĐÚNG 160 ký tự,
+/// tức 1 đoạn SMS; thêm bất cứ thứ gì là thành 2 đoạn và đắt gấp đôi.
 export function buildInvoiceSmsMessage(
-  invoice: {
-    room_nos: string[];
-    period_start: string;
-    total_amount: number;
-    due_date: string;
-    public_code?: string | null;
-  },
-  _house?: unknown,
+  invoice: { period_start: string; public_code?: string | null },
 ): string {
   const ky = invoice.period_start.slice(5, 7) + "/" +
-    invoice.period_start.slice(0, 4);
+    invoice.period_start.slice(2, 4);
   const host = (Deno.env.get("SUPABASE_URL") ?? "").replace(/^https?:\/\//, "");
-  const link = invoice.public_code
-    ? `${host}/functions/v1/invoice/${invoice.public_code}`
-    : host;
-  const phong = (invoice.room_nos ?? []).join(",");
-  const tien = formatVndNumber(invoice.total_amount);
-  const han = formatDdMm(invoice.due_date);
-  let tomTat = `BizTown P${phong} ${tien}d han ${han}`;
-  if (tomTat.length > 50) tomTat = `BizTown ${tien}d han ${han}`;
-
+  const link = `${host}/functions/v1/i/${invoice.public_code ?? ""}`;
   return `Quy khach da den thoi gian bao tri lan ${ky} xe ${link}. ` +
-    `Vui long lien he ${tomTat} de duoc huong dan. Tran trong.`;
+    `Vui long lien he BT de duoc huong dan. Tran trong.`;
 }

@@ -150,7 +150,11 @@ class _InvoiceCreateSingleScreenState
 
   Future<void> _sendInvoice() async {
     if (_invoice == null) return;
-    await showSendInvoiceSheet(context, ref, _invoice!.id);
+    final sentMessage = await showSendInvoiceSheet(context, ref, _invoice!.id);
+    if (sentMessage != null && mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(sentMessage)));
+    }
     _invalidateAfterSave();
     if (mounted) context.pop();
   }

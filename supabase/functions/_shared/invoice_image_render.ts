@@ -8,7 +8,7 @@
 // Cách dựng: ghép chuỗi SVG rồi rasterise bằng `resvg` bản WASM. Toàn bộ toạ
 // độ/cỡ chữ lấy từ metadata của frame Figma, màu đọc pixel trực tiếp trên bản
 // render — không ước lượng bằng mắt.
-import { LOGO_ON_NAVY, LOGO_VIEWBOX } from "./logo.ts";
+import { LOGO_ON_NAVY, LOGO_VIEWBOX } from "./invoice_image_logo.ts";
 
 // ---- Màu, đọc pixel từ bản render Figma `526:2485` (18/09/2026) ----
 export const NAVY = "#23305E";
