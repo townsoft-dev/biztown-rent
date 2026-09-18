@@ -1,12 +1,13 @@
 {
   "app": {
     "title": "Hoá đơn BizTown",
-    "headerTitle": "Hoá đơn",
     "textColor": "white",
-    "statusBarColor": "#23305E",
     "statusBar": "normal",
     "actionBarHidden": false,
-    "hideIOSSafeAreaBottom": false
+    "hideIOSSafeAreaBottom": true,
+    "hideAndroidBottomNavigationBar": false,
+    "statusBarColor": "#23305E",
+    "headerTitle": "Hoá đơn"
   },
   "listCSS": [],
   "listSyncJS": [],
